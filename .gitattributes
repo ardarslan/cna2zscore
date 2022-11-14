@@ -1,0 +1,2 @@
+*ipynb linguist-documentation
+*.ipynb filter=dropoutput_ipynb
