@@ -7,7 +7,7 @@ from evaluate import evaluate
 from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_model_hidden_dimension, set_device, get_logger, \
                    get_dataset, get_data_loaders, get_model, get_optimizer, \
-                   get_scheduler, get_loss_function, save_model)
+                   get_scheduler, get_loss_function, save_model, save_cfg)
 
 
 if __name__ == "__main__":
@@ -16,8 +16,9 @@ if __name__ == "__main__":
     set_seeds(cfg=cfg)
     set_experiment_name(cfg=cfg)
     set_device(cfg=cfg)
+    save_cfg(cfg=cfg)
     logger = get_logger(cfg=cfg)
-    dataset = get_dataset(cfg=cfg)
+    dataset = get_dataset(cfg=cfg, logger=logger)
     data_loaders = get_data_loaders(cfg=cfg, dataset=dataset)
     set_model_hidden_dimension(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
     model = get_model(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)

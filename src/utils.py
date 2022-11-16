@@ -2,10 +2,11 @@ import os
 import sys
 import time
 import random
+import pprint
 import logging
 import argparse
 from uuid import uuid4
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, List
 
 import numpy as np
 import torch
@@ -15,7 +16,7 @@ from torch.optim import Adam, AdamW, RMSprop
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, Subset
 
-from dataset import RPPA2RNADataset, RNA2RNADataset
+from dataset import CNAPurity2GEXDataset, RPPA2GEXDataset, AverageGEXSubtype2GEXDataset
 from model import MLP
 
 
@@ -60,11 +61,13 @@ def get_experiment_dir(cfg: Dict[str, Any]) -> str:
     return experiment_dir
 
 
-def get_dataset(cfg: Dict[str, Any]) -> Dataset:
-    if cfg["dataset"] == "rppa2rna":
-        return RPPA2RNADataset(cfg=cfg)
-    elif cfg["dataset"] == "rna2rna":
-        return RNA2RNADataset(cfg=cfg)
+def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
+    if cfg["dataset"] == "cnapurity2gex":
+        return CNAPurity2GEXDataset(cfg=cfg, logger=logger)
+    elif cfg["dataset"] == "rppa2gex":
+        return RPPA2GEXDataset(cfg=cfg, logger=logger)
+    elif cfg["dataset"] == "avggexsubtype2gex":
+        return AverageGEXSubtype2GEXDataset(cfg=cfg, logger=logger)
     else:
         raise NotImplementedError(f"{cfg['dataset']} is not an implemented dataset.")
 
@@ -127,8 +130,6 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int) 
     else:
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
 
-    print(f"Model input dimension: {input_dimension}, output dimension: {output_dimension}.")
-
     torchsummary.summary(model, input_size=(input_dimension, ))
     return model
 
@@ -157,6 +158,13 @@ def get_loss_function(cfg: Dict[str, Any]):
         return torch.nn.MSELoss()
     else:
         raise NotImplementedError(f"{cfg['loss']} is not an implemented loss function.")
+
+
+def save_cfg(cfg: Dict[str, Any]) -> None:
+    experiment_dir = get_experiment_dir(cfg=cfg)
+    config_path = os.path.join(experiment_dir, "cfg.txt")
+    with open(config_path, "w") as file_handler:
+        file_handler.write(pprint.pformat(cfg, indent=4))
 
 
 def save_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) -> None:
@@ -191,8 +199,9 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # data
     parser.add_argument("--processed_data_dir", type=str, default="../data/processed/", help="Directory for the processed files.")
-    parser.add_argument("--dataset", type=str, default="rna2rna", choices=["rna2rna", "rppa2rna", "cna2rna", "avgrna2rna"], help="Name of the dataset.")
-    parser.add_argument("--split_ratios", type=dict, default={"train": 0.7, "val": 0.15, "test": 0.15}, help="Ratios for train, val and test splits.")
+    parser.add_argument("--dataset", type=str, default="avggexsubtype2gex", choices=["cnapurity2gex", "rppa2gex", "avggexsubtype2gex"], help="Name of the dataset.")
+    parser.add_argument("--cancer_types", type=List[str], default=["blca", "lusc", "ov"], choices=[["blca"], ["blca", "lusc", "ov"]], help="Cancer types.")
+    parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
     parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the input or not.")
     parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the output or not.")
 

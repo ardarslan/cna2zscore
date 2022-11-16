@@ -12,17 +12,14 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         X = batch["X"]
         y = batch["y"]
 
-        if not cfg["normalize_input"]:
-            yhat = model(X)
-        else:
-            X_normalized = (X - dataset.X_train_mean) / (dataset.X_train_std + 1e-10)
-            yhat = model(X_normalized)
+        if cfg["normalize_input"]:
+            X = (X - dataset.X_train_mean) / (dataset.X_train_std + 1e-10)
 
-        if not cfg["normalize_output"]:
-            loss = loss_function(yhat, y)
-        else:
-            y_normalized = (y - dataset.y_train_mean) / (dataset.y_train_std + 1e-10)
-            loss = loss_function(yhat, y_normalized)
+        if cfg["normalize_output"]:
+            y = (y - dataset.y_train_mean) / (dataset.y_train_std + 1e-10)
+
+        yhat = model(X)
+        loss = loss_function(yhat, y)
 
         loss.backward()
         optimizer.step()

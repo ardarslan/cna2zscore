@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import numpy as np
 import torch
@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 
-def evaluate_split(cfg: Dict[str, Any], data_loaders: DataLoader, split_name: str, model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger) -> np.float32:
+def evaluate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger) -> np.float32:
     model.eval()
 
     with torch.no_grad():
@@ -18,17 +18,17 @@ def evaluate_split(cfg: Dict[str, Any], data_loaders: DataLoader, split_name: st
             X = batch["X"]
             y = batch["y"]
 
-            if not cfg["normalize_input"]:
-                yhat = model(X)
-            else:
-                X_normalized = (X - dataset.X_train_mean) / (dataset.X_train_std + 1e-10)
-                yhat = model(X_normalized)
+            if cfg["normalize_input"]:
+                X = (X - dataset.X_train_mean) / (dataset.X_train_std + 1e-10)
 
-            if not cfg["normalize_output"]:
-                loss = loss_function(yhat, y)
-            else:
-                yhat_unnormalized = yhat * (dataset.y_train_std + 1e-10) + dataset.y_train_mean
-                loss = loss_function(yhat_unnormalized, y)
+            yhat = model(X)
+
+            if cfg["normalize_output"]:
+                # then during training y was manually normalized, and yhat comes as normalized as well.
+                # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
+                yhat = yhat * (dataset.y_train_std + 1e-10) + dataset.y_train_mean
+
+            loss = loss_function(yhat, y)
 
             sample_count += X.shape[0]
             total_loss += loss * sample_count
