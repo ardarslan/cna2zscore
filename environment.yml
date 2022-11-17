@@ -1,12 +1,13 @@
 name: cna2gex
 channels:
-  - r
-  - pytorch
   - anaconda
   - conda-forge
   - defaults
+  - pytorch
+  - r
 dependencies:
   - black=19.10b0
+  - gdown=4.5.3
   - ipython=8.3.0
   - numpy=1.22.3
   - pandas=1.4.2

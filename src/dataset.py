@@ -1,11 +1,11 @@
 import os
 import logging
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Optional
 
 import numpy as np
 import pandas as pd
-import torch
 from sklearn.utils import shuffle
+import torch
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -14,14 +14,14 @@ class Dataset(torch.utils.data.Dataset):
         cfg: Dict[str, Any],
         input_data_types: List[str],
         output_data_type: str,
-        intersect_input_columns_with_output_columns: List[bool],
+        mask_data_type: Optional[str],
         logger: logging.Logger
     ):
         super().__init__()
         self.cfg = cfg
         self.input_data_types = input_data_types
         self.output_data_type = output_data_type
-        self.intersect_input_columns_with_output_columns = intersect_input_columns_with_output_columns
+        self.mask_data_type = mask_data_type
         self.logger = logger
 
         self.cancer_types = sorted(cfg["cancer_types"])
@@ -39,10 +39,9 @@ class Dataset(torch.utils.data.Dataset):
 
         self.processed_data_dir = cfg["processed_data_dir"]
         self.seed = cfg["seed"]
-
-        self.X, self.y = self._get_X_y()
         self.logger = logger
 
+        self._process_dataset()
         self.input_dimension = self.X.shape[1]
         self.output_dimension = self.y.shape[1]
 
@@ -66,29 +65,27 @@ class Dataset(torch.utils.data.Dataset):
         self.y_train_mean = torch.as_tensor(np.mean(y_train, axis=0), device=self.device)
         self.y_train_std = torch.as_tensor(np.std(y_train, axis=0), device=self.device)
 
-    def _get_X_y(self) -> Tuple[np.ndarray, np.ndarray]:
+    def _process_dataset(self) -> None:
         # prepare output dataframe
-        output_df = []
-        for cancer_type in self.cancer_types:
-            current_cancer_type_df = pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, self.output_data_type + ".tsv"), sep="\t")
-            output_df.append(current_cancer_type_df)
-        output_df = pd.concat(output_df, axis=0)
+        output_df = pd.concat([pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, self.output_data_type + ".tsv"), sep="\t") for cancer_type in self.cancer_types], axis=0)
+
+        # prepare mask dataframe
+        mask_df = pd.concat([pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, self.mask_data_type + ".tsv"), sep="\t") for cancer_type in self.cancer_types], axis=0)
 
         # prepare input dataframe
         input_df = []
         for cancer_type in self.cancer_types:
             current_cancer_type_df = None
 
-            for current_input_data_type, current_intersect_input_columns_with_output_columns in zip(self.input_data_types, self.intersect_input_columns_with_output_columns):
+            for current_input_data_type in zip(self.input_data_types):
                 current_cancer_type_input_data_type_df = pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, current_input_data_type + ".tsv"), sep="\t")
 
-                # get the intersection of the input and output columns if needed
-                if current_intersect_input_columns_with_output_columns:
-                    intersecting_columns = list(set(current_cancer_type_input_data_type_df.columns).intersection(set(output_df.columns)))
+                if current_input_data_type == "cna":
+                    intersecting_columns = list(set(current_cancer_type_input_data_type_df.columns).intersection(set(output_df.columns)).intersection(set(mask_df.columns)))
                     current_cancer_type_input_data_type_df = current_cancer_type_input_data_type_df[intersecting_columns]
+                    mask_df = mask_df[intersecting_columns]
                     output_df = output_df[intersecting_columns]
 
-                # merge current_cancer_type_input_data_type_df to current_cancer_type_df
                 if current_cancer_type_df is None:
                     current_cancer_type_df = current_cancer_type_input_data_type_df
                 else:
@@ -117,26 +114,86 @@ class Dataset(torch.utils.data.Dataset):
         self.logger.log(level=logging.INFO, msg=f"Dropped the following input features with 0 std: {input_features_with_0_std}.")
         self.logger.log(level=logging.INFO, msg="Input features: " + ", ".join([column for column in input_df.columns]))
 
-        # merge input and output dataframe
+        # merge input, output and mask dataframes
         merged_df = pd.merge(left=input_df, right=output_df, how="inner", on="sample_id")
-
+        merged_df = pd.merge(left=merged_df, right=mask_df, how="inner", on="sample_id")
         merged_df = merged_df.drop(columns=["sample_id"])
         merged_df = shuffle(merged_df, random_state=self.seed)
-        X = merged_df.values[:, :input_df.shape[1]-1]
-        y = merged_df.values[:, input_df.shape[1]-1:]
 
-        self.logger.log(level=logging.INFO, msg=f"X.shape: {X.shape}, y.shape: {y.shape}")
+        self.input_dimension = input_df.shape[1] - 1
+        self.output_dimension = output_df.shape[1] - 1
 
-        return X, y
+        self.X = merged_df.values[:, :self.input_dimension]
+        self.y = merged_df.values[:, self.input_dimension:self.input_dimension + self.output_dimension]
+        self.mask = merged_df.values[:, self.input_dimension + self.output_dimension:]
+        self.gene_names = [column for column in self.output_df.columns if column != "sample_id"]
 
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         return {
                 "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
-                "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32)
+                "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32),
+                "mask": torch.as_tensor(self.mask[idx, :], device=self.device, dtype=torch.bool)
                }
 
     def __len__(self) -> int:
         return self.len_dataset
+
+    # def _process_dataset(self) -> None:
+    #     # prepare output dataframe
+    #     output_df = pd.concat([pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, self.output_data_type + ".tsv"), sep="\t") for cancer_type in self.cancer_types], axis=0)
+
+    #     # prepare input dataframe
+    #     input_df = []
+    #     for cancer_type in self.cancer_types:
+    #         current_cancer_type_df = None
+
+    #         for current_input_data_type in zip(self.input_data_types):
+    #             current_cancer_type_input_data_type_df = pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, current_input_data_type + ".tsv"), sep="\t")
+
+    #             if current_cancer_type_df is None:
+    #                 current_cancer_type_df = current_cancer_type_input_data_type_df
+    #             else:
+    #                 current_cancer_type_df = pd.merge(
+    #                     left=current_cancer_type_df,
+    #                     right=current_cancer_type_input_data_type_df,
+    #                     on="sample_id",
+    #                     how="inner"
+    #                 )
+
+    #         # add one hot encoding to the input dataframe if there are more than one cancer types
+    #         if self.one_hot_input_df:
+    #             current_cancer_type_df["cancer_type"] = cancer_type
+
+    #         input_df.append(current_cancer_type_df)
+
+    #     input_df = pd.concat(input_df, axis=0)
+
+    #     # add one hot encoding to the input dataframe if there are more than one cancer types
+    #     if self.one_hot_input_df:
+    #         input_df = pd.get_dummies(input_df, columns=["cancer_type"])
+
+    #     # drop input features with std 0.0
+    #     input_features_with_0_std = input_df.drop(columns=["sample_id"]).loc[:, input_df.drop(columns=["sample_id"]).std(axis=0) == 0].columns.tolist()
+    #     input_df = input_df[[column for column in input_df.columns if column not in input_features_with_0_std]]
+    #     self.logger.log(level=logging.INFO, msg=f"Dropped the following input features with 0 std: {input_features_with_0_std}.")
+    #     self.logger.log(level=logging.INFO, msg="Input features: " + ", ".join([column for column in input_df.columns]))
+
+    #     # merge input, output and mask dataframes
+    #     merged_df = pd.merge(left=input_df, right=output_df, how="inner", on="sample_id")
+    #     merged_df = merged_df.drop(columns=["sample_id"])
+    #     merged_df = shuffle(merged_df, random_state=self.seed)
+
+    #     self.input_dimension = input_df.shape[1] - 1
+    #     self.output_dimension = output_df.shape[1] - 1
+
+    #     self.X = merged_df.values[:, :self.input_dimension]
+    #     self.y = merged_df.values[:, self.input_dimension:self.input_dimension + self.output_dimension]
+
+    # def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+    #     return {
+    #             "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
+    #             "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32)
+    #            }
 
 
 class CNAPurity2GEXDataset(Dataset):
@@ -145,7 +202,7 @@ class CNAPurity2GEXDataset(Dataset):
             cfg=cfg,
             input_data_types=["cna", "purity"],
             output_data_type="gex",
-            intersect_input_columns_with_output_columns=[True, False],
+            mask_data_type="cna_thresholded",
             logger=logger
         )
 
@@ -156,7 +213,7 @@ class RPPA2GEXDataset(Dataset):
             cfg=cfg,
             input_data_types=["rppa"],
             output_data_type="gex",
-            intersect_input_columns_with_output_columns=[False],
+            mask_data_type=None,
             logger=logger
         )
 
@@ -167,6 +224,6 @@ class AverageGEXSubtype2GEXDataset(Dataset):
             cfg=cfg,
             input_data_types=["avg_gex", "subtype"],
             output_data_type="gex",
-            intersect_input_columns_with_output_columns=[False, False],
+            mask_data_type=None,
             logger=logger
         )
