@@ -75,8 +75,8 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         best_predicted_20_genes = gene_losses[:20]
         worst_predicted_20_genes = gene_losses[-20:]
 
-        logger.log(level=logging.INFO, msg=f"All genes, test {cfg['loss_function']} loss: {all_loss}.")
-        logger.log(level=logging.INFO, msg=f"CNA genes, test {cfg['loss_function']} loss: {cna_loss}.")
+        logger.log(level=logging.INFO, msg=f"   All genes, test {cfg['loss_function']} loss: {all_loss}.")
+        logger.log(level=logging.INFO, msg=f"   CNA genes, test {cfg['loss_function']} loss: {cna_loss}.")
         logger.log(level=logging.INFO, msg=f"nonCNA genes, test {cfg['loss_function']} loss: {noncna_loss}.")
         logger.log(level=logging.INFO, msg=f"------------------------")
 

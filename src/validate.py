@@ -33,7 +33,7 @@ def validate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_na
 
         loss = np.round(total_loss / total_count, 2)
 
-        logger.log(level=logging.INFO, msg=f"Epoch {epoch}, {split_name.capitalize()} {cfg['loss_function']} loss is {loss}.")
+        logger.log(level=logging.INFO, msg=f"Epoch {str(epoch).zfill(3)}, {(5 - len(split_name)) * ' ' + split_name.capitalize()} {cfg['loss_function']} loss is {loss}.")
 
         return loss
 
