@@ -51,5 +51,5 @@ if __name__ == "__main__":
 
     test_logger = get_logger(cfg=cfg, file_name="results.txt")
     test_loss_function = get_loss_function(cfg=cfg, reduction="sum")
-    model = load_model(cfg=cfg)
+    model = load_model(cfg=cfg, logger=test_logger)
     test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=test_loss_function, dataset=dataset, logger=test_logger)
