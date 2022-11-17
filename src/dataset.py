@@ -117,7 +117,10 @@ class Dataset(torch.utils.data.Dataset):
         # self.logger.log(level=logging.INFO, msg="Input features: " + ", ".join([column for column in input_df.columns]))
 
         if output_df.columns.tolist() != mask_df.columns.tolist():
-            raise Exception("Columns of output_df should be the same with columns of mask_df.")
+            intersecting_columns = sorted(list(set(output_df.columns).intersection(set(mask_df.columns))))
+            intersecting_columns = ["sample_id"] + [column for column in intersecting_columns if column != "sample_id"]
+            output_df = output_df[intersecting_columns]
+            mask_df = mask_df[intersecting_columns]
 
         # merge input, output and mask dataframes
         merged_df = pd.merge(left=input_df, right=output_df, how="inner", on="sample_id")
