@@ -184,10 +184,9 @@ def save_test_ground_truths_and_predictions(cfg: Dict[str, Any], test_ground_tru
     test_predictions_df.to_csv(os.path.join(experiment_dir, "test_predictions.tsv"), sep="\t")
 
 
-def load_model(cfg: Dict[str, Any], logger: logging.Logger) -> nn.Module:
+def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:
     logger.log(level=logging.INFO, msg="Loading the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
-    dataset = get_dataset(cfg=cfg, logger=logger)
     model = get_model(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
     model.load_state_dict(torch.load(os.path.join(experiment_dir, "best_model")))
     return model

@@ -28,10 +28,8 @@ def validate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_na
                 # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
                 yhat = yhat * (dataset.y_train_std + 1e-10) + dataset.y_train_mean
 
-            loss = loss_function(yhat, y)
-
-            total_count += y.shape[0] * y.shape[1]
-            total_loss += float(loss)
+            total_count += float(y.shape[0] * y.shape[1])
+            total_loss += float(loss_function(yhat, y))
 
         loss = np.round(total_loss / total_count, 2)
 

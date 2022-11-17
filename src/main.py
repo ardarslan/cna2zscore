@@ -50,6 +50,6 @@ if __name__ == "__main__":
         else:
             scheduler.step(current_val_loss)
 
-    model = load_model(cfg=cfg, logger=logger)
+    model = load_model(cfg=cfg, dataset=dataset, logger=logger)
     test_ground_truths, test_predictions = test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
     save_test_ground_truths_and_predictions(cfg=cfg, test_ground_truths=test_ground_truths, test_predictions=test_predictions, entrezgene_ids=dataset.entrezgene_ids, logger=logger)

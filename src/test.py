@@ -47,20 +47,20 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             test_ground_truths.append(y)
             test_predictions.append(yhat)
 
-            all_count += y.shape[0] * y.shape[1]
+            all_count += float(y.shape[0] * y.shape[1])
             all_loss_sum += float(loss_function(yhat, y))
 
-            cna_count += cna_mask.sum()
+            cna_count += float(cna_mask.sum())
             cna_loss_sum += float(loss_function(yhat * cna_mask, y * cna_mask))
 
-            noncna_count += noncna_mask.sum()
+            noncna_count += float(noncna_mask.sum())
             noncna_loss_sum += float(loss_function(yhat * noncna_mask, y * noncna_mask))
 
-            gene_counts += y.shape[0]
+            gene_counts += float(y.shape[0])
 
             for sample_id in range(y.shape[0]):
                 for entrezgene_id, column_id in zip(entrezgene_ids, range(y.shape[1])):
-                    gene_loss_sums[entrezgene_id] += loss_function(yhat[sample_id][column_id], y[sample_id][column_id])
+                    gene_loss_sums[entrezgene_id] += float(loss_function(yhat[sample_id][column_id], y[sample_id][column_id]))
 
         test_ground_truths = torch.vstack(test_ground_truths)
         test_predictions = torch.vstack(test_predictions)
@@ -69,7 +69,7 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         cna_loss = np.round(cna_loss_sum / cna_count, 2)
         noncna_loss = np.round(noncna_loss_sum / noncna_count, 2)
         gene_losses = dict(
-            (entrezgene_id, np.round(np.float32(gene_loss_sum / gene_counts), 2)) for entrezgene_id, gene_loss_sum in gene_loss_sums.items()
+            (entrezgene_id, np.round(gene_loss_sum / gene_counts, 2)) for entrezgene_id, gene_loss_sum in gene_loss_sums.items()
         )
         gene_losses = sorted(list(gene_losses.items()), key=lambda x: x[1])
         best_predicted_20_genes = gene_losses[:20]
