@@ -6,7 +6,7 @@ import pprint
 import logging
 import argparse
 from uuid import uuid4
-from typing import Dict, Any, Union, List
+from typing import Dict, Any, Union
 
 import numpy as np
 import torch
@@ -199,8 +199,8 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # data
     parser.add_argument("--processed_data_dir", type=str, default="../data/processed/", help="Directory for the processed files.")
-    parser.add_argument("--dataset", type=str, default="avggexsubtype2gex", choices=["cnapurity2gex", "rppa2gex", "avggexsubtype2gex"], help="Name of the dataset.")
-    parser.add_argument("--cancer_types", type=List[str], default=["blca", "lusc", "ov"], choices=[["blca"], ["blca", "lusc", "ov"]], help="Cancer types.")
+    parser.add_argument("--dataset", type=str, default="cnapurity2gex", choices=["cnapurity2gex", "rppa2gex", "avggexsubtype2gex"], help="Name of the dataset.")
+    parser.add_argument("--cancer_types", type=str, default="all", choices=["blca", "all"], help="Cancer types.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
     parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the input or not.")
     parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the output or not.")
@@ -223,8 +223,8 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scheduler_patience", type=int, default=8, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
 
     # training
-    parser.add_argument("--num_epochs", type=int, default=50, help="Number of training epochs.")
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
+    parser.add_argument("--num_epochs", type=int, default=100, help="Number of training epochs.")
+    parser.add_argument("--batch_size", type=int, default=16, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--early_stopping_patience", type=int, default=15, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 

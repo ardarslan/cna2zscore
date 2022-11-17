@@ -24,7 +24,11 @@ class Dataset(torch.utils.data.Dataset):
         self.mask_data_type = mask_data_type
         self.logger = logger
 
-        self.cancer_types = sorted(cfg["cancer_types"])
+        if cfg["cancer_types"] == "all":
+            self.cancer_types = ["blca", "lusc", "ov"]
+        else:
+            self.cancer_types = [cfg["cancer_types"]]
+
         self.one_hot_input_df = len(self.cancer_types) > 1
         self.split_ratios = cfg["split_ratios"]
 
