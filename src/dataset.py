@@ -146,63 +146,6 @@ class Dataset(torch.utils.data.Dataset):
     def __len__(self) -> int:
         return self.len_dataset
 
-    # def _process_dataset(self) -> None:
-    #     # prepare output dataframe
-    #     output_df = pd.concat([pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, self.output_data_type + ".tsv"), sep="\t") for cancer_type in self.cancer_types], axis=0)
-
-    #     # prepare input dataframe
-    #     input_df = []
-    #     for cancer_type in self.cancer_types:
-    #         current_cancer_type_df = None
-
-    #         for current_input_data_type in zip(self.input_data_types):
-    #             current_cancer_type_input_data_type_df = pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, current_input_data_type + ".tsv"), sep="\t")
-
-    #             if current_cancer_type_df is None:
-    #                 current_cancer_type_df = current_cancer_type_input_data_type_df
-    #             else:
-    #                 current_cancer_type_df = pd.merge(
-    #                     left=current_cancer_type_df,
-    #                     right=current_cancer_type_input_data_type_df,
-    #                     on="sample_id",
-    #                     how="inner"
-    #                 )
-
-    #         # add one hot encoding to the input dataframe if there are more than one cancer types
-    #         if self.one_hot_input_df:
-    #             current_cancer_type_df["cancer_type"] = cancer_type
-
-    #         input_df.append(current_cancer_type_df)
-
-    #     input_df = pd.concat(input_df, axis=0)
-
-    #     # add one hot encoding to the input dataframe if there are more than one cancer types
-    #     if self.one_hot_input_df:
-    #         input_df = pd.get_dummies(input_df, columns=["cancer_type"])
-
-    #     # drop input features with std 0.0
-    #     input_features_with_0_std = input_df.drop(columns=["sample_id"]).loc[:, input_df.drop(columns=["sample_id"]).std(axis=0) == 0].columns.tolist()
-    #     input_df = input_df[[column for column in input_df.columns if column not in input_features_with_0_std]]
-    #     self.logger.log(level=logging.INFO, msg=f"Dropped the following input features with 0 std: {input_features_with_0_std}.")
-    #     self.logger.log(level=logging.INFO, msg="Input features: " + ", ".join([column for column in input_df.columns]))
-
-    #     # merge input, output and mask dataframes
-    #     merged_df = pd.merge(left=input_df, right=output_df, how="inner", on="sample_id")
-    #     merged_df = merged_df.drop(columns=["sample_id"])
-    #     merged_df = shuffle(merged_df, random_state=self.seed)
-
-    #     self.input_dimension = input_df.shape[1] - 1
-    #     self.output_dimension = output_df.shape[1] - 1
-
-    #     self.X = merged_df.values[:, :self.input_dimension]
-    #     self.y = merged_df.values[:, self.input_dimension:self.input_dimension + self.output_dimension]
-
-    # def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
-    #     return {
-    #             "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
-    #             "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32)
-    #            }
-
 
 class CNAPurity2GEXDataset(Dataset):
     def __init__(self, cfg: Dict[str, Any], logger: logging.Logger):
