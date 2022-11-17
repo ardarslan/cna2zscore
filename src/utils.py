@@ -224,7 +224,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # training
     parser.add_argument("--num_epochs", type=int, default=100, help="Number of training epochs.")
-    parser.add_argument("--batch_size", type=int, default=16, help="Batch size.")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--early_stopping_patience", type=int, default=15, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
