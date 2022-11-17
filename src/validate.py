@@ -30,9 +30,8 @@ def validate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_na
 
             loss = loss_function(yhat, y)
 
-            current_count = X.shape[0] * X.shape[1]
-            total_count += current_count
-            total_loss += loss * current_count
+            total_count += y.shape[0] * y.shape[1]
+            total_loss += loss
 
         loss = np.round(np.float32(total_loss / total_count), 2)
 

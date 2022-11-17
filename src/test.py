@@ -47,17 +47,14 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             test_ground_truths.append(y)
             test_predictions.append(yhat)
 
-            current_all_count = y.shape[0] * y.shape[1]
-            all_count += current_all_count
-            all_loss_sum += loss_function(yhat, y) * current_all_count
+            all_count += y.shape[0] * y.shape[1]
+            all_loss_sum += loss_function(yhat, y)
 
-            current_cna_count = cna_mask.sum()
-            cna_count += current_cna_count
-            cna_loss_sum += loss_function(yhat * cna_mask, y * cna_mask) * current_cna_count
+            cna_count += cna_mask.sum()
+            cna_loss_sum += loss_function(yhat * cna_mask, y * cna_mask)
 
-            current_noncna_count = noncna_mask.sum()
-            noncna_count += current_noncna_count
-            noncna_loss_sum += loss_function(yhat * noncna_mask, y * noncna_mask) * current_noncna_count
+            noncna_count += noncna_mask.sum()
+            noncna_loss_sum += loss_function(yhat * noncna_mask, y * noncna_mask)
 
             gene_counts += y.shape[0]
 
@@ -72,7 +69,7 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         cna_loss = np.round(np.float32(cna_loss_sum / cna_count), 2)
         noncna_loss = np.round(np.float32(noncna_loss_sum / noncna_count), 2)
         gene_losses = dict(
-            (entrezgene_id, np.round(np.float32(gene_loss_sum / gene_counts))) for entrezgene_id, gene_loss_sum in gene_loss_sums.items()
+            (entrezgene_id, np.round(np.float32(gene_loss_sum / gene_counts), 2)) for entrezgene_id, gene_loss_sum in gene_loss_sums.items()
         )
         gene_losses = sorted(list(gene_losses.items()), key=lambda x: x[1])
         best_predicted_20_genes = gene_losses[:20]

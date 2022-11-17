@@ -154,9 +154,9 @@ def get_scheduler(cfg: Dict[str, Any], optimizer):
     return scheduler
 
 
-def get_loss_function(cfg: Dict[str, Any]):
+def get_loss_function(cfg: Dict[str, Any], reduction: str):
     if cfg["loss_function"] == "mse":
-        return torch.nn.MSELoss()
+        return torch.nn.MSELoss(reduction=reduction)
     else:
         raise NotImplementedError(f"{cfg['loss']} is not an implemented loss function.")
 

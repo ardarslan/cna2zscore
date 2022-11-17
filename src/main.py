@@ -26,14 +26,15 @@ if __name__ == "__main__":
     model = get_model(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
     optimizer = get_optimizer(cfg=cfg, model=model)
     scheduler = get_scheduler(cfg=cfg, optimizer=optimizer)
-    loss_function = get_loss_function(cfg=cfg)
+    train_loss_function = get_loss_function(cfg=cfg, reduction="mean")
+    val_test_loss_function = get_loss_function(cfg=cfg, reduction="sum")
 
     best_val_loss = np.inf
     num_epochs_val_loss_not_decreased = 0
 
     for epoch in range(cfg["num_epochs"]):
-        train(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=loss_function, dataset=dataset, optimizer=optimizer)
-        loss_dict = validate(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=loss_function, dataset=dataset, epoch=epoch, logger=logger)
+        train(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=train_loss_function, dataset=dataset, optimizer=optimizer)
+        loss_dict = validate(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, epoch=epoch, logger=logger)
         current_val_loss = loss_dict["val"]
 
         if current_val_loss < best_val_loss:
@@ -50,5 +51,5 @@ if __name__ == "__main__":
             scheduler.step(current_val_loss)
 
     model = load_model(cfg=cfg, logger=logger)
-    test_ground_truths, test_predictions = test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=loss_function, dataset=dataset, logger=logger)
+    test_ground_truths, test_predictions = test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
     save_test_ground_truths_and_predictions(cfg=cfg, test_ground_truths=test_ground_truths, test_predictions=test_predictions, entrezgene_ids=dataset.entrezgene_ids, logger=logger)
