@@ -24,10 +24,10 @@ class Dataset(torch.utils.data.Dataset):
         self.mask_data_type = mask_data_type
         self.logger = logger
 
-        if cfg["cancer_types"] == "all":
+        if cfg["cancer_type"] == "all":
             self.cancer_types = ["blca", "lusc", "ov"]
         else:
-            self.cancer_types = [cfg["cancer_types"]]
+            self.cancer_types = [cfg["cancer_type"]]
 
         self.one_hot_input_df = len(self.cancer_types) > 1
         self.split_ratios = cfg["split_ratios"]
@@ -37,9 +37,6 @@ class Dataset(torch.utils.data.Dataset):
 
         if self.split_ratios["train"] + self.split_ratios["val"] + self.split_ratios["test"] != 1.0:
             raise Exception("The values of dictionary 'split_ratios' should sum up to 1.0.")
-
-        if len(self.input_data_types) != len(self.intersect_input_columns_with_output_columns):
-            raise Exception("intersect_input_columns_with_output_columns should have the same length with input_data_types.")
 
         self.processed_data_dir = cfg["processed_data_dir"]
         self.seed = cfg["seed"]
