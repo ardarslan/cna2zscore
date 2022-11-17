@@ -9,7 +9,7 @@ from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_model_hidden_dimension, set_device, get_logger, \
                    get_dataset, get_data_loaders, get_model, get_optimizer, \
                    get_scheduler, get_loss_function, save_model, save_cfg,
-                   load_model, save_test_ground_truths_and_predictions)
+                   load_model, save_test_results)
 
 
 if __name__ == "__main__":
@@ -51,5 +51,5 @@ if __name__ == "__main__":
             scheduler.step(current_val_loss)
 
     model = load_model(cfg=cfg, dataset=dataset, logger=logger)
-    test_ground_truths, test_predictions = test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
-    save_test_ground_truths_and_predictions(cfg=cfg, test_ground_truths=test_ground_truths, test_predictions=test_predictions, entrezgene_ids=dataset.entrezgene_ids, logger=logger)
+    test_results_dict = test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
+    save_test_results(cfg=cfg, test_results_dict=test_results_dict, entrezgene_ids=dataset.entrezgene_ids, logger=logger)

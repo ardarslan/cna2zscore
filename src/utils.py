@@ -175,13 +175,30 @@ def save_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) ->
     torch.save(model.state_dict(), os.path.join(experiment_dir, "best_model"))
 
 
-def save_test_ground_truths_and_predictions(cfg: Dict[str, Any], test_ground_truths: torch.Tensor, test_predictions: torch.Tensor, entrezgene_ids: List[int], logger: logging.Logger) -> None:
-    logger.log(level=logging.INFO, msg="Saving test ground truths and predictions...")
+def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], entrezgene_ids: List[int], logger: logging.Logger) -> None:
+    logger.log(level=logging.INFO, msg="Saving test results...")
     experiment_dir = get_experiment_dir(cfg=cfg)
-    test_ground_truths_df = pd.DataFrame(data=test_ground_truths.cpu().numpy(), columns=entrezgene_ids)
-    test_predictions_df = pd.DataFrame(data=test_predictions.cpu().numpy(), columns=entrezgene_ids)
-    test_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_ground_truths.tsv"), sep="\t")
-    test_predictions_df.to_csv(os.path.join(experiment_dir, "test_predictions.tsv"), sep="\t")
+
+    test_ground_truths = test_results_dict["test_ground_truths"]
+    test_predictions = test_results_dict["test_predictions"]
+    all_loss = test_results_dict["all_loss"]
+    cna_loss = test_results_dict["cna_loss"]
+    noncna_loss = test_results_dict["noncna_loss"]
+    best_predicted_20_genes = test_results_dict["best_predicted_20_genes"]
+    worst_predicted_20_genes = test_results_dict["worst_predicted_20_genes"]
+
+    test_ground_truths_df = pd.DataFrame(data=test_ground_truths, columns=entrezgene_ids)
+    test_predictions_df = pd.DataFrame(data=test_predictions, columns=entrezgene_ids)
+    test_loss_values_df = pd.DataFrame.from_dict({"loss_type": ["all", "cna", "noncna"], "loss_value": [all_loss, cna_loss, noncna_loss]})
+    best_predicted_20_genes_df = pd.DataFrame(data=best_predicted_20_genes, columns=["entrezgene_id", "test_mse"])
+    worst_predicted_20_genes_df = pd.DataFrame(data=worst_predicted_20_genes, columns=["entrezgene_id", "test_mse"])
+
+    os.makedirs(os.path.join(experiment_dir, "test_results"), exist_ok=True)
+    test_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t")
+    test_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t")
+    test_loss_values_df.to_csv(os.path.join(experiment_dir, "test_results", "loss_values.tsv"), sep="\t")
+    best_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "best_predicted_20_genes.tsv"), sep="\t")
+    worst_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "worst_predicted_20_genes.tsv"), sep="\t")
 
 
 def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:

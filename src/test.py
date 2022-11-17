@@ -5,10 +5,10 @@ import numpy as np
 
 from collections import defaultdict
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 
-def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
+def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> Tuple[np.ndarray, np.ndarray, np.float32, np.float32, np.float32, List[Tuple[int, np.float32]], List[Tuple[int, np.float32]]]:
     model.eval()
 
     with torch.no_grad():
@@ -62,8 +62,8 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
                 for entrezgene_id, column_id in zip(entrezgene_ids, range(y.shape[1])):
                     gene_loss_sums[entrezgene_id] += float(loss_function(yhat[sample_id][column_id], y[sample_id][column_id]))
 
-        test_ground_truths = torch.vstack(test_ground_truths)
-        test_predictions = torch.vstack(test_predictions)
+        test_ground_truths = torch.vstack(test_ground_truths).cpu().numpy()
+        test_predictions = torch.vstack(test_predictions).cpu().numpy()
 
         all_loss = np.round(all_loss_sum / all_count, 2)
         cna_loss = np.round(cna_loss_sum / cna_count, 2)
@@ -89,4 +89,4 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         for entrezgene_id, gene_loss in worst_predicted_20_genes:
             logger.log(level=logging.INFO, msg=f"Entrezgene ID: {entrezgene_id}, {cfg['loss_function']} loss: {gene_loss}.")
 
-        return test_ground_truths, test_predictions
+        return test_ground_truths, test_predictions, all_loss, cna_loss, noncna_loss, best_predicted_20_genes, worst_predicted_20_genes
