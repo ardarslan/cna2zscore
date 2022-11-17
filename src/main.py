@@ -9,7 +9,7 @@ from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_model_hidden_dimension, set_device, get_logger, \
                    get_dataset, get_data_loaders, get_model, get_optimizer, \
                    get_scheduler, get_loss_function, save_model, save_cfg,
-                   load_model)
+                   load_model, remove_logger)
 
 
 if __name__ == "__main__":
@@ -20,7 +20,6 @@ if __name__ == "__main__":
     set_device(cfg=cfg)
     save_cfg(cfg=cfg)
     train_val_logger = get_logger(cfg=cfg, file_name="logs.txt")
-    test_logger = get_logger(cfg=cfg, file_name="results.txt")
     dataset = get_dataset(cfg=cfg, logger=train_val_logger)
     data_loaders = get_data_loaders(cfg=cfg, dataset=dataset)
     set_model_hidden_dimension(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
@@ -28,7 +27,6 @@ if __name__ == "__main__":
     optimizer = get_optimizer(cfg=cfg, model=model)
     scheduler = get_scheduler(cfg=cfg, optimizer=optimizer)
     train_eval_loss_function = get_loss_function(cfg=cfg, reduction="mean")
-    test_loss_function = get_loss_function(cfg=cfg, reduction="sum")
 
     best_val_loss = np.inf
     num_epochs_val_loss_not_decreased = 0
@@ -50,6 +48,9 @@ if __name__ == "__main__":
             break
         else:
             scheduler.step(current_val_loss)
+    remove_logger(cfg=cfg, logger=train_val_logger)
 
+    test_logger = get_logger(cfg=cfg, file_name="results.txt")
+    test_loss_function = get_loss_function(cfg=cfg, reduction="sum")
     model = load_model(cfg=cfg)
     test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=test_loss_function, dataset=dataset, logger=test_logger)

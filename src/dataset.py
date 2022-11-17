@@ -114,7 +114,7 @@ class Dataset(torch.utils.data.Dataset):
         input_features_with_0_std = input_df.drop(columns=["sample_id"]).loc[:, input_df.drop(columns=["sample_id"]).std(axis=0) == 0].columns.tolist()
         input_df = input_df[[column for column in input_df.columns if column not in input_features_with_0_std]]
         self.logger.log(level=logging.INFO, msg=f"Dropped the following input features with 0 std: {input_features_with_0_std}.")
-        self.logger.log(level=logging.INFO, msg="Input features: " + ", ".join([column for column in input_df.columns]))
+        # self.logger.log(level=logging.INFO, msg="Input features: " + ", ".join([column for column in input_df.columns]))
 
         if output_df.columns.tolist() != mask_df.columns.tolist():
             raise Exception("Columns of output_df should be the same with columns of mask_df.")
@@ -131,6 +131,9 @@ class Dataset(torch.utils.data.Dataset):
         self.X = merged_df.values[:, :self.input_dimension]
         self.y = merged_df.values[:, self.input_dimension:self.input_dimension + self.output_dimension]
         self.mask = merged_df.values[:, self.input_dimension + self.output_dimension:].astype(np.bool_).astype(np.float32)
+
+        self.logger.log(level=logging.INFO, msg=f"X.shape: {self.X.shape}, y.shape: {self.y.shape}, mask.shape: {self.mask.shape}")
+
         self.entrezgene_ids = [column for column in output_df.columns if column != "sample_id"]
 
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
