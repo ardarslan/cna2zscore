@@ -109,11 +109,6 @@ def get_logger(cfg: Dict[str, Any], file_name: str) -> logging.Logger:
     return logger
 
 
-def remove_logger(cfg: Dict[str, Any], logger: logging.Logger):
-    logger.removeHandler()
-    del logger
-
-
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset) -> Dict[str, DataLoader]:
     batch_size = cfg["batch_size"]
 
