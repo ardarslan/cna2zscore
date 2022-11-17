@@ -22,7 +22,7 @@ Download raw data
 mkdir data
 cd data
 gdown 1aJo5IdlI545lKniNjX33GD_cH4hurQ2Y
-unzip raw.zip -d raw
+unzip raw.zip
 rm -rf raw.zip
 ```
 
@@ -39,7 +39,7 @@ nbs/data_processor.ipynb
 mkdir data
 cd data
 gdown 1CPdjSSt7QhJZgpbPWmf_uFnWJgthP4l-
-unzip processed.zip -d processed
+unzip processed.zip
 rm -rf processed.zip
 ```
 
