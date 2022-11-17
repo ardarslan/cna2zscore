@@ -72,7 +72,7 @@ def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
         raise NotImplementedError(f"{cfg['dataset']} is not an implemented dataset.")
 
 
-def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
+def get_logger(cfg: Dict[str, Any], file_name: str) -> logging.Logger:
     """
     Initialize logger to stdout and optionally also a log file.
     Args:
@@ -88,7 +88,7 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
         raise Exception(f"{log_level} is not a valid log_level.")
 
     experiment_dir = get_experiment_dir(cfg=cfg)
-    log_file_path = os.path.join(experiment_dir, "logs.txt")
+    log_file_path = os.path.join(experiment_dir, file_name)
 
     logger = logging.getLogger()
     logger.setLevel(log_level)
@@ -109,7 +109,7 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
     return logger
 
 
-def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset):
+def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset) -> Dict[str, DataLoader]:
     batch_size = cfg["batch_size"]
 
     train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=batch_size, shuffle=True)
@@ -153,9 +153,9 @@ def get_scheduler(cfg: Dict[str, Any], optimizer):
     return scheduler
 
 
-def get_loss_function(cfg: Dict[str, Any]):
+def get_loss_function(cfg: Dict[str, Any], reduction: str):
     if cfg["loss_function"] == "mse":
-        return torch.nn.MSELoss()
+        return torch.nn.MSELoss(reduction=reduction)
     else:
         raise NotImplementedError(f"{cfg['loss']} is not an implemented loss function.")
 

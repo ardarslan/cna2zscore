@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 
-def evaluate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger) -> np.float32:
+def validate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger) -> np.float32:
     model.eval()
 
     with torch.no_grad():
@@ -40,12 +40,12 @@ def evaluate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_na
         return loss
 
 
-def evaluate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger) -> Dict[str, np.float32]:
+def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger) -> Dict[str, np.float32]:
     loss_dict = dict(
         (
             split_name,
-            evaluate_split(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=loss_function, dataset=dataset, split_name=split_name, epoch=epoch, logger=logger)
+            validate_split(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=loss_function, dataset=dataset, split_name=split_name, epoch=epoch, logger=logger)
         )
-        for split_name in ["train", "val", "test"]
+        for split_name in ["train", "val"]
     )
     return loss_dict

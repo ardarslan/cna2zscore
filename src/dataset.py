@@ -114,6 +114,9 @@ class Dataset(torch.utils.data.Dataset):
         self.logger.log(level=logging.INFO, msg=f"Dropped the following input features with 0 std: {input_features_with_0_std}.")
         self.logger.log(level=logging.INFO, msg="Input features: " + ", ".join([column for column in input_df.columns]))
 
+        if output_df.columns.tolist() != mask_df.columns.tolist():
+            raise Exception("Columns of output_df should be the same with columns of mask_df.")
+
         # merge input, output and mask dataframes
         merged_df = pd.merge(left=input_df, right=output_df, how="inner", on="sample_id")
         merged_df = pd.merge(left=merged_df, right=mask_df, how="inner", on="sample_id")
@@ -125,14 +128,14 @@ class Dataset(torch.utils.data.Dataset):
 
         self.X = merged_df.values[:, :self.input_dimension]
         self.y = merged_df.values[:, self.input_dimension:self.input_dimension + self.output_dimension]
-        self.mask = merged_df.values[:, self.input_dimension + self.output_dimension:]
-        self.gene_names = [column for column in self.output_df.columns if column != "sample_id"]
+        self.mask = merged_df.values[:, self.input_dimension + self.output_dimension:].astype(np.bool_).astype(np.float32)
+        self.entrezgene_ids = [column for column in output_df.columns if column != "sample_id"]
 
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         return {
                 "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
                 "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32),
-                "mask": torch.as_tensor(self.mask[idx, :], device=self.device, dtype=torch.bool)
+                "mask": torch.as_tensor(self.mask[idx, :], device=self.device, dtype=torch.float32)
                }
 
     def __len__(self) -> int:
@@ -213,7 +216,7 @@ class RPPA2GEXDataset(Dataset):
             cfg=cfg,
             input_data_types=["rppa"],
             output_data_type="gex",
-            mask_data_type=None,
+            mask_data_type="cna_thresholded",
             logger=logger
         )
 
@@ -224,6 +227,6 @@ class AverageGEXSubtype2GEXDataset(Dataset):
             cfg=cfg,
             input_data_types=["avg_gex", "subtype"],
             output_data_type="gex",
-            mask_data_type=None,
+            mask_data_type="cna_thresholded",
             logger=logger
         )
