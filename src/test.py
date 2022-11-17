@@ -89,4 +89,12 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         for entrezgene_id, gene_loss in worst_predicted_20_genes:
             logger.log(level=logging.INFO, msg=f"Entrezgene ID: {entrezgene_id}, {cfg['loss_function']} loss: {gene_loss}.")
 
-        return test_ground_truths, test_predictions, all_loss, cna_loss, noncna_loss, best_predicted_20_genes, worst_predicted_20_genes
+        return {
+                "test_ground_truths": test_ground_truths,
+                "test_predictions": test_predictions,
+                "all_loss": all_loss,
+                "cna_loss": cna_loss,
+                "noncna_loss": noncna_loss,
+                "best_predicted_20_genes": best_predicted_20_genes,
+                "worst_predicted_20_genes": worst_predicted_20_genes
+            }
