@@ -11,7 +11,7 @@ def validate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_na
     model.eval()
 
     with torch.no_grad():
-        sample_count = 0
+        total_count = 0
         total_loss = 0
 
         for batch in data_loaders[split_name]:
@@ -30,10 +30,11 @@ def validate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_na
 
             loss = loss_function(yhat, y)
 
-            sample_count += X.shape[0]
-            total_loss += loss * sample_count
+            current_count = X.shape[0] * X.shape[1]
+            total_count += current_count
+            total_loss += loss * current_count
 
-        loss = np.round(np.float32(total_loss / sample_count), 2)
+        loss = np.round(np.float32(total_loss / total_count), 2)
 
         logger.log(level=logging.INFO, msg=f"Epoch {epoch}, {split_name.capitalize()} {cfg['loss_function']} loss is {loss}.")
 

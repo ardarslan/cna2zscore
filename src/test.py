@@ -25,6 +25,9 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         gene_counts = 0
         gene_loss_sums = defaultdict(lambda: 0)
 
+        test_ground_truths = []
+        test_predictions = []
+
         for batch in data_loaders["test"]:
             X = batch["X"]
             y = batch["y"]
@@ -41,20 +44,29 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
                 # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
                 yhat = yhat * (dataset.y_train_std + 1e-10) + dataset.y_train_mean
 
-            all_count += y.shape[0] * y.shape[1]
-            all_loss_sum += loss_function(yhat, y)
+            test_ground_truths.append(y)
+            test_predictions.append(yhat)
 
-            cna_count += cna_mask.sum()
-            cna_loss_sum += loss_function(yhat * cna_mask, y * cna_mask)
+            current_all_count = y.shape[0] * y.shape[1]
+            all_count += current_all_count
+            all_loss_sum += loss_function(yhat, y) * current_all_count
 
-            noncna_count += noncna_mask.sum()
-            noncna_loss_sum += loss_function(yhat * noncna_mask, y * noncna_mask)
+            current_cna_count = cna_mask.sum()
+            cna_count += current_cna_count
+            cna_loss_sum += loss_function(yhat * cna_mask, y * cna_mask) * current_cna_count
+
+            current_noncna_count = noncna_mask.sum()
+            noncna_count += current_noncna_count
+            noncna_loss_sum += loss_function(yhat * noncna_mask, y * noncna_mask) * current_noncna_count
 
             gene_counts += y.shape[0]
 
             for sample_id in range(y.shape[0]):
                 for entrezgene_id, column_id in zip(entrezgene_ids, range(y.shape[1])):
                     gene_loss_sums[entrezgene_id] += loss_function(yhat[sample_id][column_id], y[sample_id][column_id])
+
+        test_ground_truths = torch.vstack(test_ground_truths)
+        test_predictions = torch.vstack(test_predictions)
 
         all_loss = np.round(np.float32(all_loss_sum / all_count), 2)
         cna_loss = np.round(np.float32(cna_loss_sum / cna_count), 2)
@@ -79,3 +91,5 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         logger.log(level=logging.INFO, msg=f"Worst predicted 20 genes:")
         for entrezgene_id, gene_loss in worst_predicted_20_genes:
             logger.log(level=logging.INFO, msg=f"Entrezgene ID: {entrezgene_id}, {cfg['loss_function']} loss: {gene_loss}.")
+
+        return test_ground_truths, test_predictions

@@ -6,9 +6,10 @@ import pprint
 import logging
 import argparse
 from uuid import uuid4
-from typing import Dict, Any, Union
+from typing import Dict, Any, List, Union
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torchsummary
@@ -72,7 +73,7 @@ def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
         raise NotImplementedError(f"{cfg['dataset']} is not an implemented dataset.")
 
 
-def get_logger(cfg: Dict[str, Any], file_name: str) -> logging.Logger:
+def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
     """
     Initialize logger to stdout and optionally also a log file.
     Args:
@@ -88,7 +89,7 @@ def get_logger(cfg: Dict[str, Any], file_name: str) -> logging.Logger:
         raise Exception(f"{log_level} is not a valid log_level.")
 
     experiment_dir = get_experiment_dir(cfg=cfg)
-    log_file_path = os.path.join(experiment_dir, file_name)
+    log_file_path = os.path.join(experiment_dir, "logs.txt")
 
     logger = logging.getLogger()
     logger.setLevel(log_level)
@@ -153,14 +154,15 @@ def get_scheduler(cfg: Dict[str, Any], optimizer):
     return scheduler
 
 
-def get_loss_function(cfg: Dict[str, Any], reduction: str):
+def get_loss_function(cfg: Dict[str, Any]):
     if cfg["loss_function"] == "mse":
-        return torch.nn.MSELoss(reduction=reduction)
+        return torch.nn.MSELoss()
     else:
         raise NotImplementedError(f"{cfg['loss']} is not an implemented loss function.")
 
 
-def save_cfg(cfg: Dict[str, Any]) -> None:
+def save_cfg(cfg: Dict[str, Any], logger: logging.Logger) -> None:
+    logger.log(level=logging.INFO, msg="Saving the config file...")
     experiment_dir = get_experiment_dir(cfg=cfg)
     config_path = os.path.join(experiment_dir, "cfg.txt")
     with open(config_path, "w") as file_handler:
@@ -171,6 +173,15 @@ def save_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) ->
     logger.log(level=logging.INFO, msg="Saving the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
     torch.save(model.state_dict(), os.path.join(experiment_dir, "best_model"))
+
+
+def save_test_ground_truths_and_predictions(cfg: Dict[str, Any], test_ground_truths: torch.Tensor, test_predictions: torch.Tensor, entrezgene_ids: List[int], logger: logging.Logger) -> None:
+    logger.log(level=logging.INFO, msg="Saving test ground truths and predictions...")
+    experiment_dir = get_experiment_dir(cfg=cfg)
+    test_ground_truths_df = pd.DataFrame(data=test_ground_truths.cpu().numpy(), columns=entrezgene_ids)
+    test_predictions_df = pd.DataFrame(data=test_predictions.cpu().numpy(), columns=entrezgene_ids)
+    test_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_ground_truths.tsv"), sep="\t")
+    test_predictions_df.to_csv(os.path.join(experiment_dir, "test_predictions.tsv"), sep="\t")
 
 
 def load_model(cfg: Dict[str, Any], logger: logging.Logger) -> nn.Module:
