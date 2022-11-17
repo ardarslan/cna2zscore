@@ -78,7 +78,7 @@ class Dataset(torch.utils.data.Dataset):
         for cancer_type in self.cancer_types:
             current_cancer_type_df = None
 
-            for current_input_data_type in zip(self.input_data_types):
+            for current_input_data_type in self.input_data_types:
                 current_cancer_type_input_data_type_df = pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, current_input_data_type + ".tsv"), sep="\t")
 
                 if current_input_data_type == "cna":
