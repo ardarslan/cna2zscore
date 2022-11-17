@@ -41,7 +41,7 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
                 # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
                 yhat = yhat * (dataset.y_train_std + 1e-10) + dataset.y_train_mean
 
-            all_count += yhat.shape[0] * yhat.shape[1]
+            all_count += y.shape[0] * y.shape[1]
             all_loss_sum += loss_function(yhat, y)
 
             cna_count += cna_mask.sum()
@@ -50,7 +50,7 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             noncna_count += noncna_mask.sum()
             noncna_loss_sum += loss_function(yhat * noncna_mask, y * noncna_mask)
 
-            gene_counts += batch.shape[0]
+            gene_counts += y.shape[0]
 
             for sample_id in range(y.shape[0]):
                 for entrezgene_id, column_id in zip(entrezgene_ids, range(y.shape[1])):
