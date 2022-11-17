@@ -12,18 +12,18 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
     model.eval()
 
     with torch.no_grad():
-        all_count = 0
-        all_loss_sum = 0
+        all_count = 0.0
+        all_loss_sum = 0.0
 
-        cna_count = 0
-        cna_loss_sum = 0
+        cna_count = 0.0
+        cna_loss_sum = 0.0
 
-        noncna_count = 0
-        noncna_loss_sum = 0
+        noncna_count = 0.0
+        noncna_loss_sum = 0.0
 
         entrezgene_ids = dataset.entrezgene_ids
-        gene_counts = 0
-        gene_loss_sums = defaultdict(lambda: 0)
+        gene_counts = 0.0
+        gene_loss_sums = defaultdict(lambda: 0.0)
 
         test_ground_truths = []
         test_predictions = []
@@ -48,13 +48,13 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             test_predictions.append(yhat)
 
             all_count += y.shape[0] * y.shape[1]
-            all_loss_sum += loss_function(yhat, y)
+            all_loss_sum += float(loss_function(yhat, y))
 
             cna_count += cna_mask.sum()
-            cna_loss_sum += loss_function(yhat * cna_mask, y * cna_mask)
+            cna_loss_sum += float(loss_function(yhat * cna_mask, y * cna_mask))
 
             noncna_count += noncna_mask.sum()
-            noncna_loss_sum += loss_function(yhat * noncna_mask, y * noncna_mask)
+            noncna_loss_sum += float(loss_function(yhat * noncna_mask, y * noncna_mask))
 
             gene_counts += y.shape[0]
 
@@ -65,9 +65,9 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         test_ground_truths = torch.vstack(test_ground_truths)
         test_predictions = torch.vstack(test_predictions)
 
-        all_loss = np.round(np.float32(all_loss_sum / all_count), 2)
-        cna_loss = np.round(np.float32(cna_loss_sum / cna_count), 2)
-        noncna_loss = np.round(np.float32(noncna_loss_sum / noncna_count), 2)
+        all_loss = np.round(all_loss_sum / all_count, 2)
+        cna_loss = np.round(cna_loss_sum / cna_count, 2)
+        noncna_loss = np.round(noncna_loss_sum / noncna_count, 2)
         gene_losses = dict(
             (entrezgene_id, np.round(np.float32(gene_loss_sum / gene_counts), 2)) for entrezgene_id, gene_loss_sum in gene_loss_sums.items()
         )
