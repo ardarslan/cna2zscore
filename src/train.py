@@ -16,10 +16,10 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         optimizer.zero_grad()
 
         if cfg["normalize_input"]:
-            X = (X - dataset.X_train_mean) / (dataset.X_train_std + 1e-10)
+            X = (X - dataset.X_train_mean) / dataset.X_train_std
 
         if cfg["normalize_output"]:
-            y = (y - dataset.y_train_mean) / (dataset.y_train_std + 1e-10)
+            y = (y - dataset.y_train_mean) / dataset.y_train_std
 
         yhat = model(X)
         loss = loss_function(yhat, y)

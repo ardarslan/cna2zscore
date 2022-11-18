@@ -19,14 +19,14 @@ def validate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_na
             y = batch["y"]
 
             if cfg["normalize_input"]:
-                X = (X - dataset.X_train_mean) / (dataset.X_train_std + 1e-10)
+                X = (X - dataset.X_train_mean) / dataset.X_train_std
 
             yhat = model(X)
 
             if cfg["normalize_output"]:
                 # then during training y was manually normalized, and yhat comes as normalized as well.
                 # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
-                yhat = yhat * (dataset.y_train_std + 1e-10) + dataset.y_train_mean
+                yhat = yhat * dataset.y_train_std + dataset.y_train_mean
 
             total_count += float(y.shape[0] * y.shape[1])
             total_loss += float(loss_function(yhat, y))

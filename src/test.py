@@ -42,15 +42,16 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             noncna_mask = 1.0 - cna_mask
 
             if cfg["normalize_input"]:
-                X = (X - dataset.X_train_mean) / (dataset.X_train_std + 1e-10)
+                X = (X - dataset.X_train_mean) / dataset.X_train_std
 
             yhat = model(X)
 
             if cfg["normalize_output"]:
                 # then during training y was manually normalized, and yhat is produced as normalized as well.
                 # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
-                yhat = yhat * (dataset.y_train_std + 1e-10) + dataset.y_train_mean
+                yhat = yhat * dataset.y_train_std + dataset.y_train_mean
 
+            # TODO: Write the for loops below in a more efficient way.
             for i in range(cna_mask.shape[0]):
                 for j in range(cna_mask.shape[1]):
                     if cna_mask[i][j] == 1.0:

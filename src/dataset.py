@@ -60,11 +60,17 @@ class Dataset(torch.utils.data.Dataset):
         X_train = self.X[self.train_idx, :]
         y_train = self.y[self.train_idx, :]
 
-        self.X_train_mean = torch.as_tensor(np.mean(X_train, axis=0), device=self.device, dtype=torch.float32)
-        self.X_train_std = torch.as_tensor(np.std(X_train, axis=0), device=self.device, dtype=torch.float32)
+        self.X_train_mean = np.mean(X_train, axis=0)
+        self.X_train_std = np.std(X_train, axis=0) + cfg["normalization_eps"]
+        self.X_train_mean[self.one_hot_column_indices] = 0.0
+        self.X_train_std[self.one_hot_column_indices] = 1.0
+        self.X_train_mean = torch.as_tensor(self.X_train_mean, device=self.device, dtype=torch.float32)
+        self.X_train_std = torch.as_tensor(self.X_train_std, device=self.device, dtype=torch.float32)
 
-        self.y_train_mean = torch.as_tensor(np.mean(y_train, axis=0), device=self.device, dtype=torch.float32)
-        self.y_train_std = torch.as_tensor(np.std(y_train, axis=0), device=self.device, dtype=torch.float32)
+        self.y_train_mean = np.mean(y_train, axis=0)
+        self.y_train_std = np.std(y_train, axis=0) + cfg["normalization_eps"]
+        self.y_train_mean = torch.as_tensor(self.y_train_mean, device=self.device, dtype=torch.float32)
+        self.y_train_std = torch.as_tensor(self.y_train_std, device=self.device, dtype=torch.float32)
 
     def _process_dataset(self) -> None:
         # prepare output dataframe
@@ -75,6 +81,8 @@ class Dataset(torch.utils.data.Dataset):
 
         # prepare input dataframe
         input_df = []
+        one_hot_columns = []
+
         for cancer_type in self.cancer_types:
             current_cancer_type_df = None
 
@@ -92,6 +100,8 @@ class Dataset(torch.utils.data.Dataset):
                     subtype_columns_with_0_std = current_cancer_type_input_data_type_df.drop(columns=["sample_id"]).loc[:, current_cancer_type_input_data_type_df.drop(columns=["sample_id"]).std(axis=0) == 0].columns.tolist()
                     current_cancer_type_input_data_type_df = current_cancer_type_input_data_type_df[[column for column in current_cancer_type_input_data_type_df.columns if column not in subtype_columns_with_0_std]]
                     self.logger.log(level=logging.INFO, msg=f"Dropped the following subtype columns with 0 std: {subtype_columns_with_0_std}.")
+
+                    one_hot_columns.extend([column for column in current_cancer_type_input_data_type_df.columns if column.startswith("subtype")])
 
                 if current_cancer_type_df is None:
                     current_cancer_type_df = current_cancer_type_input_data_type_df
@@ -114,6 +124,7 @@ class Dataset(torch.utils.data.Dataset):
         # add one hot encoding to the input dataframe if there are more than one cancer types
         if self.one_hot_input_df:
             input_df = pd.get_dummies(input_df, columns=["cancer_type"])
+            one_hot_columns.extend([column for column in input_df.columns if column.startswith("cancer_type")])
 
         if output_df.columns.tolist() != mask_df.columns.tolist():
             intersecting_columns = sorted(list(set(output_df.columns).intersection(set(mask_df.columns))))
@@ -126,6 +137,8 @@ class Dataset(torch.utils.data.Dataset):
         merged_df = pd.merge(left=merged_df, right=mask_df, how="inner", on="sample_id")
         merged_df = merged_df.drop(columns=["sample_id"])
         merged_df = shuffle(merged_df, random_state=self.seed)
+
+        self.one_hot_column_indices = [index for index, column in enumerate(merged_df.columns) if column in one_hot_columns]
 
         self.input_dimension = input_df.shape[1] - 1
         self.output_dimension = output_df.shape[1] - 1
