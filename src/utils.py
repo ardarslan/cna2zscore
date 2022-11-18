@@ -36,11 +36,12 @@ def set_experiment_name(cfg: Dict[str, Any]) -> None:
     cfg["experiment_name"] = f"{int(time.time())}_{uuid4().hex}"
 
 
-def set_device(cfg: Dict[str, Any]) -> None:
+def set_device(cfg: Dict[str, Any], logger: logging.Logger) -> None:
     if torch.cuda.is_available():
         cfg["device"] = "cuda"
     else:
         cfg["device"] = "cpu"
+    logger.log(level=logging.INFO, msg=f"Using {cfg['device']}...")
 
 
 def set_model_hidden_dimension(cfg: Dict[str, Any], input_dimension: int, output_dimension: int) -> None:
@@ -50,10 +51,11 @@ def set_model_hidden_dimension(cfg: Dict[str, Any], input_dimension: int, output
         cfg["hidden_dimension"] = np.mean([input_dimension, output_dimension])
     elif cfg["hidden_dimension"] == "min":
         cfg["hidden_dimension"] = np.min([input_dimension, output_dimension])
-    elif isinstance(cfg["hidden_dimension"], int):
-        pass
     else:
-        raise Exception(f"{cfg['hidden_dimension']} is not a valid hidden_dimension.")
+        try:
+            cfg["hidden_dimension"] = int(cfg["hidden_dimension"])
+        except ValueError:
+            raise Exception(f"{cfg['hidden_dimension']} is not a valid hidden_dimension.")
 
 
 def get_experiment_dir(cfg: Dict[str, Any]) -> str:
@@ -251,8 +253,8 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scheduler_patience", type=int, default=8, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
 
     # training
-    parser.add_argument("--num_epochs", type=int, default=100, help="Number of training epochs.")
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
+    parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
+    parser.add_argument("--batch_size", type=int, default=16, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--early_stopping_patience", type=int, default=15, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
