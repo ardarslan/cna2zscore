@@ -188,11 +188,11 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     cna_loss = test_results_dict["cna_loss"]
     noncna_loss = test_results_dict["noncna_loss"]
     all_corr = test_results_dict["all_corr"]
-    cna_corr = test_results_dict["cna_corr"]
-    noncna_corr = test_results_dict["noncna_corr"]
+    # cna_corr = test_results_dict["cna_corr"]
+    # noncna_corr = test_results_dict["noncna_corr"]
     all_p_value = test_results_dict["all_p_value"]
-    cna_p_value = test_results_dict["cna_p_value"]
-    noncna_p_value = test_results_dict["noncna_p_value"]
+    # cna_p_value = test_results_dict["cna_p_value"]
+    # noncna_p_value = test_results_dict["noncna_p_value"]
 
     best_predicted_20_genes = test_results_dict["best_predicted_20_genes"]
     worst_predicted_20_genes = test_results_dict["worst_predicted_20_genes"]
@@ -205,22 +205,22 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
                         f"cna_{cfg['loss_function']}",
                         f"noncna_{cfg['loss_function']}",
                         "all_corr",
-                        "cna_corr",
-                        "noncna_corr",
+                        # "cna_corr",
+                        # "noncna_corr",
                         "all_p_value",
-                        "cna_p_value",
-                        "noncna_p_value"
+                        # "cna_p_value",
+                        # "noncna_p_value"
                         ],
         "metric_value": [
                          all_loss,
                          cna_loss,
                          noncna_loss,
                          all_corr,
-                         cna_corr,
-                         noncna_corr,
+                        # cna_corr,
+                        # noncna_corr,
                          all_p_value,
-                         cna_p_value,
-                         noncna_p_value
+                        # cna_p_value,
+                        # noncna_p_value
                         ]
     })
     best_predicted_20_genes_df = pd.DataFrame(data=best_predicted_20_genes, columns=["entrezgene_id", "test_mse"])
@@ -236,7 +236,7 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     plt.figure(figsize=(12, 12))
     plt.title(f"Correlation: {np.round(all_corr, 2)}, P-value: {np.round(all_p_value, 2)}")
     plt.scatter(x=all_ground_truths.ravel(), y=all_predictions.ravel(), alpha=0.1)
-    plt.imsave(os.path.join(experiment_dir, "test_results", "scatter_plot.png"))
+    plt.savefig(os.path.join(experiment_dir, "test_results", "scatter_plot.png"))
 
 
 def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:
