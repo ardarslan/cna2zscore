@@ -9,7 +9,7 @@ from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_model_hidden_dimension, set_device, get_logger, \
                    get_dataset, get_data_loaders, get_model, get_optimizer, \
                    get_scheduler, get_loss_function, save_model, save_cfg, \
-                   load_model, save_test_results)
+                   load_model, save_test_results, set_early_stopping_epoch)
 
 
 if __name__ == "__main__":
@@ -19,7 +19,6 @@ if __name__ == "__main__":
     set_experiment_name(cfg=cfg)
     logger = get_logger(cfg=cfg)
     set_device(cfg=cfg, logger=logger)
-    save_cfg(cfg=cfg, logger=logger)
     dataset = get_dataset(cfg=cfg, logger=logger)
     data_loaders = get_data_loaders(cfg=cfg, dataset=dataset)
     set_model_hidden_dimension(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
@@ -46,9 +45,11 @@ if __name__ == "__main__":
 
         if num_epochs_val_loss_not_decreased == cfg["early_stopping_patience"]:
             logger.log(level=logging.INFO, msg=f"Stopped early at epoch {epoch}.")
+            set_early_stopping_epoch(cfg=cfg, epoch=epoch)
             break
         else:
             scheduler.step(current_val_loss)
+    save_cfg(cfg=cfg, logger=logger)
 
     del model
     del optimizer

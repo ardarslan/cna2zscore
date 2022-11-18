@@ -59,6 +59,10 @@ def set_model_hidden_dimension(cfg: Dict[str, Any], input_dimension: int, output
             raise Exception(f"{cfg['hidden_dimension']} is not a valid hidden_dimension.")
 
 
+def set_early_stopping_epoch(cfg: Dict[str, Any], epoch: int) -> None:
+    cfg["early_stopping_epoch"] = epoch
+
+
 def get_experiment_dir(cfg: Dict[str, Any]) -> str:
     experiment_dir = os.path.join(cfg["checkpoints_dir"], cfg["experiment_name"])
     os.makedirs(experiment_dir, exist_ok=True)
@@ -188,11 +192,11 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     cna_loss = test_results_dict["cna_loss"]
     noncna_loss = test_results_dict["noncna_loss"]
     all_corr = test_results_dict["all_corr"]
-    # cna_corr = test_results_dict["cna_corr"]
-    # noncna_corr = test_results_dict["noncna_corr"]
+    cna_corr = test_results_dict["cna_corr"]
+    noncna_corr = test_results_dict["noncna_corr"]
     all_p_value = test_results_dict["all_p_value"]
-    # cna_p_value = test_results_dict["cna_p_value"]
-    # noncna_p_value = test_results_dict["noncna_p_value"]
+    cna_p_value = test_results_dict["cna_p_value"]
+    noncna_p_value = test_results_dict["noncna_p_value"]
 
     best_predicted_20_genes = test_results_dict["best_predicted_20_genes"]
     worst_predicted_20_genes = test_results_dict["worst_predicted_20_genes"]
@@ -204,23 +208,23 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
                         f"all_{cfg['loss_function']}",
                         f"cna_{cfg['loss_function']}",
                         f"noncna_{cfg['loss_function']}",
-                        "all_corr",
-                        # "cna_corr",
-                        # "noncna_corr",
-                        "all_p_value",
-                        # "cna_p_value",
-                        # "noncna_p_value"
+                         "all_corr",
+                         "cna_corr",
+                         "noncna_corr",
+                         "all_p_value",
+                         "cna_p_value",
+                         "noncna_p_value"
                         ],
         "metric_value": [
                          all_loss,
                          cna_loss,
                          noncna_loss,
                          all_corr,
-                        # cna_corr,
-                        # noncna_corr,
+                         cna_corr,
+                         noncna_corr,
                          all_p_value,
-                        # cna_p_value,
-                        # noncna_p_value
+                         cna_p_value,
+                         noncna_p_value
                         ]
     })
     best_predicted_20_genes_df = pd.DataFrame(data=best_predicted_20_genes, columns=["entrezgene_id", "test_mse"])
