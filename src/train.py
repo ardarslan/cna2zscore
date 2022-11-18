@@ -7,6 +7,9 @@ from torch.utils.data import Dataset, DataLoader
 def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, optimizer) -> None:
     model.train()
     for batch in data_loaders["train"]:
+        if cfg["use_batch_normalization"] and batch.shape[0] == 1:
+            continue
+
         optimizer.zero_grad()
 
         X = batch["X"]
