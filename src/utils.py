@@ -249,14 +249,14 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # scheduler
     parser.add_argument("--scheduler", type=str, default="reduce_lr_on_plateau", help="Which scheduler to use.")
-    parser.add_argument("--scheduler_factor", type=float, default=0.1, help="Multiplicative factor used by ReduceLROnPlateau scheduler while reducing the learning rate.")
-    parser.add_argument("--scheduler_patience", type=int, default=8, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
+    parser.add_argument("--scheduler_factor", type=float, default=0.5, help="Multiplicative factor used by ReduceLROnPlateau scheduler while reducing the learning rate.")
+    parser.add_argument("--scheduler_patience", type=int, default=5, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
 
     # training
     parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
-    parser.add_argument("--early_stopping_patience", type=int, default=15, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
+    parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
     parser.add_argument("--checkpoints_dir", type=str, default="../checkpoints")
