@@ -8,7 +8,7 @@ from test import test
 from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_model_hidden_dimension, set_device, get_logger, \
                    get_dataset, get_data_loaders, get_model, get_optimizer, \
-                   get_scheduler, get_loss_function, save_model, save_cfg,
+                   get_scheduler, get_loss_function, save_model, save_cfg, \
                    load_model, save_test_results)
 
 
@@ -49,6 +49,10 @@ if __name__ == "__main__":
             break
         else:
             scheduler.step(current_val_loss)
+
+    del model
+    del optimizer
+    del scheduler
 
     model = load_model(cfg=cfg, dataset=dataset, logger=logger)
     test_results_dict = test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
