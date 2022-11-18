@@ -17,8 +17,8 @@ if __name__ == "__main__":
     cfg = argument_parser.parse_args().__dict__
     set_seeds(cfg=cfg)
     set_experiment_name(cfg=cfg)
-    set_device(cfg=cfg)
     logger = get_logger(cfg=cfg)
+    set_device(cfg=cfg, logger=logger)
     save_cfg(cfg=cfg, logger=logger)
     dataset = get_dataset(cfg=cfg, logger=logger)
     data_loaders = get_data_loaders(cfg=cfg, dataset=dataset)
