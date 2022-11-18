@@ -241,7 +241,7 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     all_predictions_1d = all_predictions.ravel()
 
     bottom_left = np.maximum(np.min(all_ground_truths_1d), np.min(all_predictions_1d))
-    top_right = np.minimum(np.min(all_ground_truths_1d), np.max(all_predictions_1d))
+    top_right = np.minimum(np.max(all_ground_truths_1d), np.max(all_predictions_1d))
 
     plt.figure(figsize=(12, 12))
     plt.title(f"Correlation: {np.round(all_corr, 2)}, P-value: {np.round(all_p_value, 2)}")
