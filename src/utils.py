@@ -264,7 +264,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=1903, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--processed_data_dir", type=str, default="../data/processed/", help="Directory for the processed files.")
+    parser.add_argument("--processed_data_dir", type=str, default="data/processed/", help="Directory for the processed files.")
     parser.add_argument("--dataset", type=str, default="cnapurity2gex", choices=["cnapurity2gex", "rppa2gex", "avggexsubtype2gex"], help="Name of the dataset.")
     parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
@@ -289,13 +289,13 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scheduler_patience", type=int, default=5, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
 
     # training
-    parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
+    parser.add_argument("--num_epochs", type=int, default=1, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="../checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="checkpoints")
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")
