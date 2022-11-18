@@ -48,11 +48,17 @@ cd ..
 # Run the code
 
 DATASET: cnapurity2gex | rppa2gex | avggexsubtype2gex
+
 CANCER_TYPE: blca | lusc | ov | all
+
 NORMALIZE_INPUT: true | false
+
 NORMALIZE_OUTPUT: true | false
+
 HIDDEN_DIMENSION: {int} | max | min | mean
+
 NUM_HIDDEN_LAYERS: {int}
+
 USE_RESIDUAL_CONNECTION: true | false
 
 ```
