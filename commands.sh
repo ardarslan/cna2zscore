@@ -1,43 +1,9 @@
 cd src
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset rppa2gex
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset rppa2gex
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset avggexsubtype2gex
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset avggexsubtype2gex
 
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 2000
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 2000
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 5000
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 5000
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 10000
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 10000
-
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 2000 --normalize_input true --normalize_output true
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 2000 --normalize_input true --normalize_output true
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 5000 --normalize_input true --normalize_output true
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 5000 --normalize_input true --normalize_output true
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 10000 --normalize_input true --normalize_output true
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 10000 --normalize_input true --normalize_output true
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension max --normalize_input true --normalize_output true
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension max --normalize_input true --normalize_output true
-
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 2000 --num_hidden_layers 2 --use_residual_connection true
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 2000 --num_hidden_layers 2 --use_residual_connection true
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 5000 --num_hidden_layers 2 --use_residual_connection true
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 5000 --num_hidden_layers 2 --use_residual_connection true
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 10000 --num_hidden_layers 2 --use_residual_connection true
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 10000 --num_hidden_layers 2 --use_residual_connection true
-
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension max --num_hidden_layers 2 --use_residual_connection true
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension max --num_hidden_layers 2 --use_residual_connection true
+for CANCER_TYPE in blca all
+    for DATASET in cnapurity2gex rppa2gex avggexsubtype2gex
+        for HIDDEN_DIMENSION in 2000 5000 10000 max
+            for NORMALIZE_INPUT_OUTPUT in false true
+                bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type CANCER_TYPE --dataset DATASET --hidden_dimension HIDDEN_DIMENSION --normalize_input NORMALIZE_INPUT_OUTPUT --normalize_output NORMALIZE_INPUT_OUTPUT --num_hidden_layers 1 --use_residual_connection false
+                bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type CANCER_TYPE --dataset DATASET --hidden_dimension HIDDEN_DIMENSION --normalize_input NORMALIZE_INPUT_OUTPUT --normalize_output NORMALIZE_INPUT_OUTPUT --num_hidden_layers 2 --use_residual_connection false
+                bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --cancer_type CANCER_TYPE --dataset DATASET --hidden_dimension HIDDEN_DIMENSION --normalize_input NORMALIZE_INPUT_OUTPUT --normalize_output NORMALIZE_INPUT_OUTPUT --num_hidden_layers 2 --use_residual_connection true
