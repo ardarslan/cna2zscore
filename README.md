@@ -8,6 +8,12 @@ chmod +x Miniconda3-latest-Linux-x86_64.sh
 
 Close the current terminal and open a new one.
 
+# Load modules
+
+```
+module load gcc/8.2.0 python_gpu/3.9.9 eth_proxy
+```
+
 # Setup and activate Conda environment
 
 ```
@@ -63,5 +69,5 @@ USE_RESIDUAL_CONNECTION: true | false
 
 ```
 cd src
-bsub -n 4 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" python main.py --dataset DATASET --cancer_type CANCER_TYPE --normalize_input NORMALIZE_INPUT --normalize_output NORMALIZE_OUTPUT --num_hidden_layers NUM_HIDDEN_LAYERS --hidden_dimension HIDDEN_DIMENSION --use_residual_connection USE_RESIDUAL_CONNECTION
+bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --dataset DATASET --cancer_type CANCER_TYPE --normalize_input NORMALIZE_INPUT --normalize_output NORMALIZE_OUTPUT --num_hidden_layers NUM_HIDDEN_LAYERS --hidden_dimension HIDDEN_DIMENSION --use_residual_connection USE_RESIDUAL_CONNECTION
 ```

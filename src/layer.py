@@ -20,7 +20,9 @@ class HiddenLayer(nn.Module):
         if self.cfg["dropout"] > 0.0:
             self.dropout = nn.Dropout(cfg['dropout'])
 
-        if use_residual_connection:
+        self.use_residual_connection = use_residual_connection
+
+        if self.use_residual_connection:
             self.w1 = nn.Linear(input_dimension, cfg["hidden_dimension"])
             self.w2 = nn.Linear(cfg["hidden_dimension"], output_dimension)
             if cfg["use_batch_normalization"]:
@@ -39,7 +41,7 @@ class HiddenLayer(nn.Module):
         if self.cfg["dropout"] > 0.0:
             y = self.dropout(y)
 
-        if self.cfg["use_residual_connection"]:
+        if self.use_residual_connection:
             y = self.w2(y)
             if self.cfg["use_batch_normalization"]:
                 y = self.bn2(y)

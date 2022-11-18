@@ -10,6 +10,7 @@ from typing import Dict, Any, List, Union
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torchsummary
@@ -202,6 +203,10 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     best_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "best_predicted_20_genes.tsv"), sep="\t")
     worst_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "worst_predicted_20_genes.tsv"), sep="\t")
 
+    plt.figure(figsize=(12, 12))
+    plt.scatter(x=test_ground_truths.ravel(), y=test_predictions.ravel(), alpha=0.1)
+    plt.imsave(os.path.join(experiment_dir, "test_results", "scatter_plot.png"))
+
 
 def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:
     logger.log(level=logging.INFO, msg="Loading the best model...")
@@ -254,7 +259,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # training
     parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
-    parser.add_argument("--batch_size", type=int, default=8, help="Batch size.")
+    parser.add_argument("--batch_size", type=int, default=4, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 

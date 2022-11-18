@@ -60,11 +60,11 @@ class Dataset(torch.utils.data.Dataset):
         X_train = self.X[self.train_idx, :]
         y_train = self.y[self.train_idx, :]
 
-        self.X_train_mean = torch.as_tensor(np.mean(X_train, axis=0), device=self.device)
-        self.X_train_std = torch.as_tensor(np.std(X_train, axis=0), device=self.device)
+        self.X_train_mean = torch.as_tensor(np.mean(X_train, axis=0), device=self.device, dtype=torch.float32)
+        self.X_train_std = torch.as_tensor(np.std(X_train, axis=0), device=self.device, dtype=torch.float32)
 
-        self.y_train_mean = torch.as_tensor(np.mean(y_train, axis=0), device=self.device)
-        self.y_train_std = torch.as_tensor(np.std(y_train, axis=0), device=self.device)
+        self.y_train_mean = torch.as_tensor(np.mean(y_train, axis=0), device=self.device, dtype=torch.float32)
+        self.y_train_std = torch.as_tensor(np.std(y_train, axis=0), device=self.device, dtype=torch.float32)
 
     def _process_dataset(self) -> None:
         # prepare output dataframe
@@ -81,12 +81,17 @@ class Dataset(torch.utils.data.Dataset):
             for current_input_data_type in self.input_data_types:
                 current_cancer_type_input_data_type_df = pd.read_csv(os.path.join(self.processed_data_dir, cancer_type, current_input_data_type + ".tsv"), sep="\t")
 
-                if current_input_data_type == "cna":
+                if current_input_data_type == "cna" or "avg_gex":
                     intersecting_columns = sorted(list(set(current_cancer_type_input_data_type_df.columns).intersection(set(output_df.columns)).intersection(set(mask_df.columns))))
                     intersecting_columns = ["sample_id"] + [column for column in intersecting_columns if column != "sample_id"]
                     current_cancer_type_input_data_type_df = current_cancer_type_input_data_type_df[intersecting_columns]
                     mask_df = mask_df[intersecting_columns]
                     output_df = output_df[intersecting_columns]
+                elif current_input_data_type == "subtype":
+                    # drop subtype columns with std 0.0
+                    subtype_columns_with_0_std = current_cancer_type_input_data_type_df.drop(columns=["sample_id"]).loc[:, current_cancer_type_input_data_type_df.drop(columns=["sample_id"]).std(axis=0) == 0].columns.tolist()
+                    current_cancer_type_input_data_type_df = current_cancer_type_input_data_type_df[[column for column in current_cancer_type_input_data_type_df.columns if column not in subtype_columns_with_0_std]]
+                    self.logger.log(level=logging.INFO, msg=f"Dropped the following subtype columns with 0 std: {subtype_columns_with_0_std}.")
 
                 if current_cancer_type_df is None:
                     current_cancer_type_df = current_cancer_type_input_data_type_df
@@ -109,12 +114,6 @@ class Dataset(torch.utils.data.Dataset):
         # add one hot encoding to the input dataframe if there are more than one cancer types
         if self.one_hot_input_df:
             input_df = pd.get_dummies(input_df, columns=["cancer_type"])
-
-        # drop input features with std 0.0
-        input_features_with_0_std = input_df.drop(columns=["sample_id"]).loc[:, input_df.drop(columns=["sample_id"]).std(axis=0) == 0].columns.tolist()
-        input_df = input_df[[column for column in input_df.columns if column not in input_features_with_0_std]]
-        self.logger.log(level=logging.INFO, msg=f"Dropped the following input features with 0 std: {input_features_with_0_std}.")
-        # self.logger.log(level=logging.INFO, msg="Input features: " + ", ".join([column for column in input_df.columns]))
 
         if output_df.columns.tolist() != mask_df.columns.tolist():
             intersecting_columns = sorted(list(set(output_df.columns).intersection(set(mask_df.columns))))
