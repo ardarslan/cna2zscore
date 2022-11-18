@@ -182,29 +182,60 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     logger.log(level=logging.INFO, msg="Saving test results...")
     experiment_dir = get_experiment_dir(cfg=cfg)
 
-    test_ground_truths = test_results_dict["test_ground_truths"]
-    test_predictions = test_results_dict["test_predictions"]
+    all_ground_truths = test_results_dict["all_ground_truths"]
+    all_predictions = test_results_dict["all_predictions"]
     all_loss = test_results_dict["all_loss"]
     cna_loss = test_results_dict["cna_loss"]
     noncna_loss = test_results_dict["noncna_loss"]
+    all_corr = test_results_dict["all_corr"]
+    cna_corr = test_results_dict["cna_corr"]
+    noncna_corr = test_results_dict["noncna_corr"]
+    all_p_value = test_results_dict["all_p_value"]
+    cna_p_value = test_results_dict["cna_p_value"]
+    noncna_p_value = test_results_dict["noncna_p_value"]
+
     best_predicted_20_genes = test_results_dict["best_predicted_20_genes"]
     worst_predicted_20_genes = test_results_dict["worst_predicted_20_genes"]
 
-    test_ground_truths_df = pd.DataFrame(data=test_ground_truths, columns=entrezgene_ids)
-    test_predictions_df = pd.DataFrame(data=test_predictions, columns=entrezgene_ids)
-    test_loss_values_df = pd.DataFrame.from_dict({"loss_type": ["all", "cna", "noncna"], "loss_value": [all_loss, cna_loss, noncna_loss]})
+    test_ground_truths_df = pd.DataFrame(data=all_ground_truths, columns=entrezgene_ids)
+    test_predictions_df = pd.DataFrame(data=all_predictions, columns=entrezgene_ids)
+    test_evaluation_metrics_df = pd.DataFrame.from_dict({
+        "metric_name": [
+                        f"all_{cfg['loss_function']}",
+                        f"cna_{cfg['loss_function']}",
+                        f"noncna_{cfg['loss_function']}",
+                        "all_corr",
+                        "cna_corr",
+                        "noncna_corr",
+                        "all_p_value",
+                        "cna_p_value",
+                        "noncna_p_value"
+                        ],
+        "metric_value": [
+                         all_loss,
+                         cna_loss,
+                         noncna_loss,
+                         all_corr,
+                         cna_corr,
+                         noncna_corr,
+                         all_p_value,
+                         cna_p_value,
+                         noncna_p_value
+                        ]
+    })
     best_predicted_20_genes_df = pd.DataFrame(data=best_predicted_20_genes, columns=["entrezgene_id", "test_mse"])
     worst_predicted_20_genes_df = pd.DataFrame(data=worst_predicted_20_genes, columns=["entrezgene_id", "test_mse"])
 
     os.makedirs(os.path.join(experiment_dir, "test_results"), exist_ok=True)
     test_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t")
     test_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t")
-    test_loss_values_df.to_csv(os.path.join(experiment_dir, "test_results", "loss_values.tsv"), sep="\t")
+    test_evaluation_metrics_df.to_csv(os.path.join(experiment_dir, "test_results", "evaluation_metrics.tsv"), sep="\t")
     best_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "best_predicted_20_genes.tsv"), sep="\t")
     worst_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "worst_predicted_20_genes.tsv"), sep="\t")
 
     plt.figure(figsize=(12, 12))
-    plt.scatter(x=test_ground_truths.ravel(), y=test_predictions.ravel(), alpha=0.1)
+    plt.title(f"Correlation: {np.round(all_corr, 2)}, P-value: {np.round(all_p_value, 2)}")
+    plt.scatter(x=all_ground_truths.ravel(), y=all_predictions.ravel(), alpha=0.1)
     plt.imsave(os.path.join(experiment_dir, "test_results", "scatter_plot.png"))
 
 

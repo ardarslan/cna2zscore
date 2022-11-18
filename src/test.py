@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
+from scipy.stats import pearsonr
 
 from collections import defaultdict
 import logging
@@ -25,8 +26,14 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         gene_counts = 0.0
         gene_loss_sums = defaultdict(lambda: 0.0)
 
-        test_ground_truths = []
-        test_predictions = []
+        all_ground_truths = []
+        all_predictions = []
+
+        cna_ground_truths_1d = []
+        cna_predictions_1d = []
+
+        noncna_ground_truths_1d = []
+        noncna_predictions_1d = []
 
         for batch in data_loaders["test"]:
             X = batch["X"]
@@ -44,8 +51,17 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
                 # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
                 yhat = yhat * (dataset.y_train_std + 1e-10) + dataset.y_train_mean
 
-            test_ground_truths.append(y)
-            test_predictions.append(yhat)
+            for i in range(cna_mask.shape[0]):
+                for j in range(cna_mask.shape[1]):
+                    if cna_mask[i][j] == 1.0:
+                        cna_ground_truths_1d.append(float(y[i][j].cpu().numpy()))
+                        cna_predictions_1d.append(float(yhat[i][j].cpu().numpy()))
+                    else:
+                        noncna_ground_truths_1d.append(float(y[i][j].cpu().numpy()))
+                        noncna_predictions_1d.append(float(yhat[i][j].cpu().numpy()))
+
+            all_ground_truths.append(y.cpu().numpy())
+            all_predictions.append(yhat.cpu().numpy())
 
             all_count += float(y.shape[0] * y.shape[1])
             all_loss_sum += float(loss_function(yhat, y))
@@ -62,8 +78,21 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
                 for entrezgene_id, column_id in zip(entrezgene_ids, range(y.shape[1])):
                     gene_loss_sums[entrezgene_id] += float(loss_function(yhat[sample_id][column_id], y[sample_id][column_id]))
 
-        test_ground_truths = torch.vstack(test_ground_truths).cpu().numpy()
-        test_predictions = torch.vstack(test_predictions).cpu().numpy()
+        all_ground_truths = np.vstack(all_ground_truths)
+        all_predictions = np.vstack(all_predictions)
+
+        all_ground_truths_1d = all_ground_truths.ravel()
+        all_predictions_1d = all_predictions.ravel()
+
+        cna_ground_truths_1d = np.array(cna_ground_truths_1d)
+        cna_predictions_1d = np.array(cna_predictions_1d)
+
+        noncna_ground_truths_1d = np.array(noncna_ground_truths_1d)
+        noncna_predictions_1d = np.array(noncna_predictions_1d)
+
+        all_corr, all_p_value = pearsonr(all_ground_truths_1d, all_predictions_1d)
+        cna_corr, cna_p_value = pearsonr(cna_ground_truths_1d, cna_predictions_1d)
+        noncna_corr, noncna_p_value = pearsonr(noncna_ground_truths_1d, noncna_predictions_1d)
 
         all_loss = np.round(all_loss_sum / all_count, 2)
         cna_loss = np.round(cna_loss_sum / cna_count, 2)
@@ -90,11 +119,17 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             logger.log(level=logging.INFO, msg=f"Entrezgene ID: {entrezgene_id}, {cfg['loss_function']} loss: {gene_loss}.")
 
         return {
-                "test_ground_truths": test_ground_truths,
-                "test_predictions": test_predictions,
+                "all_ground_truths": all_ground_truths,
+                "all_predictions": all_predictions,
                 "all_loss": all_loss,
+                "all_corr": all_corr,
+                "all_p_value": all_p_value,
                 "cna_loss": cna_loss,
+                "cna_corr": cna_corr,
+                "cna_p_value": cna_p_value,
                 "noncna_loss": noncna_loss,
+                "noncna_corr": noncna_corr,
+                "noncna_p_value": noncna_p_value,
                 "best_predicted_20_genes": best_predicted_20_genes,
                 "worst_predicted_20_genes": worst_predicted_20_genes
             }
