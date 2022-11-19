@@ -59,7 +59,8 @@ def set_model_hidden_dimension(cfg: Dict[str, Any], input_dimension: int, output
             raise Exception(f"{cfg['hidden_dimension']} is not a valid hidden_dimension.")
 
 
-def set_early_stopping_epoch(cfg: Dict[str, Any], epoch: int) -> None:
+def set_early_stopping_epoch(cfg: Dict[str, Any], epoch: int, logger: logging.Logger) -> None:
+    logger.log(level=logging.INFO, msg=f"Stopped early at epoch {epoch}.")
     cfg["early_stopping_epoch"] = epoch
 
 

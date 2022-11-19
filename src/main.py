@@ -46,8 +46,7 @@ if __name__ == "__main__":
             num_epochs_val_loss_not_decreased += 1
 
         if num_epochs_val_loss_not_decreased == cfg["early_stopping_patience"]:
-            logger.log(level=logging.INFO, msg=f"Stopped early at epoch {epoch}.")
-            set_early_stopping_epoch(cfg=cfg, epoch=epoch)
+            set_early_stopping_epoch(cfg=cfg, epoch=epoch, logger=logger)
             break
         else:
             scheduler.step(current_val_loss)
