@@ -4,7 +4,7 @@ for CANCER_TYPE in blca all
     do
     for DATASET in cnapurity2gex rppa2gex avggexsubtype2gex
         do
-        for HIDDEN_DIMENSION in 2000 5000 10000 max
+        for HIDDEN_DIMENSION in 5000 10000 15000
             do
             for NORMALIZE_INPUT_OUTPUT in false true
                 do
