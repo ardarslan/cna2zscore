@@ -1,6 +1,6 @@
 cd src
 
-for CANCER_TYPE in all blca
+for CANCER_TYPE in blca all
     do
     for DATASET in avggexsubtype2gex cnapurity2gex rppa2gex
         do
