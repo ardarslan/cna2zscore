@@ -95,13 +95,6 @@ class Dataset(torch.utils.data.Dataset):
                     current_cancer_type_input_data_type_df = current_cancer_type_input_data_type_df[intersecting_columns]
                     mask_df = mask_df[intersecting_columns]
                     output_df = output_df[intersecting_columns]
-                elif current_input_data_type == "subtype":
-                    # drop subtype columns with std 0.0
-                    subtype_columns_with_0_std = current_cancer_type_input_data_type_df.drop(columns=["sample_id"]).loc[:, current_cancer_type_input_data_type_df.drop(columns=["sample_id"]).std(axis=0) == 0].columns.tolist()
-                    current_cancer_type_input_data_type_df = current_cancer_type_input_data_type_df[[column for column in current_cancer_type_input_data_type_df.columns if column not in subtype_columns_with_0_std]]
-                    self.logger.log(level=logging.INFO, msg=f"Dropped the following subtype columns with 0 std: {subtype_columns_with_0_std}.")
-
-                    one_hot_columns.extend([column for column in current_cancer_type_input_data_type_df.columns if column.startswith("subtype")])
 
                 if current_cancer_type_df is None:
                     current_cancer_type_df = current_cancer_type_input_data_type_df
@@ -121,10 +114,18 @@ class Dataset(torch.utils.data.Dataset):
 
         input_df = pd.concat(input_df, axis=0)
 
+        subtype_columns = [column for column in input_df.columns if column.startswith("subtype")]
+        subtype_columns_with_zero_std = [column for column in subtype_columns if input_df[column].values.std() == 0.0]
+        subtype_columns_with_nonzero_std = list(set(subtype_columns) - set(subtype_columns_with_zero_std))
+        # drop subtype columns with std 0.0
+        input_df = input_df[[column for column in input_df.columns if column not in subtype_columns_with_zero_std]]
+        self.logger.log(level=logging.INFO, msg=f"Dropped the following subtype columns with 0 std: {subtype_columns_with_zero_std}.")
+
         # add one hot encoding to the input dataframe if there are more than one cancer types
         if self.one_hot_input_df:
             input_df = pd.get_dummies(input_df, columns=["cancer_type"])
             one_hot_columns.extend([column for column in input_df.columns if column.startswith("cancer_type")])
+            one_hot_columns.extend(subtype_columns_with_nonzero_std)
 
         if output_df.columns.tolist() != mask_df.columns.tolist():
             intersecting_columns = sorted(list(set(output_df.columns).intersection(set(mask_df.columns))))

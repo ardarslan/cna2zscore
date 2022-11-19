@@ -15,10 +15,12 @@ from utils import (get_argument_parser, set_seeds, set_experiment_name, \
 if __name__ == "__main__":
     argument_parser = get_argument_parser()
     cfg = argument_parser.parse_args().__dict__
+
     set_seeds(cfg=cfg)
     set_experiment_name(cfg=cfg)
     logger = get_logger(cfg=cfg)
     set_device(cfg=cfg, logger=logger)
+    save_cfg(cfg=cfg, logger=logger)
     dataset = get_dataset(cfg=cfg, logger=logger)
     data_loaders = get_data_loaders(cfg=cfg, dataset=dataset)
     set_model_hidden_dimension(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)

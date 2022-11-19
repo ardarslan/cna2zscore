@@ -231,11 +231,11 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     worst_predicted_20_genes_df = pd.DataFrame(data=worst_predicted_20_genes, columns=["entrezgene_id", "test_mse"])
 
     os.makedirs(os.path.join(experiment_dir, "test_results"), exist_ok=True)
-    test_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t")
-    test_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t")
-    test_evaluation_metrics_df.to_csv(os.path.join(experiment_dir, "test_results", "evaluation_metrics.tsv"), sep="\t")
-    best_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "best_predicted_20_genes.tsv"), sep="\t")
-    worst_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "worst_predicted_20_genes.tsv"), sep="\t")
+    test_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t", index=False)
+    test_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t", index=False)
+    test_evaluation_metrics_df.to_csv(os.path.join(experiment_dir, "test_results", "evaluation_metrics.tsv"), sep="\t", index=False)
+    best_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "best_predicted_20_genes.tsv"), sep="\t", index=False)
+    worst_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "worst_predicted_20_genes.tsv"), sep="\t", index=False)
 
     all_ground_truths_1d = all_ground_truths.ravel()
     all_predictions_1d = all_predictions.ravel()
