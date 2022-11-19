@@ -15,8 +15,9 @@ class MLP(nn.Module):
         self.layers = nn.ModuleList()
 
         # Append hidden layers
-        for i in range(cfg["num_hidden_layers"]):
-            if i == 0:
+        num_hidden_layers_appended = 0
+        while num_hidden_layers_appended < cfg["num_hidden_layers"]:
+            if num_hidden_layers_appended == 0:
                 current_linear_input_dimension = input_dimension
             else:
                 current_linear_input_dimension = cfg["hidden_dimension"]
@@ -25,9 +26,10 @@ class MLP(nn.Module):
 
             if cfg["use_residual_connection"] and current_linear_input_dimension == current_linear_output_dimension:
                 current_linear_residual_connection = True
-                i += 1
+                num_hidden_layers_appended += 2
             else:
                 current_linear_residual_connection = False
+                num_hidden_layers_appended += 1
 
             self.layers.append(HiddenLayer(cfg=cfg, input_dimension=current_linear_input_dimension, output_dimension=current_linear_output_dimension, use_residual_connection=current_linear_residual_connection))
 
