@@ -293,7 +293,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hidden_dimension", default="max", help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
     parser.add_argument("--hidden_activation", type=str, default="relu", help="Activation function used to activate each hidden layer's (batch normalized) output.")
     parser.add_argument("--use_residual_connection", type=str2bool, default=False, nargs='?', const=True, help="Whether to use residual connection between hidden layers or not.")
-    parser.add_argument("--use_batch_normalization", type=str2bool, default=False, nargs='?', const=True, help="Whether to use batch normalization after each hidden layer or not.")
+    parser.add_argument("--use_batch_normalization", type=str2bool, default=True, nargs='?', const=True, help="Whether to use batch normalization after each hidden layer or not.")
     parser.add_argument("--dropout", type=float, default=0.0, help="Probability of zeroing out an entry in a given vector.")
 
     # optimizer
