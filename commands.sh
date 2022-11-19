@@ -1,10 +1,10 @@
 cd src
 
-for CANCER_TYPE in blca all
+for HIDDEN_DIMENSION in 1000 2500 5000 max
     do
-    for DATASET in avggexsubtype2gex cnapurity2gex rppa2gex
+    for CANCER_TYPE in blca all
         do
-        for HIDDEN_DIMENSION in 1000 2500 5000 max
+        for DATASET in rppa2gex cnapurity2gex avggexsubtype2gex
             do
             for NORMALIZE_OUTPUT in false true
                 do
