@@ -169,6 +169,10 @@ def get_loss_function(cfg: Dict[str, Any], reduction: str):
         raise NotImplementedError(f"{cfg['loss']} is not an implemented loss function.")
 
 
+def get_entrezgene_id_to_hgnc_symbol_mapping(cfg: Dict[str, Any]):
+    return dict(pd.read_csv(os.path.join(cfg["raw_data_dir"], "hgnc_to_entrezgene_id_mapping.tsv"), sep="\t")[["entrezgene_id", "hgnc_symbol"]].values)
+
+
 def save_cfg(cfg: Dict[str, Any], logger: logging.Logger) -> None:
     logger.log(level=logging.INFO, msg="Saving the config file...")
     experiment_dir = get_experiment_dir(cfg=cfg)
@@ -228,8 +232,8 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
                          noncna_p_value
                         ]
     })
-    best_predicted_20_genes_df = pd.DataFrame(data=best_predicted_20_genes, columns=["entrezgene_id", "test_mse"])
-    worst_predicted_20_genes_df = pd.DataFrame(data=worst_predicted_20_genes, columns=["entrezgene_id", "test_mse"])
+    best_predicted_20_genes_df = pd.DataFrame(data=best_predicted_20_genes, columns=["entrezgene_id", "normalized_loss"])
+    worst_predicted_20_genes_df = pd.DataFrame(data=worst_predicted_20_genes, columns=["entrezgene_id", "normalized_loss"])
 
     os.makedirs(os.path.join(experiment_dir, "test_results"), exist_ok=True)
     test_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t", index=False)
@@ -245,13 +249,15 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     top_right = np.minimum(np.quantile(all_ground_truths_1d, 0.99), np.quantile(all_predictions_1d, 0.99))
 
     plt.figure(figsize=(12, 12))
-    plt.title(f"Correlation: {np.round(all_corr, 2)}, P-value: {np.round(all_p_value, 2)}")
+    plt.title(f"Pearson Corr: {np.round(all_corr, 2)}, P-value: {np.round(all_p_value, 2)}", fontsize=32)
     plt.scatter(x=all_ground_truths_1d, y=all_predictions_1d, alpha=0.1)
-    plt.xlabel("Ground truth GEX values")
-    plt.ylabel("Predicted GEX values")
+    plt.xlabel("Ground truth GEX values", fontsize=28)
+    plt.ylabel("Predicted GEX values", fontsize=28)
     plt.xlim(bottom_left, top_right)
     plt.ylim(bottom_left, top_right)
     plt.plot([bottom_left, top_right], [bottom_left, top_right], color='r')
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
     plt.savefig(os.path.join(experiment_dir, "test_results", "scatter_plot.png"))
 
 
@@ -280,6 +286,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=1903, help="Random seed for reproducibility.")
 
     # data
+    parser.add_argument("--raw_data_dir", type=str, default="../data/raw/", help="Directory for the raw files.")
     parser.add_argument("--processed_data_dir", type=str, default="../data/processed/", help="Directory for the processed files.")
     parser.add_argument("--dataset", type=str, default="cnapurity2gex", choices=["cnapurity2gex", "rppa2gex", "avggexsubtype2gex"], help="Name of the dataset.")
     parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "all"], help="Cancer type.")

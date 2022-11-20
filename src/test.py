@@ -8,9 +8,13 @@ from collections import defaultdict
 import logging
 from typing import Any, Dict, List, Tuple
 
+from utils import get_entrezgene_id_to_hgnc_symbol_mapping
+
 
 def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> Tuple[np.ndarray, np.ndarray, np.float32, np.float32, np.float32, List[Tuple[int, np.float32]], List[Tuple[int, np.float32]]]:
     model.eval()
+
+    entrezgene_id_to_hgnc_symbol_mapping = get_entrezgene_id_to_hgnc_symbol_mapping(cfg=cfg)
 
     with torch.no_grad():
         all_count = 0.0
@@ -23,8 +27,8 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         noncna_loss_sum = 0.0
 
         entrezgene_ids = dataset.entrezgene_ids
-        gene_counts = 0.0
         gene_loss_sums = defaultdict(lambda: 0.0)
+        gene_ground_truth_sums = defaultdict(lambda: 0.0)
 
         all_ground_truths = []
         all_predictions = []
@@ -73,11 +77,10 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             noncna_count += float(noncna_mask.sum())
             noncna_loss_sum += float(loss_function(yhat * noncna_mask, y * noncna_mask))
 
-            gene_counts += float(y.shape[0])
-
             for sample_id in range(y.shape[0]):
                 for entrezgene_id, column_id in zip(entrezgene_ids, range(y.shape[1])):
                     gene_loss_sums[entrezgene_id] += float(loss_function(yhat[sample_id][column_id], y[sample_id][column_id]))
+                    gene_ground_truth_sums[entrezgene_id] += float(loss_function(y[sample_id][column_id], 0.0))
 
         all_ground_truths = np.vstack(all_ground_truths)
         all_predictions = np.vstack(all_predictions)
@@ -99,11 +102,14 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         cna_loss = cna_loss_sum / cna_count
         noncna_loss = noncna_loss_sum / noncna_count
         gene_losses = dict(
-            (entrezgene_id, gene_loss_sum / gene_counts) for entrezgene_id, gene_loss_sum in gene_loss_sums.items()
+            (entrezgene_id, gene_loss_sum / gene_ground_truth_sums[entrezgene_id]) for entrezgene_id, gene_loss_sum in gene_loss_sums.items()
         )
         gene_losses = sorted(list(gene_losses.items()), key=lambda x: x[1])
-        best_predicted_20_genes = gene_losses[:20]
-        worst_predicted_20_genes = gene_losses[-20:]
+        best_predicted_20_gene_ids = gene_losses[:20]
+        worst_predicted_20_gene_ids = gene_losses[-20:]
+
+        best_predicted_20_gene_symbols = [(entrezgene_id_to_hgnc_symbol_mapping[entrezgene_id], normalized_loss) for entrezgene_id, normalized_loss in best_predicted_20_gene_ids]
+        worst_predicted_20_gene_symbols = [(entrezgene_id_to_hgnc_symbol_mapping[entrezgene_id], normalized_loss) for entrezgene_id, normalized_loss in worst_predicted_20_gene_ids]
 
         logger.log(level=logging.INFO, msg=f"   All genes, test {cfg['loss_function']} loss: {np.round(all_loss, 2)}.")
         logger.log(level=logging.INFO, msg=f"   CNA genes, test {cfg['loss_function']} loss: {np.round(cna_loss, 2)}.")
@@ -116,13 +122,13 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         logger.log(level=logging.INFO, msg=f"------------------------")
 
         logger.log(level=logging.INFO, msg=f"Best predicted 20 genes:")
-        for entrezgene_id, gene_loss in best_predicted_20_genes:
-            logger.log(level=logging.INFO, msg=f"Entrezgene ID: {entrezgene_id}, {cfg['loss_function']} loss: {np.round(gene_loss, 2)}.")
+        for hgnc_symbol, _ in best_predicted_20_gene_symbols:
+            logger.log(level=logging.INFO, msg=f"HGNC Symbol: {hgnc_symbol}")
         logger.log(level=logging.INFO, msg=f"------------------------")
 
         logger.log(level=logging.INFO, msg=f"Worst predicted 20 genes:")
-        for entrezgene_id, gene_loss in worst_predicted_20_genes:
-            logger.log(level=logging.INFO, msg=f"Entrezgene ID: {entrezgene_id}, {cfg['loss_function']} loss: {np.round(gene_loss, 2)}.")
+        for hgnc_symbol, _ in worst_predicted_20_gene_symbols:
+            logger.log(level=logging.INFO, msg=f"HGNC Symbol: {hgnc_symbol}")
 
         return {
                 "all_ground_truths": all_ground_truths,
@@ -136,6 +142,6 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
                 "noncna_loss": noncna_loss,
                 "noncna_corr": noncna_corr,
                 "noncna_p_value": noncna_p_value,
-                "best_predicted_20_genes": best_predicted_20_genes,
-                "worst_predicted_20_genes": worst_predicted_20_genes
+                "best_predicted_20_genes": best_predicted_20_gene_symbols,
+                "worst_predicted_20_genes": worst_predicted_20_gene_symbols
             }
