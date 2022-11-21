@@ -109,8 +109,8 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         best_predicted_20_gene_ids = gene_losses[:20]
         worst_predicted_20_gene_ids = gene_losses[-20:]
 
-        best_predicted_20_gene_symbols = [(entrezgene_id_to_hgnc_symbol_mapping[entrezgene_id], normalized_loss) for entrezgene_id, normalized_loss in best_predicted_20_gene_ids]
-        worst_predicted_20_gene_symbols = [(entrezgene_id_to_hgnc_symbol_mapping[entrezgene_id], normalized_loss) for entrezgene_id, normalized_loss in worst_predicted_20_gene_ids]
+        best_predicted_20_gene_symbols = [(entrezgene_id_to_hgnc_symbol_mapping[int(entrezgene_id)], normalized_loss) for entrezgene_id, normalized_loss in best_predicted_20_gene_ids]
+        worst_predicted_20_gene_symbols = [(entrezgene_id_to_hgnc_symbol_mapping[int(entrezgene_id)], normalized_loss) for entrezgene_id, normalized_loss in worst_predicted_20_gene_ids]
 
         logger.log(level=logging.INFO, msg=f"   All genes, test {cfg['loss_function']} loss: {np.round(all_loss, 2)}.")
         logger.log(level=logging.INFO, msg=f"   CNA genes, test {cfg['loss_function']} loss: {np.round(cna_loss, 2)}.")
