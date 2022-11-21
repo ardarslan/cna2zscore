@@ -15,6 +15,7 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
     model.eval()
 
     entrezgene_id_to_hgnc_symbol_mapping = get_entrezgene_id_to_hgnc_symbol_mapping(cfg=cfg)
+    zero = torch.tensor(data=0.0, device=cfg["device"])
 
     with torch.no_grad():
         all_count = 0.0
@@ -80,7 +81,7 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             for sample_id in range(y.shape[0]):
                 for entrezgene_id, column_id in zip(entrezgene_ids, range(y.shape[1])):
                     gene_loss_sums[entrezgene_id] += float(loss_function(yhat[sample_id][column_id], y[sample_id][column_id]))
-                    gene_ground_truth_sums[entrezgene_id] += float(loss_function(y[sample_id][column_id], 0.0))
+                    gene_ground_truth_sums[entrezgene_id] += float(loss_function(zero, y[sample_id][column_id]))
 
         all_ground_truths = np.vstack(all_ground_truths)
         all_predictions = np.vstack(all_predictions)
