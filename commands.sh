@@ -1,24 +1,32 @@
 cd src
 
-# for HIDDEN_DIMENSION in 1000 2500 5000 max
-#     do
-#     for CANCER_TYPE in blca all
-#         do
-#         for DATASET in rppa2gex cnapurity2gex avggexsubtype2gex
-#             do
-#             for NORMALIZE_OUTPUT in false true
-#                 do
-#                 bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --hidden_dimension $HIDDEN_DIMENSION --normalize_output $NORMALIZE_OUTPUT --num_hidden_layers 0 --use_residual_connection false
-#                 bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --hidden_dimension $HIDDEN_DIMENSION --normalize_output $NORMALIZE_OUTPUT --num_hidden_layers 1 --use_residual_connection false
-#                 bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --hidden_dimension $HIDDEN_DIMENSION --normalize_output $NORMALIZE_OUTPUT --num_hidden_layers 2 --use_residual_connection true
-#                 done
-#             done
-#         done
-#     done
 
-bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset cnapurity2gex --hidden_dimension 1000 --normalize_output true --num_hidden_layers 1 --use_residual_connection false
-bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type blca --dataset rppa2gex --hidden_dimension 2500 --normalize_output true --num_hidden_layers 1 --use_residual_connection false
+for CANCER_TYPE in 'blca' 'all'; do
+    for DATASET in 'rppa2gex' 'cnapurity2gex' 'thresholdedcnapurity2gex'; do
+        for NORMALIZE_OUTPUT in false true; do
+            for NUM_HIDDEN_LAYERS in 0 1 2; do
+                for HIDDEN_DIMENSION in 1000 2500 5000; do
 
-bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type all --dataset cnapurity2gex --hidden_dimension 5000 --normalize_output true --num_hidden_layers 1 --use_residual_connection false
-bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type all --dataset rppa2gex --hidden_dimension 1000 --normalize_output true --num_hidden_layers 0 --use_residual_connection false
-bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type all --dataset avggexsubtype2gex --hidden_dimension 1000 --normalize_output true --num_hidden_layers 0 --use_residual_connection false
+                    # No regularization
+                    bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --normalize_output $NORMALIZE_OUTPUT --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout 0.0 --l1_reg_coeff 0.0 --l2_reg_coeff 0.0
+
+                    # Dropout
+                    for DROPOUT in 0.25 0.5; do
+                        bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --normalize_output $NORMALIZE_OUTPUT --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout $DROPOUT --l1_reg_coeff 0.0 --l2_reg_coeff 0.0
+                    done
+
+                    # L1 regularization
+                    for L1_REG_COEFF in 0.001 0.01; do
+                        bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --normalize_output $NORMALIZE_OUTPUT --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout 0.0 --l1_reg_coeff $L1_REG_COEFF --l2_reg_coeff 0.0
+                    done
+
+                    # L2 regularization
+                    for L2_REG_COEFF in 0.001 0.01; do
+                        bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --normalize_output $NORMALIZE_OUTPUT --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout 0.0 --l1_reg_coeff 0.0 --l2_reg_coeff $L2_REG_COEFF
+                    done
+
+                done
+            done
+        done
+    done
+done

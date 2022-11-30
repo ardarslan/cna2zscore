@@ -24,5 +24,10 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         yhat = model(X)
         loss = loss_function(yhat, y)
 
+        if cfg["l1_reg_coeff"] > 0:
+            loss += cfg["l1_reg_coeff"] * sum(p.abs().sum() for p in model.parameters())
+        if cfg["l2_reg_coeff"] > 0:
+            loss += cfg["l2_reg_coeff"] * sum(p.pow(2.0).sum() for p in model.parameters())
+
         loss.backward()
         optimizer.step()

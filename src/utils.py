@@ -18,7 +18,9 @@ from torch.optim import Adam, AdamW, RMSprop
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, Subset
 
-from dataset import CNAPurity2GEXDataset, RPPA2GEXDataset, AverageGEXSubtype2GEXDataset
+from dataset import CNA2GEXDataset, ThresholdedCNA2GEXDataset, \
+                    CNAPurity2GEXDataset, ThresholdedCNAPurity2GEXDataset, \
+                    RPPA2GEXDataset
 from model import MLP
 
 
@@ -71,12 +73,16 @@ def get_experiment_dir(cfg: Dict[str, Any]) -> str:
 
 
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
-    if cfg["dataset"] == "cnapurity2gex":
+    if cfg["dataset"] == "cna2gex":
+        return CNA2GEXDataset(cfg=cfg, logger=logger)
+    elif cfg["dataset"] == "thresholdedcna2gex":
+        return ThresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
+    elif cfg["dataset"] == "cnapurity2gex":
         return CNAPurity2GEXDataset(cfg=cfg, logger=logger)
+    elif cfg["dataset"] == "thresholdedcnapurity2gex":
+        return ThresholdedCNAPurity2GEXDataset(cfg=cfg, logger=logger)
     elif cfg["dataset"] == "rppa2gex":
         return RPPA2GEXDataset(cfg=cfg, logger=logger)
-    elif cfg["dataset"] == "avggexsubtype2gex":
-        return AverageGEXSubtype2GEXDataset(cfg=cfg, logger=logger)
     else:
         raise NotImplementedError(f"{cfg['dataset']} is not an implemented dataset.")
 
@@ -193,6 +199,8 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
 
     all_ground_truths = test_results_dict["all_ground_truths"]
     all_predictions = test_results_dict["all_predictions"]
+    all_cna_mask_nonbinaries = test_results_dict["all_cna_mask_nonbinaries"]
+    all_cancer_types = test_results_dict["all_cancer_types"]
     all_loss = test_results_dict["all_loss"]
     cna_loss = test_results_dict["cna_loss"]
     noncna_loss = test_results_dict["noncna_loss"]
@@ -206,8 +214,10 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     best_predicted_20_genes = test_results_dict["best_predicted_20_genes"]
     worst_predicted_20_genes = test_results_dict["worst_predicted_20_genes"]
 
-    test_ground_truths_df = pd.DataFrame(data=all_ground_truths, columns=entrezgene_ids)
-    test_predictions_df = pd.DataFrame(data=all_predictions, columns=entrezgene_ids)
+    all_ground_truths_df = pd.DataFrame(data=all_ground_truths, columns=entrezgene_ids)
+    all_predictions_df = pd.DataFrame(data=all_predictions, columns=entrezgene_ids)
+    all_cna_mask_nonbinaries_df = pd.DataFrame(data=all_cna_mask_nonbinaries, columns=entrezgene_ids)
+
     test_evaluation_metrics_df = pd.DataFrame.from_dict({
         "metric_name": [
                         f"all_{cfg['loss_function']}",
@@ -236,8 +246,9 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     worst_predicted_20_genes_df = pd.DataFrame(data=worst_predicted_20_genes, columns=["entrezgene_id", "normalized_loss"])
 
     os.makedirs(os.path.join(experiment_dir, "test_results"), exist_ok=True)
-    test_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t", index=False)
-    test_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t", index=False)
+    all_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t", index=False)
+    all_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t", index=False)
+    all_cna_mask_nonbinaries_df.to_csv(os.path.join(experiment_dir, "test_results", "all_cna_mask_nonbinaries.tsv", sep="\t", index=False))
     test_evaluation_metrics_df.to_csv(os.path.join(experiment_dir, "test_results", "evaluation_metrics.tsv"), sep="\t", index=False)
     best_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "best_predicted_20_genes.tsv"), sep="\t", index=False)
     worst_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "worst_predicted_20_genes.tsv"), sep="\t", index=False)
@@ -286,10 +297,10 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=1903, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--raw_data_dir", type=str, default="../data/raw/", help="Directory for the raw files.")
     parser.add_argument("--processed_data_dir", type=str, default="../data/processed/", help="Directory for the processed files.")
-    parser.add_argument("--dataset", type=str, default="cnapurity2gex", choices=["cnapurity2gex", "rppa2gex", "avggexsubtype2gex"], help="Name of the dataset.")
-    parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "all"], help="Cancer type.")
+    parser.add_argument("--dataset", type=str, default="cnapurity2gex", choices=["cnapurity2gex", "thresholdedcnapurity2gex", "rppa2gex"], help="Name of the dataset.")
+
+    parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
     parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the input or not.")
     parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the output or not.")
@@ -313,13 +324,15 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scheduler_patience", type=int, default=5, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
 
     # training
-    parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
+    parser.add_argument("--num_epochs", type=int, default=1, help="Number of training epochs.") # CHANGEME
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
+    parser.add_argument("--l1_reg_coeff", type=float, default=0.0, help="L1 regularization coefficient.")
+    parser.add_argument("--l2_reg_coeff", type=float, default=0.0, help="L2 regularization coefficient.")
     parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_checkpoints") # CHANGEME
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")
