@@ -1,6 +1,7 @@
 name: cna2gex
 channels:
   - anaconda
+  - bioconda
   - conda-forge
   - defaults
   - pytorch
@@ -15,6 +16,7 @@ dependencies:
   - pandas=1.4.2
   - pip=22.3.1
   - pytorch=1.10.0=py3.9_cuda11.3_cudnn8.2.0_0
+  - ray=2.3.1
   - rpy2=3.5.1
   - scikit-learn=1.0.2
   - scipy=1.9.3

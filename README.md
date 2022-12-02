@@ -56,7 +56,7 @@ cd ..
 
 # Run the code
 
-DATASET: thresholdedcnapurity2gex | cnapurity2gex | rppa2gex
+DATASET: thresholdedcnapurity2gex | unthresholdedcnapurity2gex | thresholdedcna2gex | unthresholdedcna2gex | rppa2gex
 
 CANCER_TYPE: blca | all
 
