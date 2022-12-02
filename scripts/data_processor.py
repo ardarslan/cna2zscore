@@ -235,12 +235,17 @@ gex_df = gex_df[gex_df["ensembl_id"].swifter.apply(lambda x: x in ensembl_id_to_
 gex_df["entrezgene_id"] = gex_df["ensembl_id"].swifter.apply(lambda x: ensembl_id_to_entrezgene_id_mapping[x]).tolist()
 gex_df.drop(columns=["ensembl_id"], inplace=True)
 
-def select_max_expression_per_gene(x):
-    expression_sums = x.drop(columns=["entrezgene_id"]).values.sum(axis=1)
+def get_indices_with_max_expression_per_gene(x):
+    expression_sums = x["expression_sum"].values
     expression_argmax = np.argmax(expression_sums)
-    return x.iloc[expression_argmax, :]
+    return x.iloc[expression_argmax, :]["index"]
 
-gex_df = gex_df.swifter.groupby("entrezgene_id").apply(lambda x: select_max_expression_per_gene(x)).reset_index(drop=True)
+gex_df.reset_index(drop=True, inplace=True)
+gex_df["index"] = gex_df.index.tolist()
+gex_df["expression_sum"] = gex_df.drop(columns=["entrezgene_id"]).values.sum(axis=1).tolist()
+selected_indices = gex_df[["index", "entrezgene_id", "expression_sum"]].swifter.groupby("entrezgene_id").apply(lambda x: get_indices_with_max_expression_per_gene(x))
+gex_df = gex_df[gex_df["index"].swifter.apply(lambda x: x in selected_indices)].drop(columns=["index", "expression_sum"])
+
 gex_df["entrezgene_id"] = gex_df["entrezgene_id"].swifter.apply(lambda x: int(x))
 
 gex_df.index = gex_df["entrezgene_id"].tolist()
