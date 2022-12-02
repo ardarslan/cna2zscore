@@ -56,7 +56,6 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
     logger.log(level=logging.INFO, msg=f"Test {cfg['loss_function']} loss is {all_loss}.")
 
     test_results_dict = {
-        "all_loss": all_loss,
         "all_sample_ids": all_sample_ids,
         "all_ys": all_ys,
         "all_yhats": all_yhats,

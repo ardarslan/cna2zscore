@@ -9,7 +9,7 @@ from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_model_hidden_dimension, set_device, get_logger, \
                    get_dataset, get_data_loaders, get_model, get_optimizer, \
                    get_scheduler, get_loss_function, save_model, save_cfg, \
-                   load_model, set_early_stopping_epoch)
+                   load_model, set_early_stopping_epoch, save_test_results)
 
 
 if __name__ == "__main__":
@@ -60,8 +60,3 @@ if __name__ == "__main__":
     test_results_dict = test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
 
     save_test_results(cfg=cfg, test_results_dict=test_results_dict, entrezgene_ids=dataset.entrezgene_ids, logger=logger)
-
-    with open("test_results_dict.pickle", "wb") as file:
-        pickle.dump(obj=test_results_dict, file=file)
-
-    # save_test_results(cfg=cfg, test_results_dict=test_results_dict, entrezgene_ids=dataset.entrezgene_ids, logger=logger)

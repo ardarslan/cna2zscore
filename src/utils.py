@@ -10,7 +10,6 @@ from typing import Dict, Any, List, Union
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torchsummary
@@ -191,6 +190,20 @@ def save_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) ->
     logger.log(level=logging.INFO, msg="Saving the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
     torch.save(model.state_dict(), os.path.join(experiment_dir, "best_model"))
+
+
+def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], entrezgene_ids: List[int], logger: logging.Logger) -> None:
+    experiment_dir = get_experiment_dir(cfg=cfg)
+    logger.log(level=logging.INFO, msg="Saving test results...")
+    all_ground_truths_df = pd.DataFrame(data=test_results_dict["all_ys"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
+    all_predictions_df = pd.DataFrame(data=test_results_dict["all_yhats"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
+    all_cna_mask_nonbinaries_df = pd.DataFrame(data=test_results_dict["all_cna_mask_nonbinaries"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
+    all_cancer_types_df = pd.DataFrame.from_dict({"sample_id": test_results_dict["all_sample_ids"], "cancer_type": test_results_dict["all_cancer_types"]})
+
+    all_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t", index=False)
+    all_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t", index=False)
+    all_cna_mask_nonbinaries_df.to_csv(os.path.join(experiment_dir, "test_results", "cna_mask_nonbinaries.tsv"), sep="\t", index=False)
+    all_cancer_types_df.to_csv(os.path.join(experiment_dir, "test_results", "cancer_types.tsv"), sep="\t", index=False)
 
 
 # def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], entrezgene_ids: List[int], logger: logging.Logger) -> None:
