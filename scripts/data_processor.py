@@ -4,7 +4,7 @@
 # In[1]:
 
 
-development = True
+development = False
 
 
 # In[3]:
@@ -240,9 +240,11 @@ gex_df = gex_df.T
 gex_df.reset_index(drop=False, inplace=True)
 gex_df.rename(columns={"index": "sample_id"}, inplace=True)
 
+print(len(gex_df.columns), len(set(gex_df.columns)))
+
 if development:
-    # print(gex_df)
-    print(len(gex_df.columns), len(set(gex_df.columns)))
+    print(gex_df)
+
 
 print("Processed GEX data.")
 # # Find intersecting sample IDs and columns
