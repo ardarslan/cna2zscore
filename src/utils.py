@@ -73,11 +73,11 @@ def get_experiment_dir(cfg: Dict[str, Any]) -> str:
 
 
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
-    if cfg["dataset"] == "cna2gex":
+    if cfg["dataset"] == "unthresholdedcna2gex":
         return UnthresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
     elif cfg["dataset"] == "thresholdedcna2gex":
         return ThresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
-    elif cfg["dataset"] == "cnapurity2gex":
+    elif cfg["dataset"] == "unthresholdedcnapurity2gex":
         return UnthresholdedCNAPurity2GEXDataset(cfg=cfg, logger=logger)
     elif cfg["dataset"] == "thresholdedcnapurity2gex":
         return ThresholdedCNAPurity2GEXDataset(cfg=cfg, logger=logger)
