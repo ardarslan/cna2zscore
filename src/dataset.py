@@ -135,21 +135,21 @@ class Dataset(torch.utils.data.Dataset):
         return self.len_dataset
 
 
-class CNAPurity2GEXDataset(Dataset):
+class UnthresholdedCNAPurity2GEXDataset(Dataset):
     def __init__(self, cfg: Dict[str, Any], logger: logging.Logger):
         super().__init__(
             cfg=cfg,
-            input_data_types=["cna", "tumor_purity"],
+            input_data_types=["unthresholded_cna", "tumor_purity"],
             output_data_type="gex",
             logger=logger
         )
 
 
-class CNA2GEXDataset(Dataset):
+class UnthresholdedCNA2GEXDataset(Dataset):
     def __init__(self, cfg: Dict[str, Any], logger: logging.Logger):
         super().__init__(
             cfg=cfg,
-            input_data_types=["cna"],
+            input_data_types=["unthresholded_cna"],
             output_data_type="gex",
             logger=logger
         )
