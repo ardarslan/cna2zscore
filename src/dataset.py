@@ -105,8 +105,9 @@ class Dataset(torch.utils.data.Dataset):
         merged_df = pd.merge(left=input_df, right=output_df, how="inner", on="sample_id")
         merged_df = pd.merge(left=merged_df, right=mask_df, how="inner", on="sample_id")
         merged_df = pd.merge(left=merged_df, right=cancer_type_df, how="inner", on="sample_id")
-        merged_df.drop(columns=["sample_id"], inplace=True)
         merged_df = shuffle(merged_df, random_state=self.seed)
+        self.sample_ids = merged_df["sample_id"].values
+        merged_df.drop(columns=["sample_id"], inplace=True)
 
         self.one_hot_column_indices = [index for index, column in enumerate(merged_df.columns) if str(column).startswith("cancer_type_")]
 
@@ -128,6 +129,7 @@ class Dataset(torch.utils.data.Dataset):
                 "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
                 "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32),
                 "mask": torch.as_tensor(self.mask[idx, :], device=self.device, dtype=torch.float32),
+                "sample_id": torch.as_tensor(self.sample_ids[idx, :], device=self.device, dtype=torch.StringType),
                 "cancer_type": torch.as_tensor(self.cancer_types[idx, :], device=self.device, dtype=torch.StringType)
                }
 

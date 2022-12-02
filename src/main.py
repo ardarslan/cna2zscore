@@ -59,6 +59,8 @@ if __name__ == "__main__":
     model = load_model(cfg=cfg, dataset=dataset, logger=logger)
     test_results_dict = test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
 
+    save_test_results(cfg=cfg, test_results_dict=test_results_dict, entrezgene_ids=dataset.entrezgene_ids, logger=logger)
+
     with open("test_results_dict.pickle", "wb") as file:
         pickle.dump(obj=test_results_dict, file=file)
 

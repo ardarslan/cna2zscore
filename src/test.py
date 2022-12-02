@@ -10,6 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> Tuple[np.ndarray, np.ndarray, np.float32, np.float32, np.float32, List[Tuple[int, np.float32]], List[Tuple[int, np.float32]]]:
     model.eval()
 
+    all_sample_ids = []
     all_ys = []
     all_yhats = []
     all_cna_mask_nonbinaries = []
@@ -20,6 +21,7 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
 
     with torch.no_grad():
         for batch in data_loaders["test"]:
+            sample_ids = batch["sample_id"]
             X = batch["X"]
             y = batch["y"]
             cna_mask_nonbinary = batch["mask"]
@@ -38,21 +40,24 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             total_loss += float(loss_function(yhat, y))
             total_sample_count += X.shape[0]
 
-            all_ys.append(y)
-            all_yhats.append(yhat)
-            all_cna_mask_nonbinaries.append(cna_mask_nonbinary)
-            all_cancer_types.append(cancer_types)
+            all_sample_ids.append(sample_ids.cpu().numpy().ravel())
+            all_ys.append(y.cpu().numpy())
+            all_yhats.append(yhat.cpu().numpy())
+            all_cna_mask_nonbinaries.append(cna_mask_nonbinary.cpu().numpy())
+            all_cancer_types.append(cancer_types.cpu().numpy().ravel())
 
+    all_sample_ids = np.hstack(all_sample_ids)
     all_ys = np.vstack(all_ys)
     all_yhats = np.vstack(all_yhats)
     all_cna_mask_nonbinaries = np.vstack(all_cna_mask_nonbinaries)
-    all_cancer_types = np.vstack(all_cancer_types)
+    all_cancer_types = np.hstack(all_cancer_types)
     all_loss = total_loss / total_sample_count
 
     logger.log(level=logging.INFO, msg=f"Test {cfg['loss_function']} loss is {all_loss}.")
 
     test_results_dict = {
         "all_loss": all_loss,
+        "all_sample_ids": all_sample_ids,
         "all_ys": all_ys,
         "all_yhats": all_yhats,
         "all_cna_mask_nonbinaries": all_cna_mask_nonbinaries,
