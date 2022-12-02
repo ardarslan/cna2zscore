@@ -7,14 +7,6 @@
 development = False
 
 
-# In[2]:
-
-
-if development:
-    get_ipython().run_line_magic('load_ext', 'autoreload')
-    get_ipython().run_line_magic('autoreload', '2')
-
-
 # In[3]:
 
 
@@ -59,7 +51,7 @@ rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
 rppa_df = rppa_df.dropna(axis=1)
 
 if development:
-    display(rppa_df)
+    print(rppa_df)
 
 print("Processed RPPA data.")
 
@@ -130,8 +122,8 @@ thresholded_cna_df = process_cna_df(cna_file_name=thresholded_cna_file_name)
 unthresholded_cna_df = process_cna_df(cna_file_name=unthresholded_cna_file_name)
 
 if development:
-    display(thresholded_cna_df)
-    display(unthresholded_cna_df)
+    print(thresholded_cna_df)
+    print(unthresholded_cna_df)
 
 print("Processed CNA data.")
 
@@ -154,8 +146,8 @@ cancer_type_df["cancer_type"] = cancer_type_df["cancer_type"].swifter.apply(lamb
 cancer_type_one_hot_df = pd.get_dummies(data=cancer_type_df, columns=["cancer_type"])
 
 if development:
-    display(cancer_type_df)
-    display(cancer_type_one_hot_df)
+    print(cancer_type_df)
+    print(cancer_type_one_hot_df)
 
 print("Processed Cancer Type data...")
 
@@ -216,7 +208,7 @@ tumor_purity_df = tumor_purity_df[tumor_purity_df["sample_id"].swifter.apply(lam
 tumor_purity_df["sample_id"] = tumor_purity_df["sample_id"].swifter.apply(lambda x: x[:15])
 
 if development:
-    display(tumor_purity_df)
+    print(tumor_purity_df)
 
 print("Processed Tumor Purity data.")
 
@@ -249,7 +241,7 @@ gex_df.reset_index(drop=False, inplace=True)
 gex_df.rename(columns={"index": "sample_id"}, inplace=True)
 
 if development:
-    display(gex_df)
+    print(gex_df)
 
 print("Processed GEX data.")
 # # Find intersecting sample IDs and columns
