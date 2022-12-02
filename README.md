@@ -33,11 +33,14 @@ rm -rf raw.zip
 cd ..
 ```
 
-Run the following notebooks in the given order:
+Run the following lines to process raw data:
 
 ```
-nbs/hgnc_symbol_to_entrezgene_id_mapper.ipynb
-nbs/data_processor.ipynb
+cd scripts
+python3 ensembl_id_to_entrezgene_id_mapper.py
+python3 hgnc_symbol_to_entrezgene_id_mapper.py
+bsub -n 4 -W 04:00 -R "rusage[mem=16384]" python data_processor.py
+cd ..
 ```
 
 # Or download the processed data
@@ -53,9 +56,9 @@ cd ..
 
 # Run the code
 
-DATASET: cnapurity2gex | rppa2gex | avggexsubtype2gex
+DATASET: thresholdedcnapurity2gex | cnapurity2gex | rppa2gex
 
-CANCER_TYPE: blca | lusc | ov | all
+CANCER_TYPE: blca | all
 
 NORMALIZE_INPUT: true | false
 
