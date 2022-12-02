@@ -193,8 +193,10 @@ def save_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) ->
 
 
 def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], entrezgene_ids: List[int], logger: logging.Logger) -> None:
-    experiment_dir = get_experiment_dir(cfg=cfg)
     logger.log(level=logging.INFO, msg="Saving test results...")
+
+    experiment_dir = get_experiment_dir(cfg=cfg)
+
     all_ground_truths_df = pd.DataFrame(data=test_results_dict["all_ys"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
     all_predictions_df = pd.DataFrame(data=test_results_dict["all_yhats"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
     all_cna_mask_nonbinaries_df = pd.DataFrame(data=test_results_dict["all_cna_mask_nonbinaries"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
