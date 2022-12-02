@@ -47,7 +47,7 @@ tumor_sample_ids = ["0" + str(i) for i in range(1, 10)]
 
 # In[6]:
 
-
+print("Processing RPPA data...")
 rppa_file_name = "TCGA-RPPA-pancan-clean.xena"
 
 rppa_df = pd.read_csv(os.path.join(data_dir, "raw", rppa_file_name), sep="\t")
@@ -61,12 +61,13 @@ rppa_df = rppa_df.dropna(axis=1)
 if development:
     display(rppa_df)
 
+print("Processed RPPA data.")
 
 # # Process Thresholded and Unthresholded CNA Data
 
 # In[7]:
 
-
+print("Processing CNA data...")
 thresholded_cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_all_thresholded.by_genes"
 unthresholded_cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_all_data_by_genes"
 
@@ -82,7 +83,7 @@ def process_cna_df(cna_file_name):
     if development:
         cna_df = pd.read_csv(os.path.join(data_dir, "raw", cna_file_name), sep="\t", nrows=1000)
     else:
-        cna_df = pd.read_csv(os.path.join(data_dir, "raw", cna_file_name), sep="\t")  
+        cna_df = pd.read_csv(os.path.join(data_dir, "raw", cna_file_name), sep="\t")
 
     for index, row in cna_df.iterrows():
         sample_splitted = row["Sample"].split("|")
@@ -122,7 +123,7 @@ def process_cna_df(cna_file_name):
     cna_df.reset_index(drop=False, inplace=True)
     cna_df = cna_df.rename_axis(None, axis=1)
     cna_df.rename(columns={"index": "sample_id"}, inplace=True)
-    
+
     return cna_df
 
 thresholded_cna_df = process_cna_df(cna_file_name=thresholded_cna_file_name)
@@ -132,11 +133,13 @@ if development:
     display(thresholded_cna_df)
     display(unthresholded_cna_df)
 
+print("Processed CNA data.")
 
 # # Process Cancer Type Data
 
 # In[8]:
 
+print("Processing Cancer Type data...")
 
 cancer_type_file_name = "TCGA_phenotype_denseDataOnlyDownload.tsv"
 cancer_type_full_name_to_abbrreviation_mapping_file_name = "cancer_type_full_name_to_abbrreviation_mapping.tsv"
@@ -154,11 +157,13 @@ if development:
     display(cancer_type_df)
     display(cancer_type_one_hot_df)
 
+print("Processed Cancer Type data...")
 
 # # Process Tumor Purity Data
 
 # In[9]:
 
+print("Processing Tumor Purity data...")
 
 tumor_purity_cpe_file_name = "tumor_purity.csv"
 tumor_purity_estimate_file_name = "tumor_purity_ESTIMATE.csv"
@@ -176,11 +181,11 @@ for _, row in tumor_purity_cpe_df.iterrows():
     if not pd.isnull(purity_cpe):
         tumor_sample_id_purity_mapping[sample_id] = float(purity_cpe.replace(",", "."))
         continue
-    
+
     if not pd.isnull(purity_absolute):
         tumor_sample_id_purity_mapping[sample_id] = float(purity_absolute.replace(",", "."))
         continue
-    
+
     if not pd.isnull(purity_estimate):
         tumor_sample_id_purity_mapping[sample_id] = float(purity_estimate.replace(",", "."))
         continue
@@ -213,11 +218,12 @@ tumor_purity_df["sample_id"] = tumor_purity_df["sample_id"].swifter.apply(lambda
 if development:
     display(tumor_purity_df)
 
+print("Processed Tumor Purity data.")
 
 # # Process GEX Data
 
 # In[10]:
-
+print("Processing GEX data...")
 
 ensembl_id_to_entrezgene_id_mapping_file_name = "ensembl_id_to_entrezgene_id_mapping.tsv"
 gex_file_name = "tcga_gene_expected_count"
@@ -245,11 +251,10 @@ gex_df.rename(columns={"index": "sample_id"}, inplace=True)
 if development:
     display(gex_df)
 
-
+print("Processed GEX data.")
 # # Find intersecting sample IDs and columns
 
 # In[11]:
-
 
 gex_sample_ids = set(gex_df["sample_id"].tolist())
 unthresholded_cna_sample_ids = set(unthresholded_cna_df["sample_id"].tolist())
@@ -267,7 +272,7 @@ intersecting_columns = ["sample_id"] + sorted(list(gex_gene_ids.intersection(unt
 # # Save data
 
 # In[12]:
-
+print("Saving data...")
 
 rppa_df = rppa_df[rppa_df["sample_id"].swifter.apply(lambda x: x in intersecting_sample_ids)]
 rppa_df = rppa_df.sort_values(by="sample_id")
@@ -287,23 +292,21 @@ print("unthresholded_cna_df.shape:", unthresholded_cna_df.shape)
 tumor_purity_df = tumor_purity_df[tumor_purity_df["sample_id"].swifter.apply(lambda x: x in intersecting_sample_ids)]
 tumor_purity_df = tumor_purity_df.sort_values(by="sample_id")
 tumor_purity_df.to_csv(os.path.join(data_dir, processed_folder_name, "tumor_purity.tsv"), sep="\t", index=False)
+print("tumor_purity_df.shape:", tumor_purity_df.shape)
 
 cancer_type_df = cancer_type_df[cancer_type_df["sample_id"].swifter.apply(lambda x: x in intersecting_sample_ids)]
 cancer_type_df = cancer_type_df.sort_values(by="sample_id")
 cancer_type_df.to_csv(os.path.join(data_dir, processed_folder_name, "cancer_type.tsv"), sep="\t", index=False)
+print("cancer_type_df.shape:", cancer_type_df.shape)
 
 cancer_type_one_hot_df = cancer_type_one_hot_df[cancer_type_one_hot_df["sample_id"].swifter.apply(lambda x: x in intersecting_sample_ids)]
 cancer_type_one_hot_df = cancer_type_one_hot_df.sort_values(by="sample_id")
 cancer_type_one_hot_df.to_csv(os.path.join(data_dir, processed_folder_name, "cancer_type_one_hot.tsv"), sep="\t", index=False)
+print("cancer_type_one_hot_df.shape", cancer_type_one_hot_df.shape)
 
 gex_df = gex_df[gex_df["sample_id"].swifter.apply(lambda x: x in intersecting_sample_ids)][intersecting_columns]
 gex_df = gex_df.sort_values(by="sample_id")
 gex_df.to_csv(os.path.join(data_dir, processed_folder_name, "gex.tsv"), sep="\t", index=False)
 print("gex_df.shape:", gex_df.shape)
 
-
-# In[ ]:
-
-
-
-
+print("Saved data.")
