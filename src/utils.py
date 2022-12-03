@@ -204,85 +204,6 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     all_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t", index=False)
 
 
-# def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], entrezgene_ids: List[int], logger: logging.Logger) -> None:
-#     logger.log(level=logging.INFO, msg="Saving test results...")
-#     experiment_dir = get_experiment_dir(cfg=cfg)
-
-#     all_ground_truths = test_results_dict["all_ground_truths"]
-#     all_predictions = test_results_dict["all_predictions"]
-#     all_cna_mask_nonbinaries = test_results_dict["all_cna_mask_nonbinaries"]
-#     all_cancer_types = test_results_dict["all_cancer_types"]
-#     all_loss = test_results_dict["all_loss"]
-#     cna_loss = test_results_dict["cna_loss"]
-#     noncna_loss = test_results_dict["noncna_loss"]
-#     all_corr = test_results_dict["all_corr"]
-#     cna_corr = test_results_dict["cna_corr"]
-#     noncna_corr = test_results_dict["noncna_corr"]
-#     all_p_value = test_results_dict["all_p_value"]
-#     cna_p_value = test_results_dict["cna_p_value"]
-#     noncna_p_value = test_results_dict["noncna_p_value"]
-
-#     best_predicted_20_genes = test_results_dict["best_predicted_20_genes"]
-#     worst_predicted_20_genes = test_results_dict["worst_predicted_20_genes"]
-
-#     all_ground_truths_df = pd.DataFrame(data=all_ground_truths, columns=entrezgene_ids)
-#     all_predictions_df = pd.DataFrame(data=all_predictions, columns=entrezgene_ids)
-#     all_cna_mask_nonbinaries_df = pd.DataFrame(data=all_cna_mask_nonbinaries, columns=entrezgene_ids)
-
-#     test_evaluation_metrics_df = pd.DataFrame.from_dict({
-#         "metric_name": [
-#                         f"all_{cfg['loss_function']}",
-#                         f"cna_{cfg['loss_function']}",
-#                         f"noncna_{cfg['loss_function']}",
-#                          "all_corr",
-#                          "cna_corr",
-#                          "noncna_corr",
-#                          "all_p_value",
-#                          "cna_p_value",
-#                          "noncna_p_value"
-#                         ],
-#         "metric_value": [
-#                          all_loss,
-#                          cna_loss,
-#                          noncna_loss,
-#                          all_corr,
-#                          cna_corr,
-#                          noncna_corr,
-#                          all_p_value,
-#                          cna_p_value,
-#                          noncna_p_value
-#                         ]
-#     })
-#     best_predicted_20_genes_df = pd.DataFrame(data=best_predicted_20_genes, columns=["entrezgene_id", "normalized_loss"])
-#     worst_predicted_20_genes_df = pd.DataFrame(data=worst_predicted_20_genes, columns=["entrezgene_id", "normalized_loss"])
-
-#     os.makedirs(os.path.join(experiment_dir, "test_results"), exist_ok=True)
-#     all_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t", index=False)
-#     all_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t", index=False)
-#     all_cna_mask_nonbinaries_df.to_csv(os.path.join(experiment_dir, "test_results", "all_cna_mask_nonbinaries.tsv", sep="\t", index=False))
-#     test_evaluation_metrics_df.to_csv(os.path.join(experiment_dir, "test_results", "evaluation_metrics.tsv"), sep="\t", index=False)
-#     best_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "best_predicted_20_genes.tsv"), sep="\t", index=False)
-#     worst_predicted_20_genes_df.to_csv(os.path.join(experiment_dir, "test_results", "worst_predicted_20_genes.tsv"), sep="\t", index=False)
-
-#     all_ground_truths_1d = all_ground_truths.ravel()
-#     all_predictions_1d = all_predictions.ravel()
-
-#     bottom_left = np.maximum(np.quantile(all_ground_truths_1d, 0.01), np.quantile(all_predictions_1d, 0.01))
-#     top_right = np.minimum(np.quantile(all_ground_truths_1d, 0.99), np.quantile(all_predictions_1d, 0.99))
-
-#     plt.figure(figsize=(12, 12))
-#     plt.title(f"Pearson Corr: {np.round(all_corr, 2)}, P-value: {np.round(all_p_value, 2)}", fontsize=32)
-#     plt.scatter(x=all_ground_truths_1d, y=all_predictions_1d, alpha=0.1)
-#     plt.xlabel("Ground truth GEX values", fontsize=28)
-#     plt.ylabel("Predicted GEX values", fontsize=28)
-#     plt.xlim(bottom_left, top_right)
-#     plt.ylim(bottom_left, top_right)
-#     plt.plot([bottom_left, top_right], [bottom_left, top_right], color='r')
-#     plt.xticks(fontsize=18)
-#     plt.yticks(fontsize=18)
-#     plt.savefig(os.path.join(experiment_dir, "test_results", "scatter_plot.png"))
-
-
 def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:
     logger.log(level=logging.INFO, msg="Loading the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
@@ -320,7 +241,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     # model
     parser.add_argument("--model", type=str, default="mlp", help="Which model to use.")
     parser.add_argument("--num_hidden_layers", type=int, default=1, help="Number of layers except the output layer.")
-    parser.add_argument("--hidden_dimension", default="max", help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
+    parser.add_argument("--hidden_dimension", default=5000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
     parser.add_argument("--hidden_activation", type=str, default="relu", help="Activation function used to activate each hidden layer's (batch normalized) output.")
     parser.add_argument("--use_residual_connection", type=str2bool, default=False, nargs='?', const=True, help="Whether to use residual connection between hidden layers or not.")
     parser.add_argument("--use_batch_normalization", type=str2bool, default=True, nargs='?', const=True, help="Whether to use batch normalization after each hidden layer or not.")
