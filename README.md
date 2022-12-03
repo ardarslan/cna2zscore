@@ -72,5 +72,5 @@ USE_RESIDUAL_CONNECTION: true | false
 
 ```
 cd src
-bsub -n 2 -W 24:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python main.py --dataset DATASET --cancer_type CANCER_TYPE --normalize_input NORMALIZE_INPUT --normalize_output NORMALIZE_OUTPUT --num_hidden_layers NUM_HIDDEN_LAYERS --hidden_dimension HIDDEN_DIMENSION --use_residual_connection USE_RESIDUAL_CONNECTION
+bsub -n 4 -W 24:00 -R "rusage[mem=32768, ngpus_excl_p=1]" python main.py --dataset DATASET --cancer_type CANCER_TYPE --normalize_input NORMALIZE_INPUT --normalize_output NORMALIZE_OUTPUT --num_hidden_layers NUM_HIDDEN_LAYERS --hidden_dimension HIDDEN_DIMENSION --use_residual_connection USE_RESIDUAL_CONNECTION
 ```
