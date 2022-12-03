@@ -124,9 +124,9 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
 
 
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset) -> Dict[str, DataLoader]:
-    train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=1, shuffle=True)
-    val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=cfg["effective_batch_size"], shuffle=False)
-    test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=cfg["effective_batch_size"], shuffle=False)
+    train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=cfg["batch_size"], shuffle=True)
+    val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=cfg["batch_size"], shuffle=False)
+    test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=cfg["batch_size"], shuffle=False)
 
     data_loaders = {
         "train": train_data_loader,
@@ -255,7 +255,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # training
     parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
-    parser.add_argument("--effective_batch_size", type=int, default=32, help="Batch size.")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--l1_reg_coeff", type=float, default=0.0, help="L1 regularization coefficient.")
     parser.add_argument("--l2_reg_coeff", type=float, default=0.0, help="L2 regularization coefficient.")
