@@ -1,24 +1,28 @@
+import os
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
+from utils import get_experiment_dir
 
-def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> Tuple[np.ndarray, np.ndarray, np.float32, np.float32, np.float32, List[Tuple[int, np.float32]], List[Tuple[int, np.float32]]]:
+
+def save_predictions_and_ground_truths_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
     model.eval()
 
     all_sample_ids = []
-    all_ys = []
-    all_yhats = []
+    all_ground_truths = []
+    all_predictions = []
 
     total_loss = 0.0
-    total_sample_count = 0.0
+    total_count = 0.0
 
     with torch.no_grad():
-        for batch in data_loaders["test"]:
+        for batch in data_loaders[split_name]:
             sample_id_indices = batch["sample_id_indices"]
             X = batch["X"]
             y = batch["y"]
@@ -33,24 +37,31 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
                 # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
                 yhat = yhat * dataset.y_train_std + dataset.y_train_mean
 
+            total_count += float(y.shape[0] * y.shape[1])
             total_loss += float(loss_function(yhat, y))
-            total_sample_count += X.shape[0]
 
             all_sample_ids.append(np.array([dataset.sample_ids[int(sample_id_index)] for sample_id_index in sample_id_indices.numpy()]))
-            all_ys.append(y.cpu().numpy())
-            all_yhats.append(yhat.cpu().numpy())
+            all_ground_truths.append(y.cpu().numpy())
+            all_predictions.append(yhat.cpu().numpy())
 
     all_sample_ids = np.hstack(all_sample_ids)
-    all_ys = np.vstack(all_ys)
-    all_yhats = np.vstack(all_yhats)
-    all_loss = total_loss / total_sample_count
+    all_ground_truths = np.vstack(all_ground_truths)
+    all_predictions = np.vstack(all_predictions)
+    all_loss = total_loss / total_count
 
-    logger.log(level=logging.INFO, msg=f"Test {cfg['loss_function']} loss is {all_loss}.")
+    logger.log(level=logging.INFO, msg=f"{split_name.capitalize()} {cfg['loss_function']} loss is {all_loss}.")
 
-    test_results_dict = {
-        "all_sample_ids": all_sample_ids,
-        "all_ys": all_ys,
-        "all_yhats": all_yhats,
-    }
+    logger.log(level=logging.INFO, msg=f"Saving {split_name} results...")
 
-    return test_results_dict
+    experiment_dir = get_experiment_dir(cfg=cfg)
+
+    all_ground_truths_df = pd.DataFrame(data=all_ground_truths, columns=dataset.entrezgene_ids, index=all_sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
+    all_predictions_df = pd.DataFrame(data=all_predictions, columns=dataset.entrezgene_ids, index=all_sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
+
+    all_ground_truths_df.to_csv(os.path.join(experiment_dir, f"{split_name}_ground_truths.tsv"), sep="\t", index=False)
+    all_predictions_df.to_csv(os.path.join(experiment_dir, f"{split_name}_predictions.tsv"), sep="\t", index=False)
+
+
+def save_predictions_and_ground_truths(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
+    for split_name in ["val", "test"]:
+        save_predictions_and_ground_truths_split(cfg=cfg, data_loaders=data_loaders, split_name=split_name, model=model, loss_function=loss_function, dataset=dataset, logger=logger)

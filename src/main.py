@@ -2,12 +2,12 @@ import numpy as np
 
 from train import train
 from validate import validate
-from test import test
+from test import save_predictions_and_ground_truths
 from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_model_hidden_dimension, set_device, get_logger, \
                    get_dataset, get_data_loaders, get_model, get_optimizer, \
                    get_scheduler, get_loss_function, save_model, save_cfg, \
-                   load_model, set_early_stopping_epoch, save_test_results)
+                   load_model, set_early_stopping_epoch)
 
 
 if __name__ == "__main__":
@@ -55,6 +55,4 @@ if __name__ == "__main__":
     del scheduler
 
     model = load_model(cfg=cfg, dataset=dataset, logger=logger)
-    test_results_dict = test(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
-
-    save_test_results(cfg=cfg, test_results_dict=test_results_dict, entrezgene_ids=dataset.entrezgene_ids, logger=logger)
+    save_predictions_and_ground_truths(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)

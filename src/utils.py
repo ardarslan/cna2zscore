@@ -190,18 +190,6 @@ def save_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) ->
     torch.save(model.state_dict(), os.path.join(experiment_dir, "best_model"))
 
 
-def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], entrezgene_ids: List[int], logger: logging.Logger) -> None:
-    logger.log(level=logging.INFO, msg="Saving test results...")
-
-    experiment_dir = get_experiment_dir(cfg=cfg)
-
-    all_ground_truths_df = pd.DataFrame(data=test_results_dict["all_ys"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
-    all_predictions_df = pd.DataFrame(data=test_results_dict["all_yhats"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
-
-    all_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_ground_truths.tsv"), sep="\t", index=False)
-    all_predictions_df.to_csv(os.path.join(experiment_dir, "test_predictions.tsv"), sep="\t", index=False)
-
-
 def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:
     logger.log(level=logging.INFO, msg="Loading the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
