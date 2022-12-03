@@ -124,11 +124,9 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
 
 
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset) -> Dict[str, DataLoader]:
-    batch_size = cfg["batch_size"]
-
-    train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=batch_size, shuffle=True)
-    val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=batch_size, shuffle=False)
-    test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=batch_size, shuffle=False)
+    train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=1, shuffle=True)
+    val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=cfg["effective_batch_size"], shuffle=False)
+    test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=cfg["effective_batch_size"], shuffle=False)
 
     data_loaders = {
         "train": train_data_loader,
@@ -242,9 +240,9 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--model", type=str, default="mlp", help="Which model to use.")
     parser.add_argument("--num_hidden_layers", type=int, default=1, help="Number of layers except the output layer.")
     parser.add_argument("--hidden_dimension", default=5000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
-    parser.add_argument("--hidden_activation", type=str, default="relu", help="Activation function used to activate each hidden layer's (batch normalized) output.")
+    parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
     parser.add_argument("--use_residual_connection", type=str2bool, default=False, nargs='?', const=True, help="Whether to use residual connection between hidden layers or not.")
-    parser.add_argument("--use_batch_normalization", type=str2bool, default=True, nargs='?', const=True, help="Whether to use batch normalization after each hidden layer or not.")
+    parser.add_argument("--use_batch_normalization", type=str2bool, default=False, nargs='?', const=True, help="Whether to use batch normalization after each hidden layer or not.")
     parser.add_argument("--dropout", type=float, default=0.0, help="Probability of zeroing out an entry in a given vector.")
 
     # optimizer
@@ -257,7 +255,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # training
     parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
+    parser.add_argument("--effective_batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--l1_reg_coeff", type=float, default=0.0, help="L1 regularization coefficient.")
     parser.add_argument("--l2_reg_coeff", type=float, default=0.0, help="L2 regularization coefficient.")

@@ -31,7 +31,7 @@ if __name__ == "__main__":
     best_val_loss = np.inf
     num_epochs_val_loss_not_decreased = 0
 
-    for epoch in range(cfg["num_epochs"]):
+    for epoch in range(1, cfg["num_epochs"] + 1):
         train(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=train_loss_function, dataset=dataset, optimizer=optimizer)
         loss_dict = validate(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, epoch=epoch, logger=logger)
         current_val_loss = loss_dict["val"]
