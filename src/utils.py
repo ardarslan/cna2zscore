@@ -199,13 +199,9 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
 
     all_ground_truths_df = pd.DataFrame(data=test_results_dict["all_ys"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
     all_predictions_df = pd.DataFrame(data=test_results_dict["all_yhats"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
-    all_cna_mask_nonbinaries_df = pd.DataFrame(data=test_results_dict["all_cna_mask_nonbinaries"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
-    all_cancer_types_df = pd.DataFrame.from_dict({"sample_id": test_results_dict["all_sample_ids"], "cancer_type": test_results_dict["all_cancer_types"]})
 
     all_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t", index=False)
     all_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t", index=False)
-    all_cna_mask_nonbinaries_df.to_csv(os.path.join(experiment_dir, "test_results", "cna_mask_nonbinaries.tsv"), sep="\t", index=False)
-    all_cancer_types_df.to_csv(os.path.join(experiment_dir, "test_results", "cancer_types.tsv"), sep="\t", index=False)
 
 
 # def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], entrezgene_ids: List[int], logger: logging.Logger) -> None:
@@ -339,7 +335,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scheduler_patience", type=int, default=5, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
 
     # training
-    parser.add_argument("--num_epochs", type=int, default=1, help="Number of training epochs.") # CHANGEME
+    parser.add_argument("--num_epochs", type=int, default=1, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--l1_reg_coeff", type=float, default=0.0, help="L1 regularization coefficient.")
@@ -347,7 +343,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="../cna2gex_checkpoints")
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")

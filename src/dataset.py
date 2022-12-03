@@ -35,8 +35,6 @@ class Dataset(torch.utils.data.Dataset):
         self.logger = logger
 
         self._process_dataset()
-        self.input_dimension = self.X.shape[1]
-        self.output_dimension = self.y.shape[1]
 
         self.device = cfg["device"]
         self.len_dataset = self.X.shape[0]
@@ -67,18 +65,16 @@ class Dataset(torch.utils.data.Dataset):
     def _process_dataset(self) -> None:
         output_df = pd.read_csv(os.path.join(self.processed_data_dir, self.output_data_type + ".tsv"), sep="\t")
 
-        mask_df = pd.read_csv(os.path.join(self.processed_data_dir, "thresholded_cna.tsv"), sep="\t")
-
-        cancer_type_df = pd.read_csv(os.path.join(self.processed_data_dir, "cancer_type.tsv"), sep="\t")
-
         if self.cfg["cancer_type"] != "all":
+            cancer_type_df = pd.read_csv(os.path.join(self.processed_data_dir, "cancer_type.tsv"), sep="\t")
             cancer_type_sample_ids = cancer_type_df[cancer_type_df["cancer_type"] == self.cfg["cancer_type"]]["sample_id"].tolist()
 
         input_df = None
 
         for current_input_data_type in self.input_data_types:
             current_input_data_type_df = pd.read_csv(os.path.join(self.processed_data_dir, current_input_data_type + ".tsv"), sep="\t")
-            if current_input_data_type in ["cna", "cna_thresholded"]:
+
+            if current_input_data_type in ["unthresholded_cna", "thresholded_cna"]:
                 assert current_input_data_type_df.columns.tolist() == output_df.columns.tolist(), f"Columns of {current_input_data_type} dataframe are not the same with columns of output dataframe."
 
             if self.cfg["cancer_type"] != "all":
@@ -99,12 +95,8 @@ class Dataset(torch.utils.data.Dataset):
                                 on="sample_id",
                                 how="inner")
 
-        assert output_df.columns.tolist() == mask_df.columns.tolist(), "Columns of output dataframe are not the same with columns of mask dataframe."
-
-        # merge input, output and mask dataframes
+        # merge input and output dataframes
         merged_df = pd.merge(left=input_df, right=output_df, how="inner", on="sample_id")
-        merged_df = pd.merge(left=merged_df, right=mask_df, how="inner", on="sample_id")
-        merged_df = pd.merge(left=merged_df, right=cancer_type_df, how="inner", on="sample_id")
         merged_df = shuffle(merged_df, random_state=self.seed)
         self.sample_ids = merged_df["sample_id"].values
         merged_df.drop(columns=["sample_id"], inplace=True)
@@ -113,14 +105,11 @@ class Dataset(torch.utils.data.Dataset):
 
         self.input_dimension = input_df.shape[1] - 1
         self.output_dimension = output_df.shape[1] - 1
-        self.mask_dimension = mask_df.shape[1] - 1
 
         self.X = merged_df.values[:, :self.input_dimension]
-        self.y = merged_df.values[:, self.input_dimension:self.input_dimension + self.output_dimension]
-        self.mask = merged_df.values[:, self.input_dimension + self.output_dimension:self.input_dimension + self.output_dimension + self.mask_dimension]
-        self.cancer_types = merged_df.values[:, self.input_dimension + self.output_dimension + self.mask_dimension:]
+        self.y = merged_df.values[:, self.input_dimension:]
 
-        self.logger.log(level=logging.INFO, msg=f"X.shape: {self.X.shape}, y.shape: {self.y.shape}, mask.shape: {self.mask.shape}")
+        self.logger.log(level=logging.INFO, msg=f"X.shape: {self.X.shape}, y.shape: {self.y.shape}")
 
         self.entrezgene_ids = [column for column in output_df.columns if column != "sample_id"]
 
@@ -128,9 +117,7 @@ class Dataset(torch.utils.data.Dataset):
         return {
                 "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
                 "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32),
-                "mask": torch.as_tensor(self.mask[idx, :], dtype=torch.float32),
                 "sample_id": torch.as_tensor(self.sample_ids[idx, :], dtype=torch.StringType),
-                "cancer_type": torch.as_tensor(self.cancer_types[idx, :], dtype=torch.StringType)
                }
 
     def __len__(self) -> int:

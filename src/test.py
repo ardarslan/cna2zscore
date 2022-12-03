@@ -13,8 +13,6 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
     all_sample_ids = []
     all_ys = []
     all_yhats = []
-    all_cna_mask_nonbinaries = []
-    all_cancer_types = []
 
     total_loss = 0.0
     total_sample_count = 0.0
@@ -24,8 +22,6 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             sample_ids = batch["sample_id"]
             X = batch["X"]
             y = batch["y"]
-            cna_mask_nonbinary = batch["mask"]
-            cancer_types = batch["cancer_type"]
 
             if cfg["normalize_input"]:
                 X = (X - dataset.X_train_mean) / dataset.X_train_std
@@ -43,14 +39,10 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             all_sample_ids.append(sample_ids.numpy().ravel())
             all_ys.append(y.cpu().numpy())
             all_yhats.append(yhat.cpu().numpy())
-            all_cna_mask_nonbinaries.append(cna_mask_nonbinary.numpy())
-            all_cancer_types.append(cancer_types.numpy().ravel())
 
     all_sample_ids = np.hstack(all_sample_ids)
     all_ys = np.vstack(all_ys)
     all_yhats = np.vstack(all_yhats)
-    all_cna_mask_nonbinaries = np.vstack(all_cna_mask_nonbinaries)
-    all_cancer_types = np.hstack(all_cancer_types)
     all_loss = total_loss / total_sample_count
 
     logger.log(level=logging.INFO, msg=f"Test {cfg['loss_function']} loss is {all_loss}.")
@@ -59,8 +51,6 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
         "all_sample_ids": all_sample_ids,
         "all_ys": all_ys,
         "all_yhats": all_yhats,
-        "all_cna_mask_nonbinaries": all_cna_mask_nonbinaries,
-        "all_cancer_types": all_cancer_types
     }
 
     return test_results_dict

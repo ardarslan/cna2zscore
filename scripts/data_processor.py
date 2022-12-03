@@ -143,11 +143,8 @@ cancer_type_df = cancer_type_df.rename(columns={"sample": "sample_id", "_primary
 cancer_type_df = cancer_type_df[["sample_id", "cancer_type"]]
 cancer_type_df["cancer_type"] = cancer_type_df["cancer_type"].swifter.apply(lambda x: cancer_type_full_name_to_abbreviation_mapping[x])
 
-cancer_type_one_hot_df = pd.get_dummies(data=cancer_type_df, columns=["cancer_type"])
-
 if development:
     print(cancer_type_df)
-    print(cancer_type_one_hot_df)
 
 print("Processed Cancer Type data...")
 
@@ -308,8 +305,7 @@ cancer_type_df = cancer_type_df.sort_values(by="sample_id")
 cancer_type_df.to_csv(os.path.join(data_dir, processed_folder_name, "cancer_type.tsv"), sep="\t", index=False)
 print("cancer_type_df.shape:", cancer_type_df.shape)
 
-cancer_type_one_hot_df = cancer_type_one_hot_df[cancer_type_one_hot_df["sample_id"].swifter.apply(lambda x: x in intersecting_sample_ids)]
-cancer_type_one_hot_df = cancer_type_one_hot_df.sort_values(by="sample_id")
+cancer_type_one_hot_df = pd.get_dummies(data=cancer_type_df, columns=["cancer_type"])
 cancer_type_one_hot_df.to_csv(os.path.join(data_dir, processed_folder_name, "cancer_type_one_hot.tsv"), sep="\t", index=False)
 print("cancer_type_one_hot_df.shape", cancer_type_one_hot_df.shape)
 
