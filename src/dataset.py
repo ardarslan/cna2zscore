@@ -98,7 +98,8 @@ class Dataset(torch.utils.data.Dataset):
         # merge input and output dataframes
         merged_df = pd.merge(left=input_df, right=output_df, how="inner", on="sample_id")
         merged_df = shuffle(merged_df, random_state=self.seed)
-        self.sample_ids = merged_df["sample_id"].values
+        self.sample_ids = merged_df["sample_id"].values.ravel()
+        self.sample_id_indices = np.arange(self.sample_ids.shape[0])
         merged_df.drop(columns=["sample_id"], inplace=True)
 
         self.one_hot_column_indices = [index for index, column in enumerate(merged_df.columns) if str(column).startswith("cancer_type_")]
@@ -117,7 +118,7 @@ class Dataset(torch.utils.data.Dataset):
         return {
                 "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
                 "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32),
-                "sample_id": torch.as_tensor(self.sample_ids[idx], dtype=torch.StringType),
+                "sample_id_indices": torch.as_tensor(self.sample_id_indices[idx], dtype=torch.long),
                }
 
     def __len__(self) -> int:

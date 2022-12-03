@@ -19,7 +19,7 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
 
     with torch.no_grad():
         for batch in data_loaders["test"]:
-            sample_ids = batch["sample_id"]
+            sample_id_indices = batch["sample_id_indices"]
             X = batch["X"]
             y = batch["y"]
 
@@ -36,7 +36,7 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             total_loss += float(loss_function(yhat, y))
             total_sample_count += X.shape[0]
 
-            all_sample_ids.append(sample_ids.numpy().ravel())
+            all_sample_ids.append(np.array([dataset.sample_ids[int(sample_id_index)] for sample_id_index in sample_id_indices.numpy()]))
             all_ys.append(y.cpu().numpy())
             all_yhats.append(yhat.cpu().numpy())
 
