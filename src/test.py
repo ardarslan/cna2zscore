@@ -11,7 +11,7 @@ from torch.utils.data import Dataset, DataLoader
 from utils import get_experiment_dir
 
 
-def save_predictions_and_ground_truths_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
+def save_predictions_and_ground_truths_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
     model.eval()
 
     all_sample_ids = []
@@ -62,6 +62,6 @@ def save_predictions_and_ground_truths_split(cfg: Dict[str, Any], data_loaders: 
     all_predictions_df.to_csv(os.path.join(experiment_dir, f"{split_name}_predictions.tsv"), sep="\t", index=False)
 
 
-def save_predictions_and_ground_truths(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
+def save_predictions_and_ground_truths(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
     for split_name in ["val", "test"]:
         save_predictions_and_ground_truths_split(cfg=cfg, data_loaders=data_loaders, split_name=split_name, model=model, loss_function=loss_function, dataset=dataset, logger=logger)

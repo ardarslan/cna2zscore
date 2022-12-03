@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 
-def validate_split(cfg: Dict[str, Any], data_loaders: List[DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger) -> np.float32:
+def validate_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger) -> np.float32:
     model.eval()
 
     with torch.no_grad():
