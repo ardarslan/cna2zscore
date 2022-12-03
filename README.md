@@ -39,7 +39,7 @@ Run the following lines to process raw data:
 cd scripts
 python3 ensembl_id_to_entrezgene_id_mapper.py
 python3 hgnc_symbol_to_entrezgene_id_mapper.py
-bsub -n 8 -W 04:00 -R "rusage[mem=32768, ngpus_excl_p=1]" python data_processor.py
+bsub -n 8 -W 04:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python data_processor.py
 cd ..
 ```
 
