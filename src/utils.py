@@ -196,12 +196,14 @@ def save_test_results(cfg: Dict[str, Any], test_results_dict: Dict[str, Any], en
     logger.log(level=logging.INFO, msg="Saving test results...")
 
     experiment_dir = get_experiment_dir(cfg=cfg)
+    test_results_dir = os.path.join(experiment_dir, "test_results")
+    os.makedirs(test_results_dir, exist_ok=True)
 
     all_ground_truths_df = pd.DataFrame(data=test_results_dict["all_ys"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
     all_predictions_df = pd.DataFrame(data=test_results_dict["all_yhats"], columns=entrezgene_ids, index=test_results_dict["all_sample_ids"]).reset_index(drop=False).rename(columns={"index": "sample_id"})
 
-    all_ground_truths_df.to_csv(os.path.join(experiment_dir, "test_results", "ground_truths.tsv"), sep="\t", index=False)
-    all_predictions_df.to_csv(os.path.join(experiment_dir, "test_results", "predictions.tsv"), sep="\t", index=False)
+    all_ground_truths_df.to_csv(os.path.join(test_results_dir, "ground_truths.tsv"), sep="\t", index=False)
+    all_predictions_df.to_csv(os.path.join(test_results_dir, "predictions.tsv"), sep="\t", index=False)
 
 
 def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:
