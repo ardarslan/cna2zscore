@@ -128,9 +128,9 @@ class Dataset(torch.utils.data.Dataset):
         return {
                 "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
                 "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32),
-                "mask": torch.as_tensor(self.mask[idx, :], device=self.device, dtype=torch.float32),
-                "sample_id": torch.as_tensor(self.sample_ids[idx, :], device=self.device, dtype=torch.StringType),
-                "cancer_type": torch.as_tensor(self.cancer_types[idx, :], device=self.device, dtype=torch.StringType)
+                "mask": torch.as_tensor(self.mask[idx, :], dtype=torch.float32),
+                "sample_id": torch.as_tensor(self.sample_ids[idx, :], dtype=torch.StringType),
+                "cancer_type": torch.as_tensor(self.cancer_types[idx, :], dtype=torch.StringType)
                }
 
     def __len__(self) -> int:

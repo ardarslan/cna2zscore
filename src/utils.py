@@ -340,7 +340,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # training
     parser.add_argument("--num_epochs", type=int, default=1, help="Number of training epochs.") # CHANGEME
-    parser.add_argument("--batch_size", type=int, default=8, help="Batch size.")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--l1_reg_coeff", type=float, default=0.0, help="L1 regularization coefficient.")
     parser.add_argument("--l2_reg_coeff", type=float, default=0.0, help="L2 regularization coefficient.")

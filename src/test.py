@@ -40,11 +40,11 @@ def test(cfg: Dict[str, Any], data_loaders: List[DataLoader], model: nn.Module, 
             total_loss += float(loss_function(yhat, y))
             total_sample_count += X.shape[0]
 
-            all_sample_ids.append(sample_ids.cpu().numpy().ravel())
+            all_sample_ids.append(sample_ids.numpy().ravel())
             all_ys.append(y.cpu().numpy())
             all_yhats.append(yhat.cpu().numpy())
-            all_cna_mask_nonbinaries.append(cna_mask_nonbinary.cpu().numpy())
-            all_cancer_types.append(cancer_types.cpu().numpy().ravel())
+            all_cna_mask_nonbinaries.append(cna_mask_nonbinary.numpy())
+            all_cancer_types.append(cancer_types.numpy().ravel())
 
     all_sample_ids = np.hstack(all_sample_ids)
     all_ys = np.vstack(all_ys)
