@@ -117,7 +117,7 @@ class Dataset(torch.utils.data.Dataset):
         return {
                 "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
                 "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32),
-                "sample_id": torch.as_tensor(self.sample_ids[idx, :], dtype=torch.StringType),
+                "sample_id": torch.as_tensor(self.sample_ids[idx], dtype=torch.StringType),
                }
 
     def __len__(self) -> int:
