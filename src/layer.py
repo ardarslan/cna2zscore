@@ -16,7 +16,7 @@ class InputLayer(nn.Module):
         else:
             raise Exception(f"Hidden layer activation {cfg['hidden_activation']} is not implemented yet.")
 
-        self.w = nn.Linear(input_dimension, cfg["hidden_dimension"])
+        self.w = nn.Linear(input_dimension, cfg["hidden_dimension"], bias=bool(1 - cfg["use_batch_normalization"]))
         self.bn = nn.BatchNorm1d(cfg["hidden_dimension"])
         self.dropout = nn.Dropout(cfg["dropout"])
 
@@ -47,13 +47,13 @@ class HiddenLayer(nn.Module):
             self.dropout = nn.Dropout(cfg['dropout'])
 
         if self.cfg["use_residual_connection"]:
-            self.w1 = nn.Linear(input_dimension, cfg["hidden_dimension"])
+            self.w1 = nn.Linear(input_dimension, cfg["hidden_dimension"], bias=bool(1 - cfg["use_batch_normalization"]))
             self.w2 = nn.Linear(cfg["hidden_dimension"], output_dimension)
             if cfg["use_batch_normalization"]:
                 self.bn1 = nn.BatchNorm1d(cfg["hidden_dimension"])
                 self.bn2 = nn.BatchNorm1d(output_dimension)
         else:
-            self.w1 = nn.Linear(input_dimension, output_dimension)
+            self.w1 = nn.Linear(input_dimension, output_dimension, bias=bool(1 - cfg["use_batch_normalization"]))
             if cfg["use_batch_normalization"]:
                 self.bn1 = nn.BatchNorm1d(output_dimension)
 
