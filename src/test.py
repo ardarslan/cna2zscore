@@ -49,7 +49,7 @@ def save_predictions_and_ground_truths_split(cfg: Dict[str, Any], data_loaders: 
     all_predictions = np.vstack(all_predictions)
     all_loss = total_loss / total_count
 
-    logger.log(level=logging.INFO, msg=f"{split_name.capitalize()} {cfg['loss_function']} loss is {all_loss}.")
+    logger.log(level=logging.INFO, msg=f"{split_name.capitalize()} {cfg['loss_function']} loss is {np.round(all_loss, 2)}.")
 
     logger.log(level=logging.INFO, msg=f"Saving {split_name} results...")
 
