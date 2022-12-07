@@ -62,13 +62,13 @@ def get_gene_based_evaluation_metrics(cfg: Dict[str, Any], all_ground_truths: pd
 
 
 def get_evaluation_metrics(cancer_type: str, all_ground_truths: pd.DataFrame, all_predictions: pd.DataFrame, thresholded_cna_mask: pd.DataFrame, current_sample_ids: List[str]) -> Dict[str, float]:
-    current_thresholded_cna_mask = thresholded_cna_mask[thresholded_cna_mask["sample_id"].isin(current_sample_ids)]
+    current_thresholded_cna_mask = thresholded_cna_mask[thresholded_cna_mask["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"])
     current_thresholded_cna_mask = (current_thresholded_cna_mask.values.ravel() != 0)
 
-    current_ground_truths = all_ground_truths[all_ground_truths["sample_id"].isin(current_sample_ids)]
+    current_ground_truths = all_ground_truths[all_ground_truths["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"])
     current_ground_truths = current_ground_truths.values.ravel()
 
-    current_predictions = all_predictions[all_predictions["sample_id"].isin(current_sample_ids)]
+    current_predictions = all_predictions[all_predictions["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"])
     current_predictions = current_predictions.values.ravel()
 
     current_cna_ground_truths = current_ground_truths[np.argwhere(current_thresholded_cna_mask)]
