@@ -36,13 +36,19 @@ def plot_distributions_of_gene_based_pearson_corrs(cfg: Dict[str, Any], all_grou
 
     plt.figure(figsize=(6, 6))
     plt.title(f"Ground Truths, Split: {split_name.capitalize()}, Median Pearson Corr: {np.round(np.median(ground_truth_corrs), 2)}")
+    plt.hist(ground_truth_corrs, bins=100)
+    plt.xlabel("Pearson correlation", fontsize=28)
+    plt.ylabel("Frequency", fontsize=28)
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "histograms", "ground_truths.png"))
-    plt.close()
+    plt.close("all")
 
     plt.figure(figsize=(6, 6))
     plt.title(f"Predictions, Split: {split_name.capitalize()}, Median Pearson Corr: {np.round(np.median(prediction_corrs), 2)}")
+    plt.hist(prediction_corrs, bins=100)
+    plt.xlabel("Pearson correlation", fontsize=28)
+    plt.ylabel("Frequency", fontsize=28)
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "histograms", "predictions.png"))
-    plt.close()
+    plt.close("all")
 
 
 def get_mse_corr_p_value(ground_truths: np.ndarray, predictions: np.ndarray) -> Tuple[float]:
@@ -91,10 +97,12 @@ def plot_scatter_plot(cfg: Dict[str, Any], split_name: str, current_cancer_type:
 
     current_ground_truths = all_ground_truths[all_ground_truths["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values.ravel()
     current_predictions = all_predictions[all_predictions["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values.ravel()
+    current_corr, current_p_value = pearsonr(x=current_ground_truths, y=current_predictions)
 
     plt.scatter(x=current_ground_truths, y=current_predictions, alpha=0.1)
-    plt.xlabel(f"Split: {split_name.capitalize()}, Cancer type: {current_cancer_type.capitalize()}, Ground truth GEX values", fontsize=28)
-    plt.ylabel(f"Split: {split_name.capitalize()}, Cancer type: {current_cancer_type.capitalize()}, Predicted GEX values", fontsize=28)
+    plt.xlabel("Ground truths", fontsize=28)
+    plt.ylabel("Predictions", fontsize=28)
+    plt.title(f"Split: {split_name.capitalize()}, Cancer type: {current_cancer_type.capitalize()}, Pearson Corr: {np.round(current_corr, 2)}, P-Value: {np.round(current_p_value, 2)}", fontsize=28)
     bottom_left = np.maximum(np.min(current_ground_truths), np.min(current_predictions))
     top_right = np.minimum(np.max(current_ground_truths), np.max(current_predictions))
     plt.xlim(bottom_left, top_right)
@@ -104,7 +112,7 @@ def plot_scatter_plot(cfg: Dict[str, Any], split_name: str, current_cancer_type:
     plt.yticks(fontsize=18)
     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "scatter_plots"), exist_ok=True)
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "scatter_plots", f"{current_cancer_type}.png"))
-    plt.close()
+    plt.close("all")
 
 
 def plot_box_plots(cfg: Dict[str, Any], split_name: str, current_cancer_type: str, current_sample_ids: List[str], all_ground_truths: pd.DataFrame, all_predictions: pd.DataFrame, thresholded_cna_mask: pd.DataFrame, dataset: Dataset) -> None:
@@ -130,7 +138,7 @@ def plot_box_plots(cfg: Dict[str, Any], split_name: str, current_cancer_type: st
     current_df.boxplot(column="current_ground_truths", by="current_thresholded_cna_mask", figsize=(10, 10), fontsize=15)
     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "ground_truths"), exist_ok=True)
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "ground_truths", f"{current_cancer_type}.png"))
-    plt.close()
+    plt.close("all")
 
     plt.figure(figsize=(6, 6))
     predictions_median_z_corr, predictions_median_z_p_value = pearsonr(current_grouped_df["current_thresholded_cna_mask"].values, current_grouped_df["current_ground_truths"].values)
@@ -138,7 +146,7 @@ def plot_box_plots(cfg: Dict[str, Any], split_name: str, current_cancer_type: st
     current_df.boxplot(column="current_predictions", by="current_thresholded_cna_mask", figsize=(10, 10), fontsize=15)
     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "predictions"), exist_ok=True)
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "predictions", f"{current_cancer_type}.png"))
-    plt.close()
+    plt.close("all")
 
 
 def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, thresholded_cna_mask: pd.DataFrame, logger: logging.Logger) -> None:
