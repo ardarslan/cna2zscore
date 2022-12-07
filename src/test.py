@@ -37,10 +37,12 @@ def plot_distributions_of_gene_based_pearson_corrs(cfg: Dict[str, Any], all_grou
     plt.figure(figsize=(6, 6))
     plt.title(f"Ground Truths, Split: {split_name.capitalize()}, Median Pearson Corr: {np.round(np.median(ground_truth_corrs), 2)}")
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "histograms", "ground_truths.png"))
+    plt.close()
 
     plt.figure(figsize=(6, 6))
     plt.title(f"Predictions, Split: {split_name.capitalize()}, Median Pearson Corr: {np.round(np.median(prediction_corrs), 2)}")
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "histograms", "predictions.png"))
+    plt.close()
 
 
 def get_mse_corr_p_value(ground_truths: np.ndarray, predictions: np.ndarray) -> Tuple[float]:
@@ -102,6 +104,7 @@ def plot_scatter_plot(cfg: Dict[str, Any], split_name: str, current_cancer_type:
     plt.yticks(fontsize=18)
     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "scatter_plots"), exist_ok=True)
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "scatter_plots", f"{current_cancer_type}.png"))
+    plt.close()
 
 
 def plot_box_plots(cfg: Dict[str, Any], split_name: str, current_cancer_type: str, current_sample_ids: List[str], all_ground_truths: pd.DataFrame, all_predictions: pd.DataFrame, thresholded_cna_mask: pd.DataFrame, dataset: Dataset) -> None:
@@ -127,6 +130,7 @@ def plot_box_plots(cfg: Dict[str, Any], split_name: str, current_cancer_type: st
     current_df.boxplot(column="current_ground_truths", by="current_thresholded_cna_mask", figsize=(10, 10), fontsize=15)
     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "ground_truths"), exist_ok=True)
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "ground_truths", f"{current_cancer_type}.png"))
+    plt.close()
 
     plt.figure(figsize=(6, 6))
     predictions_median_z_corr, predictions_median_z_p_value = pearsonr(current_grouped_df["current_thresholded_cna_mask"].values, current_grouped_df["current_ground_truths"].values)
@@ -134,6 +138,7 @@ def plot_box_plots(cfg: Dict[str, Any], split_name: str, current_cancer_type: st
     current_df.boxplot(column="current_predictions", by="current_thresholded_cna_mask", figsize=(10, 10), fontsize=15)
     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "predictions"), exist_ok=True)
     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "predictions", f"{current_cancer_type}.png"))
+    plt.close()
 
 
 def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, thresholded_cna_mask: pd.DataFrame, logger: logging.Logger) -> None:
