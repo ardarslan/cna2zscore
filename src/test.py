@@ -211,7 +211,7 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
     evaluation_metrics = pd.DataFrame(data=evaluation_metrics, columns=["cancer_type", "all_mse", "all_corr", "all_p_value", "cna_mse", "cna_corr", "cna_p_value", "noncna_mse", "noncna_corr", "noncna_p_value"])
     evaluation_metrics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "evaluation_metrics.tsv"), sep="\t", index=False)
 
-    gene_based_evaluation_metrics_df = get_gene_based_evaluation_metrics(all_ground_truths=all_ground_truths, all_predictions=all_predictions)
+    gene_based_evaluation_metrics_df = get_gene_based_evaluation_metrics(cfg=cfg, all_ground_truths=all_ground_truths, all_predictions=all_predictions, dataset=dataset)
     entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping_df = pd.read_csv(os.path.join(cfg["processed_data_dir"], "entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping.tsv"), sep="\t")
     gene_based_evaluation_metrics_df = pd.merge(gene_based_evaluation_metrics_df, entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping_df, how="inner", on="entrezgene_id")
     gene_based_evaluation_metrics_df["gene_predictability"] = gene_based_evaluation_metrics_df["aug"].values + gene_based_evaluation_metrics_df["ddg"].values
