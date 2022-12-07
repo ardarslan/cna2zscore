@@ -201,7 +201,7 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
     for current_cancer_type, current_sample_ids in all_cancer_types.items():
         evaluation_metrics.append(get_evaluation_metrics(cancer_type=current_cancer_type, all_ground_truths=all_ground_truths, all_predictions=all_predictions, thresholded_cna_mask=thresholded_cna_mask, current_sample_ids=current_sample_ids))
         plot_scatter_plot(cfg=cfg, split_name=split_name, current_cancer_type=current_cancer_type, current_sample_ids=current_sample_ids, all_ground_truths=all_ground_truths, all_predictions=all_predictions)
-        plot_box_plots(cfg=cfg, split_name=split_name, current_cancer_type=current_cancer_type, current_sample_ids=current_sample_ids, all_ground_truths=all_ground_truths, all_predictions=all_predictions, thresholded_cna_mask=thresholded_cna_mask)
+        plot_box_plots(cfg=cfg, split_name=split_name, current_cancer_type=current_cancer_type, current_sample_ids=current_sample_ids, all_ground_truths=all_ground_truths, all_predictions=all_predictions, thresholded_cna_mask=thresholded_cna_mask, dataset=dataset)
 
     evaluation_metrics = pd.DataFrame(data=evaluation_metrics, columns=["cancer_type", "all_mse", "all_corr", "all_p_value", "cna_mse", "cna_corr", "cna_p_value", "noncna_mse", "noncna_corr", "noncna_p_value"])
     evaluation_metrics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "evaluation_metrics.tsv"), sep="\t", index=False)
