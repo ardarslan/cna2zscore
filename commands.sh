@@ -7,21 +7,21 @@ for DATASET in 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'unthresh
             for CANCER_TYPE in 'blca' 'all'; do
 
                 # No regularization
-                bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout 0.0 --l1_reg_coeff 0.0 --l2_reg_coeff 0.0
+                sbatch --time=240 --ntasks=2 --mem-per-cpu=16384 --gpus=1 --gres=gpumem:10240 --wrap="python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout 0.0 --l1_reg_coeff 0.0 --l2_reg_coeff 0.0"
 
                 # Dropout
                 for DROPOUT in 0.5; do
-                    bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout $DROPOUT --l1_reg_coeff 0.0 --l2_reg_coeff 0.0
+                    sbatch --time=240 --ntasks=2 --mem-per-cpu=16384 --gpus=1 --gres=gpumem:10240 --wrap="python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout $DROPOUT --l1_reg_coeff 0.0 --l2_reg_coeff 0.0"
                 done
 
                 # L1 regularization
                 for L1_REG_COEFF in 0.001 0.01; do
-                    bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout 0.0 --l1_reg_coeff $L1_REG_COEFF --l2_reg_coeff 0.0
+                    sbatch --time=240 --ntasks=2 --mem-per-cpu=16384 --gpus=1 --gres=gpumem:10240 --wrap="python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout 0.0 --l1_reg_coeff $L1_REG_COEFF --l2_reg_coeff 0.0"
                 done
 
                 # L2 regularization
                 for L2_REG_COEFF in 0.001 0.01; do
-                    bsub -n 2 -W 24:00 -R "rusage[mem=8192, ngpus_excl_p=1]" python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout 0.0 --l1_reg_coeff 0.0 --l2_reg_coeff $L2_REG_COEFF
+                    sbatch --time=240 --ntasks=2 --mem-per-cpu=16384 --gpus=1 --gres=gpumem:10240 --wrap="python main.py --cancer_type $CANCER_TYPE --dataset $DATASET --num_hidden_layers $NUM_HIDDEN_LAYERS --hidden_dimension $HIDDEN_DIMENSION --dropout 0.0 --l1_reg_coeff 0.0 --l2_reg_coeff $L2_REG_COEFF"
                 done
 
             done
