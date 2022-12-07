@@ -108,11 +108,11 @@ def plot_box_plots(cfg: Dict[str, Any], split_name: str, current_cancer_type: st
     experiment_dir = get_experiment_dir(cfg=cfg)
 
     current_ground_truths = all_ground_truths[all_ground_truths["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values
-    current_ground_truths = (current_ground_truths - dataset.y_train_mean) / dataset.y_train_std
+    current_ground_truths = (current_ground_truths - dataset.y_train_mean.cpu().numpy()) / dataset.y_train_std.cpu().numpy()
     current_ground_truths = current_ground_truths.ravel()
 
     current_predictions = all_predictions[all_predictions["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values
-    current_predictions = (current_predictions - dataset.y_train_mean) / dataset.y_train_std
+    current_predictions = (current_predictions - dataset.y_train_mean.cpu().numpy()) / dataset.y_train_std.cpu().numpy()
     current_predictions = current_predictions.ravel()
 
     current_thresholded_cna_mask = thresholded_cna_mask[thresholded_cna_mask["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values.ravel()
