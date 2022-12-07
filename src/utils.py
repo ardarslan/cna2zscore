@@ -9,7 +9,6 @@ from uuid import uuid4
 from typing import Dict, Any, Union
 
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
 import torchsummary
