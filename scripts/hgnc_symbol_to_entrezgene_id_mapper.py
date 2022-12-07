@@ -41,6 +41,7 @@ r('library(biomaRt)')
 
 data_dir = "../data"
 raw_folder_name = "raw"
+processed_folder_name = "processed"
 cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_all_data_by_genes"
 output_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
 
@@ -79,10 +80,6 @@ hgnc_entrezgene_mapping = dict(hgnc_entrezgene_pandas_df.values)
 hgnc_entrezgene_mapping_keys = hgnc_entrezgene_mapping.keys()
 
 
-# In[ ]:
-
-
-g
 
 
 # In[ ]:
@@ -113,11 +110,10 @@ hgnc_entrezgene_pandas_df = pd.DataFrame.from_dict(
 # In[ ]:
 
 
-hgnc_entrezgene_pandas_df.to_csv(os.path.join(data_dir, raw_folder_name, output_file_name), index=False, sep="\t")
+hgnc_entrezgene_pandas_df.to_csv(os.path.join(data_dir, processed_folder_name, output_file_name), index=False, sep="\t")
 
 
 # In[ ]:
 
 
 driver.close()
-

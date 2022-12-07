@@ -6,7 +6,7 @@ import pprint
 import logging
 import argparse
 from uuid import uuid4
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, Union
 
 import numpy as np
 import pandas as pd
@@ -71,6 +71,19 @@ def get_experiment_dir(cfg: Dict[str, Any]) -> str:
     return experiment_dir
 
 
+def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
+    if cfg["hidden_dimension"] > 5000:
+        cfg["real_batch_size"] = 1
+        cfg["effective_batch_size"] = cfg["batch_size"]
+        cfg["use_gradient_accumulation"] = True
+        cfg["normalization_type"] = "instance_normalization"
+    else:
+        cfg["real_batch_size"] = cfg["batch_size"]
+        cfg["effective_batch_size"] = cfg["batch_size"]
+        cfg["use_gradient_accumulation"] = False
+        cfg["normalization_type"] = "batch_normalization"
+
+
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
     if cfg["dataset"] == "unthresholdedcna2gex":
         return UnthresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
@@ -124,9 +137,9 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
 
 
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset) -> Dict[str, DataLoader]:
-    train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=cfg["batch_size"], shuffle=True)
-    val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=cfg["batch_size"], shuffle=False)
-    test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=cfg["batch_size"], shuffle=False)
+    train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=cfg["real_batch_size"], num_workers=cfg["num_workers"], pin_memory=True, shuffle=True)
+    val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=cfg["real_batch_size"], num_workers=cfg["num_workers"], pin_memory=True, shuffle=False)
+    test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=cfg["real_batch_size"], num_workers=cfg["num_workers"], pin_memory=True, shuffle=False)
 
     data_loaders = {
         "train": train_data_loader,
@@ -172,10 +185,6 @@ def get_loss_function(cfg: Dict[str, Any], reduction: str):
         raise NotImplementedError(f"{cfg['loss']} is not an implemented loss function.")
 
 
-def get_entrezgene_id_to_hgnc_symbol_mapping(cfg: Dict[str, Any]):
-    return dict(pd.read_csv(os.path.join(cfg["raw_data_dir"], "hgnc_to_entrezgene_id_mapping.tsv"), sep="\t")[["entrezgene_id", "hgnc_symbol"]].values)
-
-
 def save_cfg(cfg: Dict[str, Any], logger: logging.Logger) -> None:
     logger.log(level=logging.INFO, msg="Saving the config file...")
     experiment_dir = get_experiment_dir(cfg=cfg)
@@ -217,12 +226,12 @@ def get_argument_parser() -> argparse.ArgumentParser:
     # data
     parser.add_argument("--processed_data_dir", type=str, default="../data/processed/", help="Directory for the processed files.")
     parser.add_argument("--dataset", type=str, default="unthresholdedcnapurity2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
-
     parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
-    parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the input or not.")
-    parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the output or not.")
+    parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the input or not.")
+    parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the output or not.")
     parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
+    parser.add_argument("--num_workers", type=int, default=3, help="Number of workers used in data loaders.")
 
     # model
     parser.add_argument("--model", type=str, default="mlp", help="Which model to use.")
@@ -230,7 +239,6 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hidden_dimension", default=5000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
     parser.add_argument("--use_residual_connection", type=str2bool, default=False, nargs='?', const=True, help="Whether to use residual connection between hidden layers or not.")
-    parser.add_argument("--use_batch_normalization", type=str2bool, default=True, nargs='?', const=True, help="Whether to use batch normalization after each hidden layer or not.")
     parser.add_argument("--dropout", type=float, default=0.0, help="Probability of zeroing out an entry in a given vector.")
 
     # optimizer

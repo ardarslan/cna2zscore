@@ -30,6 +30,7 @@ from rpy2.robjects.pandas2ri import rpy2py
 
 data_dir = "../data"
 raw_folder_name = "raw"
+processed_folder_name = "processed"
 gex_file_name = "tcga_gene_expected_count"
 output_file_name = "ensembl_id_to_entrezgene_id_mapping.tsv"
 
@@ -116,7 +117,7 @@ ensembl_entrezgene_pandas_df = pd.DataFrame.from_dict(
 # In[22]:
 
 
-ensembl_entrezgene_pandas_df.to_csv(os.path.join(data_dir, raw_folder_name, output_file_name), index=False, sep="\t")
+ensembl_entrezgene_pandas_df.to_csv(os.path.join(data_dir, processed_folder_name, output_file_name), index=False, sep="\t")
 
 
 # In[23]:
@@ -132,7 +133,3 @@ driver.close()
 
 
 # In[ ]:
-
-
-
-

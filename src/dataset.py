@@ -32,35 +32,10 @@ class Dataset(torch.utils.data.Dataset):
 
         self.processed_data_dir = cfg["processed_data_dir"]
         self.seed = cfg["seed"]
+        self.device = cfg["device"]
         self.logger = logger
 
         self._process_dataset()
-
-        self.device = cfg["device"]
-        self.len_dataset = self.X.shape[0]
-
-        all_indices = shuffle(range(self.len_dataset), random_state=self.seed)
-        train_size = int(self.len_dataset * self.split_ratios["train"])
-        val_size = int(self.len_dataset * self.split_ratios["val"])
-
-        self.train_idx = all_indices[:train_size]
-        self.val_idx = all_indices[train_size:train_size+val_size]
-        self.test_idx = all_indices[train_size+val_size:]
-
-        X_train = self.X[self.train_idx, :]
-        y_train = self.y[self.train_idx, :]
-
-        self.X_train_mean = np.mean(X_train, axis=0)
-        self.X_train_std = np.std(X_train, axis=0) + cfg["normalization_eps"]
-        self.X_train_mean[self.one_hot_column_indices] = 0.0
-        self.X_train_std[self.one_hot_column_indices] = 1.0
-        self.X_train_mean = torch.as_tensor(self.X_train_mean, device=self.device, dtype=torch.float32)
-        self.X_train_std = torch.as_tensor(self.X_train_std, device=self.device, dtype=torch.float32)
-
-        self.y_train_mean = np.mean(y_train, axis=0)
-        self.y_train_std = np.std(y_train, axis=0) + cfg["normalization_eps"]
-        self.y_train_mean = torch.as_tensor(self.y_train_mean, device=self.device, dtype=torch.float32)
-        self.y_train_std = torch.as_tensor(self.y_train_std, device=self.device, dtype=torch.float32)
 
     def _process_dataset(self) -> None:
         output_df = pd.read_csv(os.path.join(self.processed_data_dir, self.output_data_type + ".tsv"), sep="\t")
@@ -113,6 +88,41 @@ class Dataset(torch.utils.data.Dataset):
         self.logger.log(level=logging.INFO, msg=f"X.shape: {self.X.shape}, y.shape: {self.y.shape}")
 
         self.entrezgene_ids = [column for column in output_df.columns if column != "sample_id"]
+
+        self.len_dataset = self.X.shape[0]
+
+        all_indices = shuffle(self.sample_id_indices, random_state=self.seed)
+        train_size = int(self.len_dataset * self.split_ratios["train"])
+        val_size = int(self.len_dataset * self.split_ratios["val"])
+
+        self.train_idx = all_indices[:train_size]
+        self.val_idx = all_indices[train_size:train_size+val_size]
+        self.test_idx = all_indices[train_size+val_size:]
+
+        train_sample_ids = self.sample_ids[self.train_idx]
+        train_sample_ids = pd.DataFrame.from_dict({"sample_id": train_sample_ids})
+        thresholded_cna_mask = pd.read_csv(os.path.join(self.processed_data_dir, "thresholded_cna.tsv"), sep="\t")
+        thresholded_cna_mask = train_sample_ids.merge(thresholded_cna_mask, on="sample_id", how="left")
+        thresholded_cna_mask = (thresholded_cna_mask.values == 0.0)
+
+        X_train = self.X[self.train_idx, :]
+        y_train = self.y[self.train_idx, :]
+
+        # TODO: Input and output normalization could be done using only the samples within a cancer type.
+
+        # Don't normalize one hot encoded input columns.
+        self.X_train_mean = np.mean(X_train, axis=0)
+        self.X_train_std = np.std(X_train, axis=0) + self.cfg["normalization_eps"]
+        self.X_train_mean[self.one_hot_column_indices] = 0.0
+        self.X_train_std[self.one_hot_column_indices] = 1.0
+        self.X_train_mean = torch.as_tensor(self.X_train_mean, device=self.device, dtype=torch.float32)
+        self.X_train_std = torch.as_tensor(self.X_train_std, device=self.device, dtype=torch.float32)
+
+        # While normalizing output columns (GEX), only use samples where a particular gene has no copy number aberration.
+        self.y_train_mean = np.mean(y_train, axis=0, where=thresholded_cna_mask)
+        self.y_train_std = np.std(y_train, axis=0, where=thresholded_cna_mask) + self.cfg["normalization_eps"]
+        self.y_train_mean = torch.as_tensor(self.y_train_mean, device=self.device, dtype=torch.float32)
+        self.y_train_std = torch.as_tensor(self.y_train_std, device=self.device, dtype=torch.float32)
 
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         return {

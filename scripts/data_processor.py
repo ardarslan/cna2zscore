@@ -64,7 +64,7 @@ thresholded_cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_al
 unthresholded_cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_all_data_by_genes"
 
 hgnc_symbol_to_entrezgene_id_mapping_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
-hgnc_symbol_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, raw_folder_name, hgnc_symbol_to_entrezgene_id_mapping_file_name), sep="\t").values)
+hgnc_symbol_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, hgnc_symbol_to_entrezgene_id_mapping_file_name), sep="\t").values)
 
 gex_file_name = "tcga_gene_expected_count"
 gex_df = pd.read_csv(os.path.join(data_dir, "raw", gex_file_name), sep="\t", usecols=["sample"])
@@ -134,9 +134,9 @@ print("Processed CNA data.")
 print("Processing Cancer Type data...")
 
 cancer_type_file_name = "TCGA_phenotype_denseDataOnlyDownload.tsv"
-cancer_type_full_name_to_abbreviation_mapping_file_name = "cancer_type_full_name_to_abbrreviation_mapping.tsv"
+cancer_type_full_name_to_abbreviation_mapping_file_name = "cancer_type_full_name_to_abbreviation_mapping.tsv"
 
-cancer_type_full_name_to_abbreviation_mapping = dict(pd.read_csv(os.path.join(data_dir, raw_folder_name, cancer_type_full_name_to_abbreviation_mapping_file_name), sep="\t").values)
+cancer_type_full_name_to_abbreviation_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, cancer_type_full_name_to_abbreviation_mapping_file_name), sep="\t").values)
 
 cancer_type_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cancer_type_file_name), sep="\t")
 cancer_type_df = cancer_type_df.rename(columns={"sample": "sample_id", "_primary_disease": "cancer_type"})
@@ -218,7 +218,7 @@ ensembl_id_to_entrezgene_id_mapping_file_name = "ensembl_id_to_entrezgene_id_map
 gex_file_name = "tcga_gene_expected_count"
 
 tumor_sample_ids = ["0" + str(i) for i in range(1, 10)]
-ensembl_id_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, raw_folder_name, ensembl_id_to_entrezgene_id_mapping_file_name), sep="\t").values)
+ensembl_id_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, ensembl_id_to_entrezgene_id_mapping_file_name), sep="\t").values)
 
 if development:
     gex_df = pd.read_csv(os.path.join(data_dir, "raw", gex_file_name), sep="\t", nrows=1000)
@@ -314,4 +314,74 @@ gex_df = gex_df.sort_values(by="sample_id")
 gex_df.to_csv(os.path.join(data_dir, processed_folder_name, "gex.tsv"), sep="\t", index=False)
 print("gex_df.shape:", gex_df.shape)
 
-print("Saved data.")
+# # Find MeanGEX and StdGEX
+# In[13]
+
+import os
+import pandas as pd
+
+data_dir = "../data"
+processed_folder_name = "processed"
+
+gex_df = pd.read_csv(os.path.join(data_dir, processed_folder_name, "gex.tsv"), sep="\t").drop(columns=["sample_id"])
+thresholded_cna_df = pd.read_csv(os.path.join(data_dir, processed_folder_name, "thresholded_cna.tsv"), sep="\t")
+
+mean_gex = gex_df.values.mean(axis=0, where=(thresholded_cna_df.drop(columns=["sample_id"]).values == 0)).ravel()
+std_gex = gex_df.values.std(axis=0, where=(thresholded_cna_df.drop(columns=["sample_id"]).values == 0)).ravel()
+entrezgene_id_to_mean_and_std_gex_mapping_df = pd.DataFrame.from_dict({"entrezgene_id": gex_df.columns.tolist(), "mean_gex": mean_gex.tolist(), "std_gex": std_gex.tolist()})
+entrezgene_id_to_mean_and_std_gex_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_mean_and_std_gex_mapping.tsv"), sep="\t")
+
+# # Find AUG and DDG ratios for each gene
+# In[14]
+
+import os
+import pandas as pd
+
+data_dir = "../data"
+processed_folder_name = "processed"
+
+gex_df = pd.read_csv(os.path.join(data_dir, processed_folder_name, "gex.tsv"), sep="\t").drop(columns=["sample_id"])
+entrezgene_id_to_mean_and_std_gex_mapping_df = pd.read_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_mean_and_std_gex_mapping.tsv"), sep="\t")
+
+mean_gex = entrezgene_id_to_mean_and_std_gex_mapping_df["mean_gex"].values
+std_gex = entrezgene_id_to_mean_and_std_gex_mapping_df["std_gex"].values
+
+gex_df = pd.DataFrame(data=(gex_df.values - mean_gex) / (std_gex + 1e-10), columns=gex_df.columns.tolist())
+
+thresholded_cna_df = pd.read_csv(os.path.join(data_dir, processed_folder_name, "thresholded_cna.tsv"), sep="\t").drop(columns=["sample_id"])
+
+aug_adg_ddg_dug_ratios = []
+
+for entrezgene_id in gex_df.columns:
+    current_genes_z_scores = gex_df[entrezgene_id].values
+    current_genes_thresholded_cna_values = thresholded_cna_df[entrezgene_id].values
+    aug_count = 0
+    ddg_count = 0
+    adg_count = 0
+    dug_count = 0
+
+    for current_genes_current_z_score, current_genes_current_thresholded_cna_value in zip(current_genes_z_scores, current_genes_thresholded_cna_values):
+        if (current_genes_current_thresholded_cna_value > 0) and (current_genes_current_z_score > 2):
+            aug_count += 1
+
+        if (current_genes_current_thresholded_cna_value > 0) and (current_genes_current_z_score < -2):
+            adg_count += 1
+
+        if (current_genes_current_thresholded_cna_value < 0) and (current_genes_current_z_score < -2):
+            ddg_count += 1
+
+        if (current_genes_current_thresholded_cna_value < 0) and (current_genes_current_z_score > 2):
+            dug_count += 1
+
+
+    aug_adg_ddg_dug_ratios.append((entrezgene_id,
+                                   float(aug_count) / float(gex_df.shape[0]),
+                                   float(adg_count) / float(gex_df.shape[0]),
+                                   float(ddg_count) / float(gex_df.shape[0]),
+                                   float(dug_count) / float(gex_df.shape[0])))
+
+aug_adg_ddg_dug_ratios_df = pd.DataFrame(data=aug_adg_ddg_dug_ratios, columns=["entrezgene_id", "aug_ratio", "adg_ratio", "ddg_ratio", "dug_ratio"])
+
+aug_adg_ddg_dug_ratios_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping.tsv"), sep="\t")
+
+# %%

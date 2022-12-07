@@ -2,12 +2,12 @@ import numpy as np
 
 from train import train
 from validate import validate
-from test import save_predictions_and_ground_truths
+from test import save_results
 from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_model_hidden_dimension, set_device, get_logger, \
                    get_dataset, get_data_loaders, get_model, get_optimizer, \
                    get_scheduler, get_loss_function, save_model, save_cfg, \
-                   load_model, set_early_stopping_epoch)
+                   load_model, set_early_stopping_epoch, set_hyperparameters_according_to_memory_limits)
 
 
 if __name__ == "__main__":
@@ -18,6 +18,7 @@ if __name__ == "__main__":
     set_experiment_name(cfg=cfg)
     logger = get_logger(cfg=cfg)
     set_device(cfg=cfg, logger=logger)
+    set_hyperparameters_according_to_memory_limits(cfg=cfg)
     save_cfg(cfg=cfg, logger=logger)
     dataset = get_dataset(cfg=cfg, logger=logger)
     data_loaders = get_data_loaders(cfg=cfg, dataset=dataset)
@@ -55,4 +56,4 @@ if __name__ == "__main__":
     del scheduler
 
     model = load_model(cfg=cfg, dataset=dataset, logger=logger)
-    save_predictions_and_ground_truths(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
+    save_results(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
