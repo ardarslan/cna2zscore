@@ -102,7 +102,7 @@ class Dataset(torch.utils.data.Dataset):
         train_sample_ids = self.sample_ids[self.train_idx]
         train_sample_ids = pd.DataFrame.from_dict({"sample_id": train_sample_ids})
         thresholded_cna_mask = pd.read_csv(os.path.join(self.processed_data_dir, "thresholded_cna.tsv"), sep="\t")
-        thresholded_cna_mask = train_sample_ids.merge(thresholded_cna_mask, on="sample_id", how="left")
+        thresholded_cna_mask = train_sample_ids.merge(thresholded_cna_mask, on="sample_id", how="left").drop(columns=["sample_id"])
         thresholded_cna_mask = (thresholded_cna_mask.values == 0.0)
 
         X_train = self.X[self.train_idx, :]
