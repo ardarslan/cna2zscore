@@ -223,6 +223,8 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
 
     plot_distributions_of_gene_based_pearson_corrs(cfg=cfg, all_ground_truths=all_ground_truths, all_predictions=all_predictions, thresholded_cna_mask=thresholded_cna_mask, split_name=split_name)
 
+    logger.log(level=logging.INFO, msg=f"Saved results for {split_name} split.")
+
 
 def save_results(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
     thresholded_cna_mask = pd.read_csv(os.path.join(cfg["processed_data_dir"], "thresholded_cna.tsv"), sep="\t")
