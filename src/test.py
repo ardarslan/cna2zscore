@@ -71,11 +71,11 @@ def get_evaluation_metrics(cancer_type: str, all_ground_truths: pd.DataFrame, al
     current_predictions = all_predictions[all_predictions["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"])
     current_predictions = current_predictions.values.ravel()
 
-    current_cna_ground_truths = current_ground_truths[np.argwhere(current_thresholded_cna_mask)]
-    current_cna_predictions = current_predictions[np.argwhere(current_thresholded_cna_mask)]
+    current_cna_ground_truths = current_ground_truths[np.argwhere(current_thresholded_cna_mask)].ravel()
+    current_cna_predictions = current_predictions[np.argwhere(current_thresholded_cna_mask)].ravel()
 
-    current_noncna_ground_truths = current_ground_truths[np.argwhere((1 - current_thresholded_cna_mask).astype(np.bool_))]
-    current_noncna_predictions = current_predictions[np.argwhere((1 - current_thresholded_cna_mask).astype(np.bool_))]
+    current_noncna_ground_truths = current_ground_truths[np.argwhere((1 - current_thresholded_cna_mask).astype(np.bool_))].ravel()
+    current_noncna_predictions = current_predictions[np.argwhere((1 - current_thresholded_cna_mask).astype(np.bool_))].ravel()
 
     all_mse, all_corr, all_p_value = get_mse_corr_p_value(ground_truths=current_ground_truths, predictions=current_predictions)
     cna_mse, cna_corr, cna_p_value = get_mse_corr_p_value(ground_truths=current_cna_ground_truths, predictions=current_cna_predictions)
