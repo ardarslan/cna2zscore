@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 from train import train
@@ -21,9 +23,9 @@ if __name__ == "__main__":
     set_hyperparameters_according_to_memory_limits(cfg=cfg)
     save_cfg(cfg=cfg, logger=logger)
     dataset = get_dataset(cfg=cfg, logger=logger)
-    data_loaders = get_data_loaders(cfg=cfg, dataset=dataset)
+    data_loaders = get_data_loaders(cfg=cfg, dataset=dataset, logger=logger)
     set_model_hidden_dimension(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
-    model = get_model(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
+    model = get_model(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension, logger=logger)
     optimizer = get_optimizer(cfg=cfg, model=model)
     scheduler = get_scheduler(cfg=cfg, optimizer=optimizer)
     train_loss_function = get_loss_function(cfg=cfg, reduction="mean")
@@ -32,6 +34,7 @@ if __name__ == "__main__":
     best_val_loss = np.inf
     num_epochs_val_loss_not_decreased = 0
 
+    logger.log(level=logging.INFO, msg="Starting training...")
     for epoch in range(1, cfg["num_epochs"] + 1):
         train(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=train_loss_function, dataset=dataset, optimizer=optimizer)
         loss_dict = validate(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, epoch=epoch, logger=logger)
@@ -49,6 +52,7 @@ if __name__ == "__main__":
             break
         else:
             scheduler.step(current_val_loss)
+    logger.log(level=logging.INFO, msg="Finished training.")
     save_cfg(cfg=cfg, logger=logger)
 
     del model

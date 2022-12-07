@@ -85,18 +85,23 @@ def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
 
 
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
+    logger.log(level=logging.INFO, msg="Creating dataset...")
+
     if cfg["dataset"] == "unthresholdedcna2gex":
-        return UnthresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
+        dataset = UnthresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
     elif cfg["dataset"] == "thresholdedcna2gex":
-        return ThresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
+        dataset = ThresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
     elif cfg["dataset"] == "unthresholdedcnapurity2gex":
-        return UnthresholdedCNAPurity2GEXDataset(cfg=cfg, logger=logger)
+        dataset = UnthresholdedCNAPurity2GEXDataset(cfg=cfg, logger=logger)
     elif cfg["dataset"] == "thresholdedcnapurity2gex":
-        return ThresholdedCNAPurity2GEXDataset(cfg=cfg, logger=logger)
+        dataset = ThresholdedCNAPurity2GEXDataset(cfg=cfg, logger=logger)
     elif cfg["dataset"] == "rppa2gex":
-        return RPPA2GEXDataset(cfg=cfg, logger=logger)
+        dataset = RPPA2GEXDataset(cfg=cfg, logger=logger)
     else:
         raise NotImplementedError(f"{cfg['dataset']} is not an implemented dataset.")
+
+    logger.log(level=logging.INFO, msg="Created dataset.")
+    return dataset
 
 
 def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
@@ -136,7 +141,9 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
     return logger
 
 
-def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset) -> Dict[str, DataLoader]:
+def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> Dict[str, DataLoader]:
+    logger.log(level=logging.INFO, msg="Creating data loaders...")
+
     train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=cfg["real_batch_size"], num_workers=cfg["num_workers"], pin_memory=True, shuffle=True)
     val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=cfg["real_batch_size"], num_workers=cfg["num_workers"], pin_memory=True, shuffle=False)
     test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=cfg["real_batch_size"], num_workers=cfg["num_workers"], pin_memory=True, shuffle=False)
@@ -146,16 +153,24 @@ def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset) -> Dict[str, DataLoa
         "val": val_data_loader,
         "test": test_data_loader,
     }
+
+    logger.log(level=logging.INFO, msg="Created data loaders.")
+
     return data_loaders
 
 
-def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int) -> torch.nn.Module:
+def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, logger: logging.Logger) -> torch.nn.Module:
+    logger.log(level=logging.INFO, msg="Creating model...")
+
     if cfg["model"] == "mlp":
         model = MLP(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension).float().to(cfg["device"])
     else:
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
 
     torchsummary.summary(model, input_size=(input_dimension, ))
+
+    logger.log(level=logging.INFO, msg="Created model.")
+
     return model
 
 
@@ -204,6 +219,7 @@ def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) ->
     experiment_dir = get_experiment_dir(cfg=cfg)
     model = get_model(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
     model.load_state_dict(torch.load(os.path.join(experiment_dir, "best_model")))
+    logger.log(level=logging.INFO, msg="Loaded the best model.")
     return model
 
 
