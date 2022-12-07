@@ -178,6 +178,7 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
     logger.log(level=logging.INFO, msg=f"Saving {split_name} results...")
 
     experiment_dir = get_experiment_dir(cfg=cfg)
+    os.makedirs(os.path.join(experiment_dir, f"{split_name}_results"), exist_ok=True)
 
     all_ground_truths = pd.DataFrame(data=all_ground_truths, columns=dataset.entrezgene_ids, index=all_sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
     all_ground_truths = all_ground_truths.sort_values(by=["sample_id"])
