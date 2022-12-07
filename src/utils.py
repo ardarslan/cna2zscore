@@ -143,9 +143,9 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> Dict[str, DataLoader]:
     logger.log(level=logging.INFO, msg="Creating data loaders...")
 
-    train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=cfg["real_batch_size"], num_workers=cfg["num_workers"], pin_memory=True, shuffle=True)
-    val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=cfg["real_batch_size"], num_workers=cfg["num_workers"], pin_memory=True, shuffle=False)
-    test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=cfg["real_batch_size"], num_workers=cfg["num_workers"], pin_memory=True, shuffle=False)
+    train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=cfg["real_batch_size"], shuffle=True)
+    val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=cfg["real_batch_size"], shuffle=False)
+    test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=cfg["real_batch_size"], shuffle=False)
 
     data_loaders = {
         "train": train_data_loader,
@@ -246,7 +246,6 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the input or not.")
     parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the output or not.")
     parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
-    parser.add_argument("--num_workers", type=int, default=0, help="Number of workers used in data loaders.")
 
     # model
     parser.add_argument("--model", type=str, default="mlp", help="Which model to use.")
