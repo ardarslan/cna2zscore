@@ -207,8 +207,8 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
     all_cancer_types = all_cancer_types.sort_values(by=["sample_id"])
     all_cancer_types.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "cancer_types.tsv"), sep="\t", index=False)
 
-    # all_cancer_types = dict(all_cancer_types.groupby("cancer_type")["sample_id"].apply(list).reset_index(name="sample_ids").values)
-    # all_cancer_types["all"] = all_sample_ids.tolist()
+    all_cancer_types = dict(all_cancer_types.groupby("cancer_type")["sample_id"].apply(list).reset_index(name="sample_ids").values)
+    all_cancer_types["all"] = all_sample_ids.tolist()
 
     evaluation_metrics = []
 
