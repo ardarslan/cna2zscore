@@ -76,13 +76,12 @@ def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = True
         cfg["normalization_type"] = "instance_normalization"
-        # cfg["optimizer"] = "sgd"
+        cfg["optimizer"] = "sgd"
     else:
         cfg["real_batch_size"] = cfg["batch_size"]
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = False
         cfg["normalization_type"] = "batch_normalization"
-        # cfg["optimizer"] = cfg["optimizer"]
 
 
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
