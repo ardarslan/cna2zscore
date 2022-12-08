@@ -10,7 +10,7 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
 
     effective_batch_size = cfg["effective_batch_size"]
     train_data_loader = data_loaders["train"]
-    num_train_samples = len(dataset.train_idx)
+    num_train_samples = len(dataset.train_indices)
     num_batches = len(train_data_loader)
     observed_sample_count = 0
 

@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 
 import numpy as np
 import pandas as pd
-from sklearn.utils import shuffle
+from sklearn.model_selection import StratifiedShuffleSplit
 import torch
 
 
@@ -38,11 +38,16 @@ class Dataset(torch.utils.data.Dataset):
         self._process_dataset()
 
     def _process_dataset(self) -> None:
-        output_df = pd.read_csv(os.path.join(self.processed_data_dir, self.output_data_type + ".tsv"), sep="\t")
-
+        cancer_type_df = pd.read_csv(os.path.join(self.processed_data_dir, "cancer_type.tsv"), sep="\t")
         if self.cfg["cancer_type"] != "all":
-            cancer_type_df = pd.read_csv(os.path.join(self.processed_data_dir, "cancer_type.tsv"), sep="\t")
             cancer_type_sample_ids = cancer_type_df[cancer_type_df["cancer_type"] == self.cfg["cancer_type"]]["sample_id"].tolist()
+        else:
+            cancer_type_sample_ids = cancer_type_df["sample_id"].tolist()
+
+        cancer_type_df = cancer_type_df[cancer_type_df["sample_id"].isin(cancer_type_sample_ids)]
+
+        output_df = pd.read_csv(os.path.join(self.processed_data_dir, self.output_data_type + ".tsv"), sep="\t")
+        output_df = output_df[output_df["sample_id"].isin(cancer_type_sample_ids)]
 
         input_df = None
 
@@ -52,8 +57,7 @@ class Dataset(torch.utils.data.Dataset):
             if current_input_data_type in ["unthresholded_cna", "thresholded_cna"]:
                 assert current_input_data_type_df.columns.tolist() == output_df.columns.tolist(), f"Columns of {current_input_data_type} dataframe are not the same with columns of output dataframe."
 
-            if self.cfg["cancer_type"] != "all":
-                current_input_data_type_df = current_input_data_type_df[current_input_data_type_df["sample_id"].apply(lambda x: x in cancer_type_sample_ids)]
+            current_input_data_type_df = current_input_data_type_df[current_input_data_type_df["sample_id"].isin(cancer_type_sample_ids)]
 
             if input_df is None:
                 input_df = current_input_data_type_df
@@ -70,9 +74,10 @@ class Dataset(torch.utils.data.Dataset):
                                 on="sample_id",
                                 how="inner")
 
-        # merge input and output dataframes
+        # merge input, output and cancer_type dataframes
         merged_df = pd.merge(left=input_df, right=output_df, how="inner", on="sample_id")
-        merged_df = shuffle(merged_df, random_state=self.seed)
+        merged_df = pd.merge(left=merged_df, right=cancer_type_df, how="inner", on="sample_id")
+
         self.sample_ids = merged_df["sample_id"].values.ravel()
         self.sample_id_indices = np.arange(self.sample_ids.shape[0])
         merged_df.drop(columns=["sample_id"], inplace=True)
@@ -82,8 +87,9 @@ class Dataset(torch.utils.data.Dataset):
         self.input_dimension = input_df.shape[1] - 1
         self.output_dimension = output_df.shape[1] - 1
 
-        self.X = merged_df.values[:, :self.input_dimension]
-        self.y = merged_df.values[:, self.input_dimension:]
+        self.X = merged_df.iloc[:, :self.input_dimension].values
+        self.y = merged_df.iloc[:, self.input_dimension:self.input_dimension+self.output_dimension].values
+        all_cancer_types = merged_df["cancer_type"].values.ravel()
 
         self.logger.log(level=logging.INFO, msg=f"X.shape: {self.X.shape}, y.shape: {self.y.shape}")
 
@@ -91,15 +97,18 @@ class Dataset(torch.utils.data.Dataset):
 
         self.len_dataset = self.X.shape[0]
 
-        all_indices = shuffle(self.sample_id_indices, random_state=self.seed)
-        train_size = int(self.len_dataset * self.split_ratios["train"])
-        val_size = int(self.len_dataset * self.split_ratios["val"])
+        all_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=1, train_size=self.split_ratios["train"], random_state=self.seed)
+        all_split_indices = next(all_stratified_shuffle_split.split(X=self.sample_id_indices, y=all_cancer_types))
+        self.train_indices = all_split_indices[0]
+        val_test_indices = all_split_indices[1]
 
-        self.train_idx = all_indices[:train_size]
-        self.val_idx = all_indices[train_size:train_size+val_size]
-        self.test_idx = all_indices[train_size+val_size:]
+        val_test_cancer_types = all_cancer_types[val_test_indices]
+        val_test_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=1, train_size=(self.split_ratios["val"] / (self.split_ratios["val"] + self.split_ratios["test"])), random_state=self.seed)
+        val_test_split_indices = next(val_test_stratified_shuffle_split.split(X=val_test_indices, y=val_test_cancer_types))
+        self.val_indices = val_test_split_indices[0]
+        self.test_indices = val_test_split_indices[1]
 
-        train_sample_ids = self.sample_ids[self.train_idx]
+        train_sample_ids = self.sample_ids[self.train_indices]
         train_sample_ids = pd.DataFrame.from_dict({"sample_id": train_sample_ids})
 
         self.logger.log(level=logging.INFO, msg="Reading thresholded cna mask...")
@@ -111,8 +120,8 @@ class Dataset(torch.utils.data.Dataset):
         thresholded_cna_mask = train_sample_ids.merge(thresholded_cna_mask, on="sample_id", how="left").drop(columns=["sample_id"])
         thresholded_cna_mask = (thresholded_cna_mask.values == 0.0)
 
-        X_train = self.X[self.train_idx, :]
-        y_train = self.y[self.train_idx, :]
+        X_train = self.X[self.train_indices, :]
+        y_train = self.y[self.train_indices, :]
 
         # TODO: Input and output normalization could be done using only the samples within a cancer type.
 

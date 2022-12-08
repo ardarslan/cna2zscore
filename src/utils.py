@@ -143,9 +143,9 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> Dict[str, DataLoader]:
     logger.log(level=logging.INFO, msg="Creating data loaders...")
 
-    train_data_loader = DataLoader(Subset(dataset, dataset.train_idx), batch_size=cfg["real_batch_size"], shuffle=True)
-    val_data_loader = DataLoader(Subset(dataset, dataset.val_idx), batch_size=cfg["real_batch_size"], shuffle=False)
-    test_data_loader = DataLoader(Subset(dataset, dataset.test_idx), batch_size=cfg["real_batch_size"], shuffle=False)
+    train_data_loader = DataLoader(Subset(dataset, dataset.train_indices), batch_size=cfg["real_batch_size"], shuffle=True)
+    val_data_loader = DataLoader(Subset(dataset, dataset.val_indices), batch_size=cfg["real_batch_size"], shuffle=False)
+    test_data_loader = DataLoader(Subset(dataset, dataset.test_indices), batch_size=cfg["real_batch_size"], shuffle=False)
 
     data_loaders = {
         "train": train_data_loader,
