@@ -176,7 +176,7 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, 
 
 def get_optimizer(cfg: Dict[str, Any], model: torch.nn.Module):
     if cfg["optimizer"] == "sgd":
-        return SGD(params=model.parameters(), lr=1e-3)
+        return SGD(params=model.parameters(), lr=1e-2, momentum=0.90)
     elif cfg["optimizer"] == "adam":
         return Adam(params=model.parameters())
     elif cfg["optimizer"] == "adamw":
