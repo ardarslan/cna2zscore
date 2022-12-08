@@ -84,7 +84,7 @@ def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
 
 
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
-    logger.log(level=logging.INFO, msg="Creating dataset...")
+    logger.log(level=logging.INFO, msg="Creating the dataset...")
 
     if cfg["dataset"] == "unthresholdedcna2gex":
         dataset = UnthresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
@@ -99,7 +99,7 @@ def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
     else:
         raise NotImplementedError(f"{cfg['dataset']} is not an implemented dataset.")
 
-    logger.log(level=logging.INFO, msg="Created dataset.")
+    logger.log(level=logging.INFO, msg="Created the dataset.")
     return dataset
 
 
@@ -141,7 +141,7 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
 
 
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> Dict[str, DataLoader]:
-    logger.log(level=logging.INFO, msg="Creating data loaders...")
+    logger.log(level=logging.INFO, msg="Creating the data loaders...")
 
     train_data_loader = DataLoader(Subset(dataset, dataset.train_indices), batch_size=cfg["real_batch_size"], shuffle=True)
     val_data_loader = DataLoader(Subset(dataset, dataset.val_indices), batch_size=cfg["real_batch_size"], shuffle=False)
@@ -153,13 +153,13 @@ def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logg
         "test": test_data_loader,
     }
 
-    logger.log(level=logging.INFO, msg="Created data loaders.")
+    logger.log(level=logging.INFO, msg="Created the data loaders.")
 
     return data_loaders
 
 
 def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, logger: logging.Logger) -> torch.nn.Module:
-    logger.log(level=logging.INFO, msg="Creating model...")
+    logger.log(level=logging.INFO, msg="Creating the model...")
 
     if cfg["model"] == "mlp":
         model = MLP(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension).float().to(cfg["device"])
@@ -168,7 +168,7 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, 
 
     torchsummary.summary(model, input_size=(input_dimension, ))
 
-    logger.log(level=logging.INFO, msg="Created model.")
+    logger.log(level=logging.INFO, msg="Created the model.")
 
     return model
 
