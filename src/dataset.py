@@ -105,8 +105,8 @@ class Dataset(torch.utils.data.Dataset):
         val_test_cancer_types = all_cancer_types[val_test_indices]
         val_test_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=1, train_size=(self.split_ratios["val"] / (self.split_ratios["val"] + self.split_ratios["test"])), random_state=self.seed)
         val_test_split_indices = next(val_test_stratified_shuffle_split.split(X=val_test_indices, y=val_test_cancer_types))
-        self.val_indices = val_test_split_indices[0]
-        self.test_indices = val_test_split_indices[1]
+        self.val_indices = val_test_indices[val_test_split_indices[0]]
+        self.test_indices = val_test_indices[val_test_split_indices[1]]
 
         train_sample_ids = self.sample_ids[self.train_indices]
         train_sample_ids = pd.DataFrame.from_dict({"sample_id": train_sample_ids})
