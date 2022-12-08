@@ -13,6 +13,7 @@ def normalize(cfg: Dict[str, Any], normalization, y: torch.Tensor):
         y = normalization(y)
     else:
         raise Exception(f"{cfg['normalization_type']} is not an implemented normalization type.")
+    return y
 
 
 class InputLayer(nn.Module):
