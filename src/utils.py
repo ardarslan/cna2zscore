@@ -250,8 +250,8 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # model
     parser.add_argument("--model", type=str, default="mlp", help="Which model to use.")
-    parser.add_argument("--num_hidden_layers", type=int, default=1, help="Number of layers except the output layer.")
-    parser.add_argument("--hidden_dimension", default=5000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
+    parser.add_argument("--num_hidden_layers", type=int, default=2, help="Number of layers except the output layer.")
+    parser.add_argument("--hidden_dimension", default=10000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
     parser.add_argument("--use_residual_connection", type=str2bool, default=False, nargs='?', const=True, help="Whether to use residual connection between hidden layers or not.")
     parser.add_argument("--dropout", type=float, default=0.0, help="Probability of zeroing out an entry in a given vector.")
