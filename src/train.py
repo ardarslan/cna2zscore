@@ -30,13 +30,8 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         if cfg["normalize_output"]:
             y = (y - dataset.y_train_mean) / dataset.y_train_std
 
-        if cfg["use_automatic_tensor_casting"]:
-            with torch.cuda.amp.autocast():
-                yhat = model(X)
-                loss = loss_function(yhat, y)
-        else:
-            yhat = model(X)
-            loss = loss_function(yhat, y)
+        yhat = model(X)
+        loss = loss_function(yhat, y)
 
         if cfg["l1_reg_coeff"] > 0:
             loss += cfg["l1_reg_coeff"] * sum(p.abs().sum() for p in model.parameters())

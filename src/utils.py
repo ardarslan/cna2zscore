@@ -76,14 +76,12 @@ def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = True
         cfg["normalization_type"] = "instance_normalization"
-        cfg["use_automatic_tensor_casting"] = True
         cfg["optimizer"] = "sgd"
     else:
         cfg["real_batch_size"] = cfg["batch_size"]
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = False
         cfg["normalization_type"] = "batch_normalization"
-        cfg["use_automatic_tensor_casting"] = False
         cfg["optimizer"] = cfg["optimizer"]
 
 
