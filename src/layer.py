@@ -4,6 +4,17 @@ import torch
 import torch.nn as nn
 
 
+def normalize(cfg: Dict[str, Any], normalization, y: torch.Tensor):
+    if cfg["normalization_type"] == "instance_normalization":
+        y = y.view(*y.shape, 1).permute((0, 2, 1))
+        y = normalization(y)
+        y = y[:, 0, :]
+    elif cfg["normalization_type"] == "batch_normalization":
+        y = normalization(y)
+    else:
+        raise Exception(f"{cfg['normalization_type']} is not an implemented normalization type.")
+
+
 class InputLayer(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int):
         super().__init__()
@@ -29,7 +40,7 @@ class InputLayer(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = self.linear(x)
-        y = self.normalization(y)
+        y = normalize(cfg=self.cfg, normalization=self.normalization, y=y)
         y = self.activation(y)
         if self.cfg["dropout"] > 0.0:
             y = self.dropout(y)
@@ -75,14 +86,14 @@ class HiddenLayer(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = self.linear_1(x)
-        y = self.normalization_1(y)
+        y = normalize(cfg=self.cfg, normalization=self.normalization_1, y=y)
         y = self.activation(y)
         if self.cfg["dropout"] > 0.0:
             y = self.dropout(y)
 
         if self.cfg["use_residual_connection"]:
             y = self.linear_2(y)
-            y = self.normalization_2(y)
+            y = normalize(cfg=self.cfg, normalization=self.normalization_2, y=y)
             y = self.activation(y)
             if self.cfg["dropout"] > 0.0:
                 y = self.dropout(y)
