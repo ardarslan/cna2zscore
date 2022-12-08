@@ -1,5 +1,7 @@
+import gc
 from typing import Any, Dict
 
+import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
@@ -28,8 +30,13 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         if cfg["normalize_output"]:
             y = (y - dataset.y_train_mean) / dataset.y_train_std
 
-        yhat = model(X)
-        loss = loss_function(yhat, y)
+        if cfg["use_automatic_tensor_casting"]:
+            with torch.cuda.amp.autocast():
+                yhat = model(X)
+                loss = loss_function(yhat, y)
+        else:
+            yhat = model(X)
+            loss = loss_function(yhat, y)
 
         if cfg["l1_reg_coeff"] > 0:
             loss += cfg["l1_reg_coeff"] * sum(p.abs().sum() for p in model.parameters())
@@ -49,3 +56,6 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
+
+        torch.cuda.empty_cache()
+        _ = gc.collect()

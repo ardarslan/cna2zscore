@@ -12,7 +12,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torchsummary
-from torch.optim import Adam, AdamW, RMSprop
+from torch.optim import Adam, AdamW, RMSprop, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, Subset
 
@@ -76,11 +76,15 @@ def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = True
         cfg["normalization_type"] = "instance_normalization"
+        cfg["use_automatic_tensor_casting"] = True
+        cfg["optimizer"] = "sgd"
     else:
         cfg["real_batch_size"] = cfg["batch_size"]
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = False
         cfg["normalization_type"] = "batch_normalization"
+        cfg["use_automatic_tensor_casting"] = False
+        cfg["optimizer"] = cfg["optimizer"]
 
 
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
@@ -174,7 +178,9 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, 
 
 
 def get_optimizer(cfg: Dict[str, Any], model: torch.nn.Module):
-    if cfg["optimizer"] == "adam":
+    if cfg["optimizer"] == "sgd":
+        return SGD(params=model.parameters())
+    elif cfg["optimizer"] == "adam":
         return Adam(params=model.parameters())
     elif cfg["optimizer"] == "adamw":
         return AdamW(params=model.parameters())

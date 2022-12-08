@@ -1,5 +1,7 @@
+import gc
 import logging
 
+import torch
 import numpy as np
 
 from train import train
@@ -58,6 +60,8 @@ if __name__ == "__main__":
     del model
     del optimizer
     del scheduler
+    gc.collect()
+    torch.cuda.empty_cache()
 
     model = load_model(cfg=cfg, dataset=dataset, logger=logger)
     save_results(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
