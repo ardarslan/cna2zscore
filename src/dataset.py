@@ -54,8 +54,10 @@ class Dataset(torch.utils.data.Dataset):
         for current_input_data_type in self.input_data_types:
             current_input_data_type_df = pd.read_csv(os.path.join(self.processed_data_dir, current_input_data_type + ".tsv"), sep="\t")
 
-            if current_input_data_type in ["unthresholded_cna", "thresholded_cna"]:
-                assert current_input_data_type_df.columns.tolist() == output_df.columns.tolist(), f"Columns of {current_input_data_type} dataframe are not the same with columns of output dataframe."
+            if current_input_data_type in ["unthresholded_cna", "thresholded_cna", "rppa"]:
+                intersecting_columns = ["sample_id"] + [column for column in set(current_input_data_type_df.columns).intersection(set(output_df.columns)) if column != "sample_id"]
+                output_df = output_df[intersecting_columns]
+                current_input_data_type_df = current_input_data_type_df[intersecting_columns]
 
             current_input_data_type_df = current_input_data_type_df[current_input_data_type_df["sample_id"].isin(cancer_type_sample_ids)]
 

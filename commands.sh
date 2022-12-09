@@ -1,7 +1,7 @@
 cd src
 
 
-for DATASET in 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex'; do
+for DATASET in 'unthresholdedcna2gex' 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex'; do
     for HIDDEN_DIMENSION in 2500 5000 10000 max; do
         for NUM_HIDDEN_LAYERS in 0 1 2; do
             for CANCER_TYPE in 'blca' 'all'; do

@@ -13,59 +13,10 @@ from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error
 
 
-# def plot_distributions_of_gene_based_pearson_corrs(cfg: Dict[str, Any], all_ground_truths: pd.DataFrame, all_predictions: pd.DataFrame, thresholded_cna_mask: pd.DataFrame, split_name: str) -> None:
-#     experiment_dir = get_experiment_dir(cfg=cfg)
-
-#     current_thresholded_cna_mask = thresholded_cna_mask[thresholded_cna_mask["sample_id"].isin(all_ground_truths["sample_id"].values)].drop(columns=["sample_id"]).values
-#     current_ground_truths = all_ground_truths.drop(columns=["sample_id"]).values
-#     current_predictions = all_predictions.drop(columns=["sample_id"]).values
-
-#     prediction_corrs = []
-#     ground_truth_corrs = []
-
-#     for j in range(current_ground_truths.shape[1]):
-#         current_df = pd.DataFrame.from_dict({"thresholded_cna_mask": current_thresholded_cna_mask[:, j].ravel(),
-#                                              "ground_truth": current_ground_truths[:, j].ravel(),
-#                                              "prediction": current_predictions[:, j].ravel()})
-#         current_grouped_df = current_df.groupby("thresholded_cna_mask").agg({"ground_truth": "median", "prediction": "median"}).reset_index(drop=False)
-#         ground_truth_corrs.append(pearsonr(x=current_grouped_df["thresholded_cna_mask"].values, y=current_grouped_df["ground_truth"].values)[0])
-#         prediction_corrs.append(pearsonr(x=current_grouped_df["thresholded_cna_mask"].values, y=current_grouped_df["prediction"].values)[0])
-
-#     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "histograms"), exist_ok=True)
-
-#     plt.figure(figsize=(6, 6))
-#     plt.title(f"Ground Truths, Split: {split_name.capitalize()}, Median Pearson Corr: {np.round(np.median(ground_truth_corrs), 2)}")
-#     plt.hist(ground_truth_corrs, bins=100)
-#     plt.xlabel("Pearson correlation", fontsize=28)
-#     plt.ylabel("Frequency", fontsize=28)
-#     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "histograms", "ground_truths.png"))
-#     plt.close("all")
-
-#     plt.figure(figsize=(6, 6))
-#     plt.title(f"Predictions, Split: {split_name.capitalize()}, Median Pearson Corr: {np.round(np.median(prediction_corrs), 2)}")
-#     plt.hist(prediction_corrs, bins=100)
-#     plt.xlabel("Pearson correlation", fontsize=28)
-#     plt.ylabel("Frequency", fontsize=28)
-#     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "histograms", "predictions.png"))
-#     plt.close("all")
-
-
 def get_mse_corr_p_value(ground_truths: np.ndarray, predictions: np.ndarray) -> Tuple[float]:
     mse = mean_squared_error(y_true=ground_truths, y_pred=predictions)
     corr, p_value = pearsonr(x=ground_truths, y=predictions)
     return mse, corr, p_value
-
-
-# def get_gene_based_evaluation_metrics(cfg: Dict[str, Any], all_ground_truths: pd.DataFrame, all_predictions: pd.DataFrame, dataset: Dataset):
-#     gene_based_evaluation_metrics_data = []
-#     for entrezgene_id in dataset.entrezgene_ids:
-#         gene_based_ground_truths = all_ground_truths[entrezgene_id]
-#         gene_based_predictions = all_predictions[entrezgene_id]
-#         gene_based_mse, gene_based_corr, _ = get_mse_corr_p_value(ground_truths=gene_based_ground_truths, predictions=gene_based_predictions)
-#         gene_based_normalized_mse = gene_based_mse / (mean_squared_error(y_true=gene_based_ground_truths, y_pred=np.zeros_like(gene_based_ground_truths)) + cfg["normalization_eps"])
-#         gene_based_evaluation_metrics_data.append((entrezgene_id, gene_based_normalized_mse, gene_based_corr))
-#     gene_based_evaluation_metrics_df = pd.DataFrame(data=gene_based_evaluation_metrics_data, columns=["entrezgene_id", "gene_normalized_mse", "gene_corr"])
-#     return gene_based_evaluation_metrics_df
 
 
 def get_evaluation_metrics(cancer_type: str, all_ground_truths: pd.DataFrame, all_predictions: pd.DataFrame, current_sample_ids: List[str]) -> Dict[str, float]:
@@ -89,63 +40,6 @@ def get_evaluation_metrics(cancer_type: str, all_ground_truths: pd.DataFrame, al
     # noncna_mse, noncna_corr, noncna_p_value = get_mse_corr_p_value(ground_truths=current_noncna_ground_truths, predictions=current_noncna_predictions)
 
     return (cancer_type, all_mse, all_corr, all_p_value) # , cna_mse, cna_corr, cna_p_value, noncna_mse, noncna_corr, noncna_p_value)
-
-
-# def plot_scatter_plot(cfg: Dict[str, Any], split_name: str, current_cancer_type: str, current_sample_ids: List[str], all_ground_truths: pd.DataFrame, all_predictions: pd.DataFrame) -> None:
-#     experiment_dir = get_experiment_dir(cfg=cfg)
-
-#     current_ground_truths = all_ground_truths[all_ground_truths["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values.ravel()
-#     current_predictions = all_predictions[all_predictions["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values.ravel()
-#     current_corr, current_p_value = pearsonr(x=current_ground_truths, y=current_predictions)
-
-#     plt.scatter(x=current_ground_truths, y=current_predictions, alpha=0.1)
-#     plt.xlabel("Ground truths", fontsize=28)
-#     plt.ylabel("Predictions", fontsize=28)
-#     plt.title(f"Split: {split_name.capitalize()}, Cancer type: {current_cancer_type.capitalize()}, Pearson Corr: {np.round(current_corr, 2)}, P-Value: {np.round(current_p_value, 2)}", fontsize=28)
-#     bottom_left = np.maximum(np.min(current_ground_truths), np.min(current_predictions))
-#     top_right = np.minimum(np.max(current_ground_truths), np.max(current_predictions))
-#     plt.xlim(bottom_left, top_right)
-#     plt.ylim(bottom_left, top_right)
-#     plt.plot([bottom_left, top_right], [bottom_left, top_right], color='r')
-#     plt.xticks(fontsize=18)
-#     plt.yticks(fontsize=18)
-#     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "scatter_plots"), exist_ok=True)
-#     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "scatter_plots", f"{current_cancer_type}.png"))
-#     plt.close("all")
-
-
-# def plot_box_plots(cfg: Dict[str, Any], split_name: str, current_cancer_type: str, current_sample_ids: List[str], all_ground_truths: pd.DataFrame, all_predictions: pd.DataFrame, thresholded_cna_mask: pd.DataFrame, dataset: Dataset) -> None:
-#     experiment_dir = get_experiment_dir(cfg=cfg)
-
-#     current_ground_truths = all_ground_truths[all_ground_truths["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values
-#     current_ground_truths = (current_ground_truths - dataset.y_train_mean.cpu().numpy()) / dataset.y_train_std.cpu().numpy()
-#     current_ground_truths = current_ground_truths.ravel()
-
-#     current_predictions = all_predictions[all_predictions["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values
-#     current_predictions = (current_predictions - dataset.y_train_mean.cpu().numpy()) / dataset.y_train_std.cpu().numpy()
-#     current_predictions = current_predictions.ravel()
-
-#     current_thresholded_cna_mask = thresholded_cna_mask[thresholded_cna_mask["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"]).values.ravel()
-#     current_df = pd.DataFrame.from_dict({"current_ground_truths": current_ground_truths,
-#                                          "current_predictions": current_predictions,
-#                                          "current_thresholded_cna_mask": current_thresholded_cna_mask})
-#     current_grouped_df = current_df.groupby("current_thresholded_cna_mask").agg({"current_ground_truths": "median", "current_predictions": "median"}).reset_index(drop=False)
-
-#     plt.figure(figsize=(6, 6))
-#     ground_truths_median_z_corr, ground_truths_median_z_p_value = pearsonr(current_grouped_df["current_thresholded_cna_mask"].values, current_grouped_df["current_ground_truths"].values)
-#     plt.title(f"Ground Truths, Split: {split_name.capitalize()}, Cancer type: {current_cancer_type.capitalize()}, Pearson Corr: {np.round(ground_truths_median_z_corr, 2)}, P-Value: {np.round(ground_truths_median_z_p_value, 2)}")
-#     current_df.boxplot(column="current_ground_truths", by="current_thresholded_cna_mask", figsize=(10, 10), fontsize=15)
-#     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "ground_truths"), exist_ok=True)
-#     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "ground_truths", f"{current_cancer_type}.png"))
-#     plt.close("all")
-
-#     plt.figure(figsize=(6, 6))
-#     predictions_median_z_corr, predictions_median_z_p_value = pearsonr(current_grouped_df["current_thresholded_cna_mask"].values, current_grouped_df["current_ground_truths"].values)
-#     plt.title(f"Predictions, Split: {split_name.capitalize()}, Cancer type: {current_cancer_type.capitalize()}, Pearson Corr: {np.round(predictions_median_z_corr, 2)}, P-Value: {np.round(predictions_median_z_p_value, 2)}")
-#     current_df.boxplot(column="current_predictions", by="current_thresholded_cna_mask", figsize=(10, 10), fontsize=15)
-#     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "predictions"), exist_ok=True)
-#     plt.savefig(os.path.join(experiment_dir, f"{split_name}_results", "box_plots", "predictions", f"{current_cancer_type}.png"))
-#     plt.close("all")
 
 
 def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
@@ -243,15 +137,6 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
     # plot_distributions_of_gene_based_pearson_corrs(cfg=cfg, all_ground_truths=all_ground_truths, all_predictions=all_predictions, thresholded_cna_mask=thresholded_cna_mask, split_name=split_name)
 
     logger.log(level=logging.INFO, msg=f"Saved results for {split_name} split.")
-
-
-# def save_results(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
-#     thresholded_cna_mask = pd.read_csv(os.path.join(cfg["processed_data_dir"], "thresholded_cna.tsv"), sep="\t")
-#     thresholded_cna_mask = thresholded_cna_mask.sort_values(by="sample_id")
-#     thresholded_cna_mask = thresholded_cna_mask[["sample_id"] + sorted([column for column in thresholded_cna_mask.drop(columns=["sample_id"]).columns])]
-
-#     for split_name in ["val", "test"]:
-#         save_results_split(cfg=cfg, data_loaders=data_loaders, split_name=split_name, model=model, loss_function=loss_function, dataset=dataset, thresholded_cna_mask=thresholded_cna_mask, logger=logger)
 
 
 def save_results(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:

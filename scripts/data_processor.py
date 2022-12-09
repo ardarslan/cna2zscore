@@ -3,21 +3,16 @@
 
 # In[1]:
 
-
 development = False
 
-
 # In[3]:
-
 
 import os
 import numpy as np
 import pandas as pd
 import swifter
 
-
 # In[4]:
-
 
 data_dir = "../data"
 raw_folder_name = "raw"
@@ -31,24 +26,31 @@ os.makedirs(os.path.join(data_dir, processed_folder_name), exist_ok=True)
 
 # In[5]:
 
-
 tumor_sample_ids = ["0" + str(i) for i in range(1, 10)]
-
 
 # # Process RPPA Data
 
 # In[6]:
 
 print("Processing RPPA data...")
-rppa_file_name = "TCGA-RPPA-pancan-clean.xena"
 
-rppa_df = pd.read_csv(os.path.join(data_dir, "raw", rppa_file_name), sep="\t")
+rppa_file_name = "TCGA-RPPA-pancan-clean.xena"
+protein_name_to_hgnc_symbol_mapping_file_name = "tcpa_to_ncbi_mapping.csv"
+hgnc_symbol_to_entrezgene_id_mapping_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
+
+rppa_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, rppa_file_name), sep="\t")
 rppa_df.index = rppa_df["SampleID"].tolist()
 rppa_df.drop(columns=["SampleID"], inplace=True)
 rppa_df = rppa_df.T
 rppa_df.reset_index(drop=False, inplace=True)
 rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
 rppa_df = rppa_df.dropna(axis=1)
+
+hgnc_symbol_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, hgnc_symbol_to_entrezgene_id_mapping_file_name), sep="\t").values)
+protein_name_to_hgnc_symbol_mapping_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, protein_name_to_hgnc_symbol_mapping_file_name), sep=",")
+protein_name_to_hgnc_symbol_mapping = dict(protein_name_to_hgnc_symbol_mapping_df[["TCPA Symbol", "NCBI Symbol 1"]].values)
+rppa_df.columns = ["sample_id"] + [hgnc_symbol_to_entrezgene_id_mapping[protein_name_to_hgnc_symbol_mapping[column]] for column in rppa_df.columns if column != "sample_id"]
+rppa_df = rppa_df[["sample_id"] + sorted([column for column in rppa_df.columns if column != "sample_id"])]
 
 if development:
     print(rppa_df)
@@ -66,7 +68,7 @@ unthresholded_cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_
 hgnc_symbol_to_entrezgene_id_mapping_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
 hgnc_symbol_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, hgnc_symbol_to_entrezgene_id_mapping_file_name), sep="\t").values)
 
-gex_file_name = "tcga_gene_expected_count"
+gex_file_name = "tcga_RSEM_gene_tpm"
 gex_df = pd.read_csv(os.path.join(data_dir, "raw", gex_file_name), sep="\t", usecols=["sample"])
 gex_ensembl_ids = frozenset(gex_df["sample"].tolist())
 del gex_df
@@ -215,7 +217,6 @@ print("Processed Tumor Purity data.")
 print("Processing GEX data...")
 
 ensembl_id_to_entrezgene_id_mapping_file_name = "ensembl_id_to_entrezgene_id_mapping.tsv"
-gex_file_name = "tcga_gene_expected_count"
 
 tumor_sample_ids = ["0" + str(i) for i in range(1, 10)]
 ensembl_id_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, ensembl_id_to_entrezgene_id_mapping_file_name), sep="\t").values)
@@ -372,7 +373,6 @@ for entrezgene_id in gex_df.columns:
 
         if (current_genes_current_thresholded_cna_value < 0) and (current_genes_current_z_score > 2):
             dug_count += 1
-
 
     aug_adg_ddg_dug_ratios.append((entrezgene_id,
                                    float(aug_count) / float(gex_df.shape[0]),
