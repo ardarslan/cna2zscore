@@ -55,6 +55,9 @@ if __name__ == "__main__":
             break
         else:
             scheduler.step(current_val_loss_dict[cfg["loss_function"]])
+
+        summary_writer.add_scalar(f"learning_rate", optimizer.param_groups[0]['lr'], epoch)
+
     logger.log(level=logging.INFO, msg="Finished training.")
     save_cfg(cfg=cfg, logger=logger)
 
