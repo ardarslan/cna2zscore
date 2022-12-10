@@ -31,6 +31,31 @@ class MLP(nn.Module):
         return y
 
 
+class ResConMLP(nn.Module):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+        super().__init__()
+        self.cfg = cfg
+
+        self.layers = nn.ModuleList()
+
+        for i in range(self.cfg["num_nonlinear_layers"]):
+            if i == 0:
+                self.layers.append(NonLinearLayer(cfg=cfg, input_dimension=input_dimension, output_dimension=cfg["hidden_dimension"]))
+            else:
+                self.layers.append(NonLinearLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=output_dimension))
+
+        if self.cfg["num_nonlinear_layers"] == 0:
+            self.layers.append(OutputLayer(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension))
+        else:
+            self.layers.append(OutputLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=output_dimension))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        y = x.clone()
+        for layer in self.layers:
+            y = layer(y)
+        return y
+
+
 # from layer import InputLayer, HiddenLayer, OutputLayer
 # class MLP(nn.Module):
 #     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):

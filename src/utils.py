@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader, Dataset, Subset
 from dataset import UnthresholdedCNA2GEXDataset, ThresholdedCNA2GEXDataset, \
                     UnthresholdedCNAPurity2GEXDataset, ThresholdedCNAPurity2GEXDataset, \
                     RPPA2GEXDataset
-from model import LinearModel, MLP
+from model import MLP, ResConMLP
 
 
 def set_seeds(cfg: Dict[str, Any]) -> None:
@@ -176,8 +176,8 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, 
 
     if cfg["model"] == "mlp":
         model = MLP(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
-    elif cfg["model"] == "linear_model":
-        model = LinearModel(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
+    elif cfg["model"] == "rescon_mlp":
+        model = ResConMLP(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
     else:
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
 

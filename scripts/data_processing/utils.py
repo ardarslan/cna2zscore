@@ -11,8 +11,8 @@ def get_dfs_with_intersecting_sample_ids(dfs: List[pd.DataFrame]) -> List[str]:
         else:
             intersecting_sample_ids = intersecting_sample_ids.intersection(df["sample_id"].tolist())
 
-    for df in dfs:
-        df = df[df["sample_id"].isin(intersecting_sample_ids)].sort_values(by="sample_id")
+    for index in range(dfs):
+        dfs[index] = df[df["sample_id"].isin(intersecting_sample_ids)].sort_values(by="sample_id")
 
     return dfs
 
@@ -25,7 +25,7 @@ def get_dfs_with_intersecting_columns(dfs: List[pd.DataFrame]) -> List[str]:
         else:
             intersecting_columns = intersecting_columns.intersection(set(df.drop(columns=["sample_id"]).columns))
 
-    for df in dfs:
-        df = df[["sample_id"] + sorted(list(intersecting_columns))]
+    for index in range(dfs):
+        dfs[index] = df[["sample_id"] + sorted(list(intersecting_columns))]
 
     return dfs
