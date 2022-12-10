@@ -4,8 +4,8 @@ from typing import Any, Dict
 import numpy as np
 import torch
 import torch.nn as nn
-from tensorboard import SummaryWriter
 from torch.utils.data import Dataset, DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 
 def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter) -> np.float32:
