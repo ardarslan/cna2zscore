@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torchsummary
+from tensorboard import SummaryWriter
 from torch.optim import Adam, AdamW, RMSprop, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, Subset
@@ -19,7 +20,7 @@ from torch.utils.data import DataLoader, Dataset, Subset
 from dataset import UnthresholdedCNA2GEXDataset, ThresholdedCNA2GEXDataset, \
                     UnthresholdedCNAPurity2GEXDataset, ThresholdedCNAPurity2GEXDataset, \
                     RPPA2GEXDataset
-from model import MLP
+from model import LinearModel, MLP
 
 
 def set_seeds(cfg: Dict[str, Any]) -> None:
@@ -141,6 +142,11 @@ def get_logger(cfg: Dict[str, Any]) -> logging.Logger:
     return logger
 
 
+def get_summary_writer(cfg: Dict[str, Any]):
+    experiment_dir = get_experiment_dir(cfg=cfg)
+    return SummaryWriter(os.path.join(experiment_dir, "loss_summary.txt"))
+
+
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> Dict[str, DataLoader]:
     logger.log(level=logging.INFO, msg="Creating the data loaders...")
 
@@ -163,7 +169,9 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, 
     logger.log(level=logging.INFO, msg="Creating the model...")
 
     if cfg["model"] == "mlp":
-        model = MLP(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension).float().to(cfg["device"])
+        model = MLP(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
+    elif cfg["model"] == "linear_model":
+        model = LinearModel(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
     else:
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
 
@@ -171,7 +179,7 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, 
 
     logger.log(level=logging.INFO, msg="Created the model.")
 
-    return model
+    return model.float().to(cfg["device"])
 
 
 def get_optimizer(cfg: Dict[str, Any], model: torch.nn.Module):

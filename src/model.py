@@ -33,3 +33,13 @@ class MLP(nn.Module):
         for layer in self.layers:
             y = layer(y)
         return y
+
+
+class LinearModel(nn.Module):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+        super().__init__()
+        self.cfg = cfg
+        self.linear = nn.Linear(in_features=input_dimension, out_features=output_dimension)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.linear(x)
