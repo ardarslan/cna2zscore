@@ -6,13 +6,14 @@ import pprint
 import logging
 import argparse
 from uuid import uuid4
-from typing import Dict, Any, Union
+from typing import Any, Dict, List, Union
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torchsummary
-from tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from torch.optim import Adam, AdamW, RMSprop, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, Subset
@@ -83,6 +84,11 @@ def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = False
         cfg["normalization_type"] = "batch_normalization"
+
+
+def set_number_of_parameters(cfg: Dict[str, Any], model: nn.Module) -> None:
+    cfg["number_of_trainable_parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    cfg["number_of_all_parameters"] = sum(p.numel() for p in model.parameters())
 
 
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
@@ -216,6 +222,12 @@ def save_cfg(cfg: Dict[str, Any], logger: logging.Logger) -> None:
     config_path = os.path.join(experiment_dir, "cfg.txt")
     with open(config_path, "w") as file_handler:
         file_handler.write(pprint.pformat(cfg, indent=4))
+
+
+def save_loss_values(cfg: Dict[str, Any], train_main_loss_values: List[float], val_main_loss_values: List[float]) -> None:
+    experiment_dir = get_experiment_dir(cfg=cfg)
+    loss_values_df = pd.DataFrame.from_dict({"epoch": np.arange(1, len(train_main_loss_values)+1), f"train_{cfg['loss_function']}": train_main_loss_values, f"val_{cfg['loss_function']}": val_main_loss_values})
+    loss_values_df.to_csv(os.path.join(experiment_dir, "loss_values.tsv"), sep="\t")
 
 
 def save_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) -> None:

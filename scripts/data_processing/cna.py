@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import pandas as pd
-import swifter
 
 
 def process_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name: str) -> pd.DataFrame:

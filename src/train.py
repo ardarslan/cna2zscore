@@ -1,6 +1,6 @@
 import gc
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import numpy as np
 import torch
@@ -9,7 +9,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 
-def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, optimizer, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter) -> None:
+def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, optimizer, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter, train_main_loss_values: List[float]) -> None:
     model.train()
     optimizer.zero_grad()
 
@@ -79,9 +79,6 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
             optimizer.step()
             optimizer.zero_grad()
 
-        torch.cuda.empty_cache()
-        _ = gc.collect()
-
     logger.log(level=logging.INFO, msg=f"Epoch {str(epoch).zfill(3)}, {(5 - len('train')) * ' ' + 'train'.capitalize()} {cfg['loss_function']} loss is {np.round(main_loss_sum / main_loss_count, 2)}.")
 
     train_loss_dict = {
@@ -93,6 +90,8 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
 
     if cfg["l2_reg_coeff"] > 0:
         train_loss_dict["l2_loss"] = l2_loss_sum / l2_loss_count
+
+    train_main_loss_values.append(train_loss_dict[cfg["loss_function"]])
 
     for loss_name, loss_value in train_loss_dict.items():
         summary_writer.add_scalar(f"train_{loss_name}", loss_value, epoch)

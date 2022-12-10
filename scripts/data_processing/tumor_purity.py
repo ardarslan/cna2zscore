@@ -1,7 +1,6 @@
 import os
 from typing import List
 
-import swifter
 import pandas as pd
 
 

@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import swifter
 
 
 def process_cancer_type_data(data_dir: str, raw_folder_name: str, processed_folder_name: str) -> pd.DataFrame:

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import numpy as np
 import torch
@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 
-def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter) -> np.float32:
+def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter, val_main_loss_values: List[float]) -> np.float32:
     model.eval()
 
     with torch.no_grad():
@@ -37,6 +37,8 @@ def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn
         val_loss_dict = {
             cfg["loss_function"]: main_loss_sum / main_loss_count
         }
+
+        val_main_loss_values.append(val_loss_dict[cfg["loss_function"]])
 
         for loss_name, loss_value in val_loss_dict.items():
             summary_writer.add_scalar(f"val_{loss_name}", loss_value, epoch)
