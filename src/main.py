@@ -3,8 +3,6 @@ import logging
 
 import torch
 import numpy as np
-import ray
-ray.init(ignore_reinit_error=True, num_cpus=16)
 
 from train import train
 from validate import validate
