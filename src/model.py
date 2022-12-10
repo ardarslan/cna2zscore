@@ -1,8 +1,9 @@
-import torch
-import torch.nn as nn
-
+import math
 from typing import Dict, Any
 
+import torch
+import torch.nn as nn
+from torch.nn.parameter import Parameter
 
 from layer import NonLinearLayer, OutputLayer
 
@@ -48,6 +49,19 @@ class ResConMLP(nn.Module):
             self.layers.append(OutputLayer(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension))
         else:
             self.layers.append(OutputLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=output_dimension))
+
+        if self.cfg["rescon_mlp_diagonal"]:
+            self.ResConW = Parameter(torch.empty((1, output_dimension)))
+            self.ResConB = Parameter(torch.empty(output_dimension))
+        else:
+            self.ResConW = Parameter(torch.empty((output_dimension, output_dimension)))
+            self.ResConB = Parameter(torch.empty(output_dimension))
+
+    def _init_rescon_parameters(self):
+        nn.init.kaiming_uniform_(self.ResConW, a=math.sqrt(5))
+        fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight)
+        bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+        nn.init.uniform_(self.ResConB, -bound, bound)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = x.clone()
