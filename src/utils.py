@@ -87,8 +87,8 @@ def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
 
 
 def set_number_of_parameters(cfg: Dict[str, Any], model: nn.Module) -> None:
-    cfg["number_of_trainable_parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    cfg["number_of_all_parameters"] = sum(p.numel() for p in model.parameters())
+    cfg["num_trainable_parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    cfg["num_all_parameters"] = sum(p.numel() for p in model.parameters())
 
 
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
@@ -273,7 +273,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # model
     parser.add_argument("--model", type=str, default="mlp", help="Which model to use.")
-    parser.add_argument("--num_hidden_layers", type=int, default=2, help="Number of layers except the output layer.")
+    parser.add_argument("--num_nonlinear_layers", type=int, default=2, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension", default=10000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
     parser.add_argument("--use_residual_connection", type=str2bool, default=False, nargs='?', const=True, help="Whether to use residual connection between hidden layers or not.")

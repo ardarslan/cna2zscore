@@ -46,17 +46,17 @@ if __name__ == "__main__":
 
     cancer_type_df.to_csv(os.path.join(data_dir, processed_folder_name, "cancer_type.tsv"), sep="\t", index=False)
     print("cancer_type_df.shape:", cancer_type_df.shape)
-    del cancer_type_df
 
     cancer_type_one_hot_df = pd.get_dummies(data=cancer_type_df, columns=["cancer_type"])
     cancer_type_one_hot_df.to_csv(os.path.join(data_dir, processed_folder_name, "cancer_type_one_hot.tsv"), sep="\t", index=False)
     print("cancer_type_one_hot_df.shape", cancer_type_one_hot_df.shape)
+    del cancer_type_df
     del cancer_type_one_hot_df
 
     gex_df.to_csv(os.path.join(data_dir, processed_folder_name, "gex.tsv"), sep="\t", index=False)
     print("gex_df.shape:", gex_df.shape)
 
-    entrezgene_id_to_mean_and_std_gex_mapping_df = process_entrezgene_id_to_mean_and_std_gex_mapping_data(gex_df=gex_df)
+    entrezgene_id_to_mean_and_std_gex_mapping_df = process_entrezgene_id_to_mean_and_std_gex_mapping_data(gex_df=gex_df, thresholded_cna_df=thresholded_cna_df)
     entrezgene_id_to_mean_and_std_gex_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_mean_and_std_gex_mapping.tsv"), sep="\t")
     print("entrezgene_id_to_mean_and_std_gex_mapping_df.shape:", entrezgene_id_to_mean_and_std_gex_mapping_df.shape)
 

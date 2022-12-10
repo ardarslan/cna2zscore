@@ -29,10 +29,10 @@ def process_gene_predictability_data(gex_df: pd.DataFrame, entrezgene_id_to_mean
                 dug_count += 1
 
         aug_adg_ddg_dug_ratios.append((entrezgene_id,
-                                    float(aug_count) / float(gex_df.shape[0]),
-                                    float(adg_count) / float(gex_df.shape[0]),
-                                    float(ddg_count) / float(gex_df.shape[0]),
-                                    float(dug_count) / float(gex_df.shape[0])))
+                                       float(aug_count) / float(gex_df.shape[0]),
+                                       float(adg_count) / float(gex_df.shape[0]),
+                                       float(ddg_count) / float(gex_df.shape[0]),
+                                       float(dug_count) / float(gex_df.shape[0])))
 
     aug_adg_ddg_dug_ratios_df = pd.DataFrame(data=aug_adg_ddg_dug_ratios, columns=["entrezgene_id", "aug_ratio", "adg_ratio", "ddg_ratio", "dug_ratio"])
     return aug_adg_ddg_dug_ratios_df
