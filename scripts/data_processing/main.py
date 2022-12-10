@@ -21,7 +21,7 @@ tumor_sample_ids = ["0" + str(i) for i in range(1, 10)]
 
 
 if __name__ == "__main__":
-    thresholded_cna_df, unthresholded_cna_df = process_cna_data(data_dir=data_dir, processed_folder_name=processed_folder_name)
+    thresholded_cna_df, unthresholded_cna_df = process_cna_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name)
     cancer_type_df = process_cancer_type_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name)
     tumor_purity_df = process_tumor_purity_data(data_dir=data_dir, raw_folder_name=raw_folder_name, tumor_sample_ids=tumor_sample_ids)
     gex_df = process_gex_data(data_dir=data_dir, processed_folder_name=processed_folder_name, tumor_sample_ids=tumor_sample_ids)
