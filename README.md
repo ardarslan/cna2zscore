@@ -25,8 +25,9 @@ conda activate cna2gex
 
 Download raw data
 ```
-mkdir data
-cd data
+cd /cluster/scratch/aarslan
+mkdir cna2gex_data
+cd cna2gex_data
 gdown 1aJo5IdlI545lKniNjX33GD_cH4hurQ2Y
 unzip raw.zip
 rm -rf raw.zip
@@ -47,8 +48,9 @@ cd ../..
 # Or download the processed data
 
 ```
-mkdir data
-cd data
+cd /cluster/scratch/aarslan
+mkdir cna2gex_data
+cd cna2gex_data
 gdown 1CPdjSSt7QhJZgpbPWmf_uFnWJgthP4l-
 unzip processed.zip
 rm -rf processed.zip
