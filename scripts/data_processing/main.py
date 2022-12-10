@@ -13,7 +13,7 @@ from gene_predictability import process_gene_predictability_data
 from utils import get_dfs_with_intersecting_sample_ids, get_dfs_with_intersecting_columns
 
 
-data_dir = "../data"
+data_dir = "../../data"
 raw_folder_name = "raw"
 processed_folder_name = "processed"
 os.makedirs(os.path.join(data_dir, processed_folder_name), exist_ok=True)
