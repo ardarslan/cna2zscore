@@ -39,8 +39,9 @@ Run the following lines to process raw data:
 cd scripts
 python3 ensembl_id_to_entrezgene_id_mapper.py
 python3 hgnc_symbol_to_entrezgene_id_mapper.py
-bsub -n 8 -W 04:00 -R "rusage[mem=16384, ngpus_excl_p=1]" python data_processor.py
-cd ..
+cd data_processing
+sbatch --time=1440 --ntasks=8 --mem-per-cpu=16384 --wrap="python main.py"
+cd ../..
 ```
 
 # Or download the processed data
@@ -72,5 +73,5 @@ USE_RESIDUAL_CONNECTION: true | false
 
 ```
 cd src
-bsub -n 4 -W 24:00 -R "rusage[mem=32768, ngpus_excl_p=1]" python main.py --dataset DATASET --cancer_type CANCER_TYPE --normalize_input NORMALIZE_INPUT --normalize_output NORMALIZE_OUTPUT --num_hidden_layers NUM_HIDDEN_LAYERS --hidden_dimension HIDDEN_DIMENSION --use_residual_connection USE_RESIDUAL_CONNECTION
+sbatch --time=1440 --ntasks=2 --mem-per-cpu=16384 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset DATASET --cancer_type CANCER_TYPE --normalize_input NORMALIZE_INPUT --normalize_output NORMALIZE_OUTPUT --num_hidden_layers NUM_HIDDEN_LAYERS --hidden_dimension HIDDEN_DIMENSION --use_residual_connection USE_RESIDUAL_CONNECTION"
 ```
