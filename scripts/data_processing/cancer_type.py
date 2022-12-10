@@ -13,7 +13,7 @@ def process_cancer_type_data(data_dir: str, raw_folder_name: str, processed_fold
     cancer_type_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cancer_type_file_name), sep="\t")
     cancer_type_df = cancer_type_df.rename(columns={"sample": "sample_id", "_primary_disease": "cancer_type"})
     cancer_type_df = cancer_type_df[["sample_id", "cancer_type"]]
-    cancer_type_df["cancer_type"] = cancer_type_df["cancer_type"].swifter.apply(lambda x: cancer_type_full_name_to_abbreviation_mapping[x])
+    cancer_type_df["cancer_type"] = cancer_type_df["cancer_type"].apply(lambda x: cancer_type_full_name_to_abbreviation_mapping[x])
 
     print("Processed Cancer Type data...")
 

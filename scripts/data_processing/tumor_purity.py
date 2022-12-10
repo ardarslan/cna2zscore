@@ -54,8 +54,8 @@ def process_tumor_purity_data(data_dir: str, raw_folder_name: str, tumor_sample_
         else:
             sample_id_dict[sample_id_first_15] = sample_id
 
-    tumor_purity_df = tumor_purity_df[tumor_purity_df["sample_id"].swifter.apply(lambda x: x in list(sample_id_dict.values()))]
-    tumor_purity_df["sample_id"] = tumor_purity_df["sample_id"].swifter.apply(lambda x: x[:15])
+    tumor_purity_df = tumor_purity_df[tumor_purity_df["sample_id"].apply(lambda x: x in list(sample_id_dict.values()))]
+    tumor_purity_df["sample_id"] = tumor_purity_df["sample_id"].apply(lambda x: x[:15])
 
     print("Processed Tumor Purity data.")
 

@@ -1,9 +1,6 @@
 import os
 
 import pandas as pd
-import ray
-ray.init(ignore_reinit_error=True, num_cpus=16, memory=int(30 * 1e9))
-import swifter
 
 from cna import process_cna_data
 from rppa import process_rppa_data

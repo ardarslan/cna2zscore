@@ -18,9 +18,9 @@ def process_gex_data(data_dir: str, processed_folder_name: str, tumor_sample_ids
 
     gex_df.rename(columns={"sample": "ensembl_id"}, inplace=True)
     gex_df = gex_df[["ensembl_id"] + [column for column in gex_df.columns if column.split("-")[-1] in tumor_sample_ids]]
-    gex_df["ensembl_id"] = gex_df["ensembl_id"].swifter.apply(lambda x: x.split(".")[0]).tolist()
-    gex_df = gex_df[gex_df["ensembl_id"].swifter.apply(lambda x: x in ensembl_id_to_entrezgene_id_mapping.keys())]
-    gex_df["entrezgene_id"] = gex_df["ensembl_id"].swifter.apply(lambda x: ensembl_id_to_entrezgene_id_mapping[x]).tolist()
+    gex_df["ensembl_id"] = gex_df["ensembl_id"].apply(lambda x: x.split(".")[0]).tolist()
+    gex_df = gex_df[gex_df["ensembl_id"].apply(lambda x: x in ensembl_id_to_entrezgene_id_mapping.keys())]
+    gex_df["entrezgene_id"] = gex_df["ensembl_id"].apply(lambda x: ensembl_id_to_entrezgene_id_mapping[x]).tolist()
     gex_df.drop(columns=["ensembl_id"], inplace=True)
 
     def get_indices_with_max_expression_per_gene(x):
@@ -31,10 +31,10 @@ def process_gex_data(data_dir: str, processed_folder_name: str, tumor_sample_ids
     gex_df.reset_index(drop=True, inplace=True)
     gex_df["index"] = gex_df.index.tolist()
     gex_df["expression_sum"] = gex_df.drop(columns=["entrezgene_id"]).values.sum(axis=1).tolist()
-    selected_indices = gex_df[["index", "entrezgene_id", "expression_sum"]].swifter.groupby("entrezgene_id").apply(lambda x: get_indices_with_max_expression_per_gene(x)).tolist()
+    selected_indices = gex_df[["index", "entrezgene_id", "expression_sum"]].groupby("entrezgene_id").apply(lambda x: get_indices_with_max_expression_per_gene(x)).tolist()
     gex_df = gex_df[gex_df["index"].isin(selected_indices)].drop(columns=["index", "expression_sum"])
 
-    gex_df["entrezgene_id"] = gex_df["entrezgene_id"].swifter.apply(lambda x: int(x))
+    gex_df["entrezgene_id"] = gex_df["entrezgene_id"].apply(lambda x: int(x))
 
     gex_df.index = gex_df["entrezgene_id"].tolist()
     gex_df.drop(columns=["entrezgene_id"], inplace=True)

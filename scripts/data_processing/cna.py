@@ -32,9 +32,9 @@ def process_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name:
                 raise Exception("sample_splitted has more than 1 '|'s")
 
         cna_df = cna_df[~pd.isnull(cna_df["entrezgene_id"])]
-        cna_df["entrezgene_id"] = cna_df["entrezgene_id"].swifter.apply(lambda x: int(x))
+        cna_df["entrezgene_id"] = cna_df["entrezgene_id"].apply(lambda x: int(x))
 
-        cna_df["ensembl_id_is_not_in_gex_ensembl_ids"] = cna_df["ensembl_id"].swifter.apply(lambda x: 1 * (x not in gex_ensembl_ids))
+        cna_df["ensembl_id_is_not_in_gex_ensembl_ids"] = cna_df["ensembl_id"].apply(lambda x: 1 * (x not in gex_ensembl_ids))
 
         def get_ensembl_version(ensembl_id):
             if pd.isnull(ensembl_id) or ensembl_id == "":
@@ -42,12 +42,12 @@ def process_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name:
             else:
                 return int(ensembl_id.split(".")[-1])
 
-        cna_df["ensembl_version"] = cna_df["ensembl_id"].swifter.apply(lambda ensembl_id: get_ensembl_version(ensembl_id))
+        cna_df["ensembl_version"] = cna_df["ensembl_id"].apply(lambda ensembl_id: get_ensembl_version(ensembl_id))
 
         def select_one_row_per_entrezgene_id(x):
             return x.sort_values(by=["ensembl_id_is_not_in_gex_ensembl_ids", "ensembl_version"], ascending=True).iloc[0, :]
 
-        cna_df = cna_df.swifter.groupby("entrezgene_id").apply(lambda x: select_one_row_per_entrezgene_id(x)).reset_index(drop=True)
+        cna_df = cna_df.groupby("entrezgene_id").apply(lambda x: select_one_row_per_entrezgene_id(x)).reset_index(drop=True)
 
         cna_df.drop(columns=["Sample", "ensembl_id", "ensembl_id_is_not_in_gex_ensembl_ids", "ensembl_version"], inplace=True)
 
