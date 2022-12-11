@@ -272,12 +272,12 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
 
     # model
-    parser.add_argument("--model", type=str, default="mlp", help="Which model to use.")
+    parser.add_argument("--model", type=str, default="mlp", choices=["mlp", "rescon_mlp"], help="Which model to use.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=2, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension", default=10000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
-    parser.add_argument("--use_residual_connection", type=str2bool, default=False, nargs='?', const=True, help="Whether to use residual connection between hidden layers or not.")
     parser.add_argument("--dropout", type=float, default=0.0, help="Probability of zeroing out an entry in a given vector.")
+    parser.add_argument("--rescon_diagonal_W", type=str2bool, default=True, nargs='?', const=True, help="If model is rescon_mlp, whether to use a diagonal weight matrix or not.")
 
     # optimizer
     parser.add_argument("--optimizer", type=str, default="adam", help="Which optimizer to use.")
