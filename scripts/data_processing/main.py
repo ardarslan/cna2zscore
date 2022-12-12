@@ -60,6 +60,6 @@ if __name__ == "__main__":
     entrezgene_id_to_mean_and_std_gex_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_mean_and_std_gex_mapping.tsv"), sep="\t")
     print("entrezgene_id_to_mean_and_std_gex_mapping_df.shape:", entrezgene_id_to_mean_and_std_gex_mapping_df.shape)
 
-    gene_predictability_df = process_gene_predictability_data(gex_df=gex_df, entrezgene_id_to_mean_and_std_gex_mapping_df=entrezgene_id_to_mean_and_std_gex_mapping_df)
+    gene_predictability_df = process_gene_predictability_data(gex_df=gex_df, entrezgene_id_to_mean_and_std_gex_mapping_df=entrezgene_id_to_mean_and_std_gex_mapping_df, thresholded_cna_df=thresholded_cna_df)
     gene_predictability_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping.tsv"), sep="\t")
     print("gene_predictability_df.shape:", gene_predictability_df.shape)
