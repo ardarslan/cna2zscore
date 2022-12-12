@@ -63,8 +63,8 @@ gex_df_hgnc_symbols = set([gene_id for gene_id in gex_df["sample"].tolist() if i
 del gex_df
 
 hgnc_symbols = cna_df_hgnc_symbols.union(gex_df_hgnc_symbols).union(rppa_df_hgnc_symbols)
-existing_hgnc_symbols = set(pd.read_csv(os.path.join(data_dir, processed_folder_name, "old_hgnc_to_entrezgene_id_mapping.tsv"), sep="\t")["hgnc_symbol"].tolist())
-hgnc_symbols = hgnc_symbols - existing_hgnc_symbols
+# existing_hgnc_symbols = set(pd.read_csv(os.path.join(data_dir, processed_folder_name, "old_hgnc_to_entrezgene_id_mapping.tsv"), sep="\t")["hgnc_symbol"].tolist())
+# hgnc_symbols = hgnc_symbols - existing_hgnc_symbols
 
 mart = r.useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 hgnc_entrezgene_r_df = r.getBM(attributes = StrVector(("hgnc_symbol", "entrezgene_id", )),
