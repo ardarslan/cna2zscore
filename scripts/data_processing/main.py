@@ -13,7 +13,7 @@ from gene_predictability import process_gene_predictability_data
 from utils import get_dfs_with_intersecting_sample_ids, get_dfs_with_intersecting_columns
 
 
-data_dir = "data"
+data_dir = "../../data"
 raw_folder_name = "raw"
 processed_folder_name = "processed"
 os.makedirs(os.path.join(data_dir, processed_folder_name), exist_ok=True)
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     thresholded_cna_df, unthresholded_cna_df = process_cna_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name)
     cancer_type_df = process_cancer_type_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name)
     tumor_purity_df = process_tumor_purity_data(data_dir=data_dir, raw_folder_name=raw_folder_name, tumor_sample_ids=tumor_sample_ids)
-    gex_df = process_gex_data(data_dir=data_dir, processed_folder_name=processed_folder_name, tumor_sample_ids=tumor_sample_ids)
+    gex_df = process_gex_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name, tumor_sample_ids=tumor_sample_ids)
     gex_df, unthresholded_cna_df, thresholded_cna_df, tumor_purity_df, cancer_type_df = get_dfs_with_intersecting_sample_ids(dfs=[gex_df, unthresholded_cna_df, thresholded_cna_df, tumor_purity_df, cancer_type_df])
     gex_df, unthresholded_cna_df, thresholded_cna_df = get_dfs_with_intersecting_columns(dfs=[gex_df, unthresholded_cna_df, thresholded_cna_df])
 

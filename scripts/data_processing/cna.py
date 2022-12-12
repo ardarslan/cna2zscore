@@ -12,11 +12,6 @@ def process_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name:
     hgnc_symbol_to_entrezgene_id_mapping_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
     hgnc_symbol_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, hgnc_symbol_to_entrezgene_id_mapping_file_name), sep="\t").values)
 
-    gex_file_name = "tcga_RSEM_gene_tpm"
-    gex_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, gex_file_name), sep="\t", usecols=["sample"])
-    gex_ensembl_ids = frozenset(gex_df["sample"].tolist())
-    del gex_df
-
     def process_cna_data_helper(cna_file_name):
         cna_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cna_file_name), sep="\t")
 
@@ -34,8 +29,6 @@ def process_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name:
         cna_df = cna_df[~pd.isnull(cna_df["entrezgene_id"])]
         cna_df["entrezgene_id"] = cna_df["entrezgene_id"].apply(lambda x: int(x))
 
-        cna_df["ensembl_id_is_not_in_gex_ensembl_ids"] = cna_df["ensembl_id"].apply(lambda x: 1 * (x not in gex_ensembl_ids))
-
         def get_ensembl_version(ensembl_id):
             if pd.isnull(ensembl_id) or ensembl_id == "":
                 return -1
@@ -45,11 +38,11 @@ def process_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name:
         cna_df["ensembl_version"] = cna_df["ensembl_id"].apply(lambda ensembl_id: get_ensembl_version(ensembl_id))
 
         def select_one_row_per_entrezgene_id(x):
-            return x.sort_values(by=["ensembl_id_is_not_in_gex_ensembl_ids", "ensembl_version"], ascending=True).iloc[0, :]
+            return x.sort_values(by=["ensembl_version"], ascending=True).iloc[0, :]
 
         cna_df = cna_df.groupby("entrezgene_id").apply(lambda x: select_one_row_per_entrezgene_id(x)).reset_index(drop=True)
 
-        cna_df.drop(columns=["Sample", "ensembl_id", "ensembl_id_is_not_in_gex_ensembl_ids", "ensembl_version"], inplace=True)
+        cna_df.drop(columns=["Sample", "ensembl_id", "ensembl_version"], inplace=True)
 
         cna_df.set_index("entrezgene_id", inplace=True)
 

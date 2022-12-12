@@ -27,18 +27,21 @@ r('library(biomaRt)')
 
 # In[ ]:
 
-data_dir = "../data"
+data_dir = "../../data"
 raw_folder_name = "raw"
 processed_folder_name = "processed"
 cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_all_data_by_genes"
 rppa_file_name = "TCGA-RPPA-pancan-clean.xena"
-protein_to_gene_mapping_file_name = "tcpa_to_ncbi_mapping.csv"
+gex_file_name = "EB++AdjustPANCAN_IlluminaHiSeq_RNASeqV2.geneExp.xena"
+protein_to_hgnc_mapping_file_name = "tcpa_to_ncbi_mapping.csv"
 output_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
 
 # In[ ]:
 
 cna_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cna_file_name), sep="\t")
 cna_df["Sample"] = cna_df["Sample"].apply(lambda x: x.split("|")[0])
+cna_df_hgnc_symbols = set(cna_df["Sample"].tolist())
+del cna_df
 
 # In[ ]:
 
@@ -49,15 +52,24 @@ rppa_df = rppa_df.T
 rppa_df.reset_index(drop=False, inplace=True)
 rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
 rppa_df = rppa_df.dropna(axis=1)
-protein_to_gene_mapping_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, protein_to_gene_mapping_file_name), sep=",")
-protein_to_gene_mapping = dict(protein_to_gene_mapping_df[["TCPA Symbol", "NCBI Symbol 1"]].values)
+protein_to_hgnc_mapping_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, protein_to_hgnc_mapping_file_name), sep=",")
+protein_to_hgnc_mapping = dict(protein_to_hgnc_mapping_df[["TCPA Symbol", "NCBI Symbol 1"]].values)
+rppa_df_hgnc_symbols = set([protein_to_hgnc_mapping[column] for column in rppa_df.columns if column != "sample_id"])
+del rppa_df
+del protein_to_hgnc_mapping_df
 
-hgnc_symbols = set(cna_df["Sample"]).union(set([protein_to_gene_mapping[column] for column in rppa_df.columns if column != "sample_id"]))
+gex_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, gex_file_name), sep="\t")
+gex_df_hgnc_symbols = set([gene_id for gene_id in gex_df["sample"].tolist() if isinstance(gene_id, str) and (not gene_id.isdigit())])
+del gex_df
+
+hgnc_symbols = cna_df_hgnc_symbols.union(gex_df_hgnc_symbols).union(rppa_df_hgnc_symbols)
+existing_hgnc_symbols = set(pd.read_csv(os.path.join(data_dir, processed_folder_name, "old_hgnc_to_entrezgene_id_mapping.tsv"), sep="\t")["hgnc_symbol"].tolist())
+hgnc_symbols = hgnc_symbols - existing_hgnc_symbols
 
 mart = r.useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 hgnc_entrezgene_r_df = r.getBM(attributes = StrVector(("hgnc_symbol", "entrezgene_id", )),
                                filters = StrVector(("hgnc_symbol", )),
-                               values = StrVector(hgnc_symbols),
+                               values = StrVector(tuple(hgnc_symbols)),
                                mart = mart)
 
 hgnc_entrezgene_pandas_df = rpy2py(hgnc_entrezgene_r_df)
