@@ -3,21 +3,23 @@ cd src
 
 for DATASET in 'unthresholdedcna2gex' 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex'; do
     for CANCER_TYPE in 'blca' 'all'; do
-        for MODEL in 'mlp' 'rescon_mlp'; do
-            if [[ $MODEL -eq 'rescon_mlp' ]]; then
-                declare -a DIAGONAL_OPTIONS=(false true)
+        for MODEL in 'linear' 'mlp' 'rescon_mlp'; do
+            if [[ $MODEL -eq 'linear' ]]; then
+                declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
+                declare -a HIDDEN_DIMENSION_OPTIONS=(0)
+            elif [[ $MODEL -eq 'mlp' ]]; then
+                declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
+                declare -a HIDDEN_DIMENSION_OPTIONS=(2500 5000 10000)
+            elif [[ $MODEL -eq 'rescon_mlp' ]]; then
+                declare -a RESCON_DIAGONAL_W_OPTIONS=(false true)
+                declare -a HIDDEN_DIMENSION_OPTIONS=(2500 5000 10000)
             else
-                declare -a DIAGONAL_OPTIONS=(false)
+                echo "MODEL is not a valid $MODEL."
+                exit 1
             fi
 
             for RESCON_DIAGONAL_W in "${RESCON_DIAGONAL_W_OPTIONS}"; do
-                for NUM_NONLINEAR_LAYERS in (0 1 2 3); do
-                    if [[ $NUM_NONLINEAR_LAYERS -eq 0 ]]; then
-                        declare -a HIDDEN_DIMENSION_OPTIONS=(0)
-                    else
-                        declare -a HIDDEN_DIMENSION_OPTIONS=(2500 5000 10000)
-                    fi
-
+                for NUM_NONLINEAR_LAYERS in (1 2 3); do
                     for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS}"; do
 
                         # No regularization

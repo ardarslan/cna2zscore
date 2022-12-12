@@ -8,10 +8,24 @@ from torch.nn.parameter import Parameter
 
 from layer import NonLinearLayer, OutputLayer
 
+
+class LinearModel(nn.Module):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+        super().__init__()
+        self.cfg = cfg
+        self.linear = OutputLayer(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.linear(x)
+
+
 class MLP(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
         self.cfg = cfg
+
+        if self.cfg["num_nonlinear_layers"] == 0:
+            raise Exception("Please use LinearModel if num_nonlinear_layers == 0.")
 
         self.layers = nn.ModuleList()
 
@@ -21,10 +35,7 @@ class MLP(nn.Module):
             else:
                 self.layers.append(NonLinearLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=output_dimension))
 
-        if self.cfg["num_nonlinear_layers"] == 0:
-            self.layers.append(OutputLayer(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension))
-        else:
-            self.layers.append(OutputLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=output_dimension))
+        self.layers.append(OutputLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=output_dimension))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = x.clone()
