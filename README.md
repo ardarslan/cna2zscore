@@ -41,7 +41,7 @@ cd scripts
 python3 ensembl_id_to_entrezgene_id_mapper.py
 python3 hgnc_symbol_to_entrezgene_id_mapper.py
 cd data_processing
-sbatch --time=1440 --ntasks=16 --mem-per-cpu=32768 --wrap="python main.py"
+sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --wrap="python main.py"
 cd ../..
 ```
 
