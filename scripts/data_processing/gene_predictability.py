@@ -2,6 +2,7 @@ import pandas as pd
 
 
 def process_gene_predictability_data(gex_df: pd.DataFrame, entrezgene_id_to_mean_and_std_gex_mapping_df: pd.DataFrame) -> pd.DataFrame:
+    gex_df = gex_df.drop(columns=["sample_id"])
     gex_df = pd.DataFrame(data=(gex_df.values - entrezgene_id_to_mean_and_std_gex_mapping_df["mean_gex"].values) / (entrezgene_id_to_mean_and_std_gex_mapping_df["std_gex"].values + 1e-10), columns=gex_df.columns.tolist())
     thresholded_cna_df = thresholded_cna_df.drop(columns=["sample_id"])
 
