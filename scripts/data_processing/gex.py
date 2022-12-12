@@ -31,7 +31,7 @@ def process_gex_data(data_dir: str, raw_folder_name: str, processed_folder_name:
     def select_gene_with_max_total_expression(x):
         gene_total_expressions = x.drop(columns=["entrezgene_id"]).values.sum(axis=1).ravel()
         max_expression_index = np.argmax(gene_total_expressions)
-        return x.iloc[max_expression_index, :]
+        return x.drop(columns=["entrezgene_id"]).iloc[max_expression_index, :]
 
     gex_df = gex_df.groupby("entrezgene_id").apply(lambda x: select_gene_with_max_total_expression(x)).reset_index(drop=False)
 
