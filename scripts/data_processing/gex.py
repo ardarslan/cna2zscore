@@ -9,7 +9,7 @@ def process_gex_data(data_dir: str, raw_folder_name: str, processed_folder_name:
     print("Processing GEX data...")
 
     gex_file_name = "EB++AdjustPANCAN_IlluminaHiSeq_RNASeqV2.geneExp.xena"
-    hgnc_to_entrezgene_id_mapping_file_name = "old_hgnc_to_entrezgene_id_mapping.tsv"
+    hgnc_to_entrezgene_id_mapping_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
 
     gex_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, gex_file_name), sep="\t")
     hgnc_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, hgnc_to_entrezgene_id_mapping_file_name), sep="\t").values)
