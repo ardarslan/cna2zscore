@@ -19,7 +19,7 @@ for DATASET in 'unthresholdedcna2gex' 'unthresholdedcnapurity2gex' 'thresholdedc
             fi
 
             for RESCON_DIAGONAL_W in "${RESCON_DIAGONAL_W_OPTIONS}"; do
-                for NUM_NONLINEAR_LAYERS in (1 2 3); do
+                for NUM_NONLINEAR_LAYERS in 1 2 3; do
                     for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS}"; do
 
                         # No regularization
