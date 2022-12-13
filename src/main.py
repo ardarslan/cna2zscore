@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     logger.log(level=logging.INFO, msg="Starting training...")
     for epoch in range(1, cfg["num_epochs"] + 1):
-        current_train_loss_dict = train(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=train_loss_function, dataset=dataset, optimizer=optimizer, train_main_loss_values=train_main_loss_values)
+        current_train_loss_dict = train(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=train_loss_function, dataset=dataset, optimizer=optimizer, epoch=epoch, logger=logger, summary_writer=summary_writer, train_main_loss_values=train_main_loss_values)
         current_val_loss_dict = validate(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, epoch=epoch, logger=logger, summary_writer=summary_writer, val_main_loss_values=val_main_loss_values)
 
         if current_val_loss_dict[cfg["loss_function"]] < best_val_loss:
@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     logger.log(level=logging.INFO, msg="Finished training.")
     save_cfg(cfg=cfg, logger=logger)
-    save_loss_values(train_main_loss_values=train_main_loss_values, val_main_loss_values=val_main_loss_values)
+    save_loss_values(cfg=cfg, train_main_loss_values=train_main_loss_values, val_main_loss_values=val_main_loss_values)
 
     del model
     del optimizer
