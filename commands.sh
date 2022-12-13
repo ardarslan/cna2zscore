@@ -5,15 +5,12 @@ for DATASET in 'unthresholdedcna2gex' 'unthresholdedcnapurity2gex' 'thresholdedc
     for CANCER_TYPE in 'blca' 'all'; do
         for MODEL in 'linear' 'mlp' 'rescon_mlp'; do
             if [[ $MODEL = 'linear' ]]; then
-                echo "linear"
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(0)
             elif [[ $MODEL = 'mlp' ]]; then
-                echo "mlp"
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(2500 5000 10000)
             elif [[ $MODEL = 'rescon_mlp' ]]; then
-                echo "rescon_mlp"
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false true)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(2500 5000 10000)
             else
