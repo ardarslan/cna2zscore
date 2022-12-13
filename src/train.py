@@ -56,10 +56,15 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
             current_l1_loss = cfg["l1_reg_coeff"] * sum(p.abs().sum() for p in model.parameters())
             l1_loss_sum += float(current_l1_loss)
             l1_loss_count += 1.0
+        else:
+            current_l1_loss = 0.0
+
         if cfg["l2_reg_coeff"] > 0:
             current_l2_loss = cfg["l2_reg_coeff"] * sum(p.pow(2.0).sum() for p in model.parameters())
             l2_loss_sum += float(current_l2_loss)
             l2_loss_count += 1.0
+        else:
+            current_l2_loss = 0.0
 
         current_total_loss = current_main_loss + current_l1_loss + current_l2_loss
         total_loss_sum += float(current_total_loss) * current_batch_size
