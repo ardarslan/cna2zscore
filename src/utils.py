@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import torchsummary
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim import Adam, AdamW, RMSprop, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -184,8 +183,6 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, 
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
 
     model = model.float().to(cfg["device"])
-
-    torchsummary.summary(model, input_size=(input_dimension, ))
 
     logger.log(level=logging.INFO, msg="Created the model.")
 
