@@ -183,11 +183,13 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, 
     else:
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
 
+    model = model.float().to(cfg["device"])
+
     torchsummary.summary(model, input_size=(input_dimension, ))
 
     logger.log(level=logging.INFO, msg="Created the model.")
 
-    return model.float().to(cfg["device"])
+    return model
 
 
 def get_optimizer(cfg: Dict[str, Any], model: torch.nn.Module):
