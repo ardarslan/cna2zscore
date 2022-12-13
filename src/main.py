@@ -3,6 +3,7 @@ import logging
 
 import torch
 import numpy as np
+from pprint import pprint
 
 from train import train
 from validate import validate
@@ -32,6 +33,7 @@ if __name__ == "__main__":
     model = get_model(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension, logger=logger)
     set_number_of_parameters(cfg=cfg, model=model)
     save_cfg(cfg=cfg, logger=logger)
+    pprint(cfg, indent=4)
     optimizer = get_optimizer(cfg=cfg, model=model)
     scheduler = get_scheduler(cfg=cfg, optimizer=optimizer)
     train_loss_function = get_loss_function(cfg=cfg, reduction="mean")
