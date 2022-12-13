@@ -49,15 +49,18 @@ class Dataset(torch.utils.data.Dataset):
         output_df = pd.read_csv(os.path.join(self.processed_data_dir, self.output_data_type + ".tsv"), sep="\t")
         output_df = output_df[output_df["sample_id"].isin(cancer_type_sample_ids)]
 
+        thresholded_cna_mask_df = pd.read_csv(os.path.join(self.processed_data_dir, "thresholded_cna.tsv"), sep="\t")
+
         input_df = None
 
         for current_input_data_type in self.input_data_types:
             current_input_data_type_df = pd.read_csv(os.path.join(self.processed_data_dir, current_input_data_type + ".tsv"), sep="\t")
 
             if current_input_data_type in ["unthresholded_cna", "thresholded_cna", "rppa"]:
-                intersecting_columns = ["sample_id"] + [column for column in set(current_input_data_type_df.columns).intersection(set(output_df.columns)) if column != "sample_id"]
+                intersecting_columns = ["sample_id"] + [column for column in set(current_input_data_type_df.columns).intersection(set(output_df.columns)).intersection(set(thresholded_cna_mask_df.columns)) if column != "sample_id"]
                 output_df = output_df[intersecting_columns]
                 current_input_data_type_df = current_input_data_type_df[intersecting_columns]
+                thresholded_cna_mask_df = thresholded_cna_mask_df[intersecting_columns]
 
             current_input_data_type_df = current_input_data_type_df[current_input_data_type_df["sample_id"].isin(cancer_type_sample_ids)]
 
@@ -112,11 +115,8 @@ class Dataset(torch.utils.data.Dataset):
 
         train_sample_ids = self.sample_ids[self.train_indices]
         train_sample_ids = pd.DataFrame.from_dict({"sample_id": train_sample_ids})
-
-        thresholded_cna_mask = pd.read_csv(os.path.join(self.processed_data_dir, "thresholded_cna.tsv"), sep="\t")
-
-        thresholded_cna_mask = train_sample_ids.merge(thresholded_cna_mask, on="sample_id", how="left").drop(columns=["sample_id"])
-        thresholded_cna_mask = (thresholded_cna_mask.values == 0.0)
+        thresholded_cna_mask_df = train_sample_ids.merge(thresholded_cna_mask_df, on="sample_id", how="left").drop(columns=["sample_id"])
+        thresholded_cna_mask_df = (thresholded_cna_mask_df.values == 0.0)
 
         X_train = self.X[self.train_indices, :]
         y_train = self.y[self.train_indices, :]
@@ -132,8 +132,8 @@ class Dataset(torch.utils.data.Dataset):
         self.X_train_std = torch.as_tensor(self.X_train_std, device=self.device, dtype=torch.float32)
 
         # While normalizing output columns (GEX), only use samples where a particular gene has no copy number aberration.
-        self.y_train_mean = np.mean(y_train, axis=0, where=thresholded_cna_mask)
-        self.y_train_std = np.std(y_train, axis=0, where=thresholded_cna_mask) + self.cfg["normalization_eps"]
+        self.y_train_mean = np.mean(y_train, axis=0, where=thresholded_cna_mask_df)
+        self.y_train_std = np.std(y_train, axis=0, where=thresholded_cna_mask_df) + self.cfg["normalization_eps"]
         self.y_train_mean = torch.as_tensor(self.y_train_mean, device=self.device, dtype=torch.float32)
         self.y_train_std = torch.as_tensor(self.y_train_std, device=self.device, dtype=torch.float32)
 
