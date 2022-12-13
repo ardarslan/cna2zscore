@@ -4,15 +4,15 @@ cd src
 for DATASET in 'unthresholdedcna2gex' 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex'; do
     for CANCER_TYPE in 'blca' 'all'; do
         for MODEL in 'linear' 'mlp' 'rescon_mlp'; do
-            if [[ $MODEL -eq 'linear' ]]; then
+            if [[ $MODEL = 'linear' ]]; then
                 echo "linear"
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(0)
-            elif [[ $MODEL -eq 'mlp' ]]; then
+            elif [[ $MODEL = 'mlp' ]]; then
                 echo "mlp"
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(2500 5000 10000)
-            elif [[ $MODEL -eq 'rescon_mlp' ]]; then
+            elif [[ $MODEL = 'rescon_mlp' ]]; then
                 echo "rescon_mlp"
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false true)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(2500 5000 10000)

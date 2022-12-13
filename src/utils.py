@@ -16,6 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.optim import Adam, AdamW, RMSprop, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, Subset
+import torchsummary
 
 from dataset import UnthresholdedCNA2GEXDataset, ThresholdedCNA2GEXDataset, \
                     UnthresholdedCNAPurity2GEXDataset, ThresholdedCNAPurity2GEXDataset, \
@@ -185,6 +186,8 @@ def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, 
     model = model.float().to(cfg["device"])
 
     logger.log(level=logging.INFO, msg="Created the model.")
+
+    torchsummary.summary(model, input_size=(input_dimension, ))
 
     return model
 
