@@ -13,7 +13,7 @@ from gene_predictability import process_gene_predictability_data
 from utils import get_dfs_with_intersecting_sample_ids, get_dfs_with_intersecting_columns
 
 
-data_dir = "/cluster/scratch/aarslan/cna2gex_data"
+data_dir = "/cluster/scratch/aarslan/cna2gexdata"
 raw_folder_name = "raw"
 processed_folder_name = "processed"
 os.makedirs(os.path.join(data_dir, processed_folder_name), exist_ok=True)
@@ -28,10 +28,16 @@ if __name__ == "__main__":
     gex_df, unthresholded_cna_df, thresholded_cna_df, tumor_purity_df, cancer_type_df = get_dfs_with_intersecting_sample_ids(dfs=[gex_df, unthresholded_cna_df, thresholded_cna_df, tumor_purity_df, cancer_type_df])
     gex_df, unthresholded_cna_df, thresholded_cna_df = get_dfs_with_intersecting_columns(dfs=[gex_df, unthresholded_cna_df, thresholded_cna_df])
 
+    rppa_df = process_rppa_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name, intersecting_columns=None, intersecting_sample_ids=None)
+
     rppa_df = process_rppa_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name, intersecting_columns=gex_df.columns.tolist(), intersecting_sample_ids=gex_df["sample_id"].tolist())
     rppa_df.to_csv(os.path.join(data_dir, processed_folder_name, "rppa.tsv"), sep="\t", index=False)
     print("rppa_df.shape:", rppa_df.shape)
+
+    rppa_genes_df = pd.DataFrame.from_dict({"gene_id": rppa_df.drop(columns=["sample_id"]).columns.tolist()})
+    rppa_genes_df.to_csv(os.path.join(data_dir, processed_folder_name, "rppa_genes.tsv"), sep="\t", index=False)
     del rppa_df
+    del rppa_genes_df
 
     thresholded_cna_df.to_csv(os.path.join(data_dir, processed_folder_name, "thresholded_cna.tsv"), sep="\t", index=False)
     print("thresholded_cna_df.shape:", thresholded_cna_df.shape)
@@ -56,10 +62,17 @@ if __name__ == "__main__":
     gex_df.to_csv(os.path.join(data_dir, processed_folder_name, "gex.tsv"), sep="\t", index=False)
     print("gex_df.shape:", gex_df.shape)
 
+    highly_expressed_genes_df = pd.DataFrame.from_dict({"gene_id": gex_df.drop(columns=["sample_id"]).columns.tolist(),
+                                                        "gene_expression_sum": gex_df.drop(columns=["sample_id"]).sum(axis=0).values.ravel()})
+    highly_expressed_genes_df = highly_expressed_genes_df.sort_values(by="gene_expression_sum", ascending=True).reset_index(drop=True)
+    highly_expressed_genes_df.iloc[:1000, :][["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "1000_highly_expressed_genes.tsv"), sep="\t", index=False)
+    highly_expressed_genes_df.iloc[:5000, :][["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "5000_highly_expressed_genes.tsv"), sep="\t", index=False)
+    del highly_expressed_genes_df
+
     entrezgene_id_to_mean_and_std_gex_mapping_df = process_entrezgene_id_to_mean_and_std_gex_mapping_data(gex_df=gex_df, thresholded_cna_df=thresholded_cna_df)
-    entrezgene_id_to_mean_and_std_gex_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_mean_and_std_gex_mapping.tsv"), sep="\t")
+    entrezgene_id_to_mean_and_std_gex_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_mean_and_std_gex_mapping.tsv"), sep="\t", index=False)
     print("entrezgene_id_to_mean_and_std_gex_mapping_df.shape:", entrezgene_id_to_mean_and_std_gex_mapping_df.shape)
 
     gene_predictability_df = process_gene_predictability_data(gex_df=gex_df, entrezgene_id_to_mean_and_std_gex_mapping_df=entrezgene_id_to_mean_and_std_gex_mapping_df, thresholded_cna_df=thresholded_cna_df)
-    gene_predictability_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping.tsv"), sep="\t")
+    gene_predictability_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping.tsv"), sep="\t", index=False)
     print("gene_predictability_df.shape:", gene_predictability_df.shape)

@@ -16,12 +16,11 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.optim import Adam, AdamW, RMSprop, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, Subset
-import torchsummary
 
 from dataset import UnthresholdedCNA2GEXDataset, ThresholdedCNA2GEXDataset, \
                     UnthresholdedCNAPurity2GEXDataset, ThresholdedCNAPurity2GEXDataset, \
                     RPPA2GEXDataset
-from model import LinearModel, MLP, ResConMLP
+from model import MLP, MMLP, ResConMLP
 
 
 def set_seeds(cfg: Dict[str, Any]) -> None:
@@ -171,23 +170,21 @@ def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logg
     return data_loaders
 
 
-def get_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int, logger: logging.Logger) -> torch.nn.Module:
+def get_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> torch.nn.Module:
     logger.log(level=logging.INFO, msg="Creating the model...")
 
-    if cfg["model"] == "linear":
-        model = LinearModel(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
-    elif cfg["model"] == "mlp":
-        model = MLP(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
+    if cfg["model"] in ["linear", "mlp"]:
+        model = MLP(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
+    elif cfg["model"] in ["linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24"]:
+        model = MMLP(cfg=cfg, chromosome_name_X_column_ids_mapping=dataset.chromosome_name_X_column_ids_mapping, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
     elif cfg["model"] == "rescon_mlp":
-        model = ResConMLP(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
+        model = ResConMLP(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
     else:
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
 
     model = model.float().to(cfg["device"])
 
     logger.log(level=logging.INFO, msg="Created the model.")
-
-    torchsummary.summary(model, input_size=(input_dimension, ))
 
     return model
 
@@ -267,8 +264,9 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=1903, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_data/processed", help="Directory for the processed files.")
+    parser.add_argument("--processed_data_dir", type=str, default="data/processed", help="Directory for the processed files.") # FIXME
     parser.add_argument("--dataset", type=str, default="rppa2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
+    parser.add_argument("--gene_type", type=str, default="all_genes", choices=["1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes"])
     parser.add_argument("--cancer_type", type=str, default="blca", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
     parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the input or not.")
@@ -276,7 +274,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
 
     # model
-    parser.add_argument("--model", type=str, default="rescon_mlp", choices=["linear", "mlp", "rescon_mlp"], help="Which model to use.")
+    parser.add_argument("--model", type=str, default="linear_per_chromosome_24", choices=["linear", "mlp", "linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24", "rescon_mlp"], help="Which model to use.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension", default=5000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
@@ -284,7 +282,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rescon_diagonal_W", type=str2bool, default=True, nargs='?', const=True, help="If model is rescon_mlp, whether to use a diagonal weight matrix or not.")
 
     # optimizer
-    parser.add_argument("--optimizer", type=str, default="adam", help="Which optimizer to use.")
+    parser.add_argument("--optimizer", type=str, default="adamw", help="Which optimizer to use.")
 
     # scheduler
     parser.add_argument("--scheduler", type=str, default="reduce_lr_on_plateau", help="Which scheduler to use.")
@@ -295,12 +293,14 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
-    parser.add_argument("--l1_reg_coeff", type=float, default=0.0, help="L1 regularization coefficient.")
-    parser.add_argument("--l2_reg_coeff", type=float, default=0.0, help="L2 regularization coefficient.")
+    parser.add_argument("--l1_reg_diagonal_coeff", type=float, default=0.0, help="L1 regularization coefficient for diagonal elements.")
+    parser.add_argument("--l1_reg_nondiagonal_coeff", type=float, default=0.0, help="L1 regularization coefficient for nondiagonal elements.")
+    parser.add_argument("--l2_reg_diagonal_coeff", type=float, default=0.0, help="L2 regularization coefficient for diagonal elements.")
+    parser.add_argument("--l2_reg_nondiagonal_coeff", type=float, default=0.0, help="L2 regularization coefficient for nondiagonal elements.")
     parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="cna2gex_checkpoints") # FIXME
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")

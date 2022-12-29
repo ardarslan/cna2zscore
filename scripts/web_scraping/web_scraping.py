@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-
 # In[ ]:
 
 import os
 import pandas as pd
 from tqdm import tqdm
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
+import requests
 
 from rpy2.robjects.packages import importr
 from rpy2.robjects import r
@@ -20,14 +18,19 @@ from rpy2.robjects.pandas2ri import rpy2py
 # import sys
 # !{sys.executable} -m pip install webdriver-manager
 
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+
 # utils = importr('utils')
 # utils.install_packages('BiocManager', repos="https://cloud.r-project.org")
 # r('BiocManager::install("biomaRt")')
 r('library(biomaRt)')
 
+driver = webdriver.Chrome(ChromeDriverManager().install())
+
 # In[ ]:
 
-data_dir = "../../data"
+data_dir = "../data"
 raw_folder_name = "raw"
 processed_folder_name = "processed"
 cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_all_data_by_genes"
@@ -63,50 +66,45 @@ gex_df_hgnc_symbols = set([gene_id for gene_id in gex_df["sample"].tolist() if i
 del gex_df
 
 hgnc_symbols = cna_df_hgnc_symbols.union(gex_df_hgnc_symbols).union(rppa_df_hgnc_symbols)
-# existing_hgnc_symbols = set(pd.read_csv(os.path.join(data_dir, processed_folder_name, "old_hgnc_to_entrezgene_id_mapping.tsv"), sep="\t")["hgnc_symbol"].tolist())
-# hgnc_symbols = hgnc_symbols - existing_hgnc_symbols
 
 mart = r.useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl")
-hgnc_entrezgene_r_df = r.getBM(attributes = StrVector(("hgnc_symbol", "entrezgene_id", )),
-                               filters = StrVector(("hgnc_symbol", )),
-                               values = StrVector(tuple(hgnc_symbols)),
-                               mart = mart)
+r_df = r.getBM(attributes = StrVector(("hgnc_symbol", "entrezgene_id", "chromosome_name")),
+               filters = StrVector(("hgnc_symbol", )),
+               values = StrVector(tuple(hgnc_symbols)),
+               mart = mart)
 
-hgnc_entrezgene_pandas_df = rpy2py(hgnc_entrezgene_r_df)
+pandas_df = rpy2py(r_df)
+pandas_df = pandas_df[~pd.isnull(pandas_df["hgnc_symbol"]) & \
+                      ~pd.isnull(pandas_df["entrezgene_id"]) & \
+                      ~pd.isnull(pandas_df["chromosome_name"]) & \
+                      pandas_df["entrezgene_id"].apply(lambda x: x > 0)]
 
-hgnc_entrezgene_pandas_df = hgnc_entrezgene_pandas_df[(~pd.isnull(hgnc_entrezgene_pandas_df["hgnc_symbol"])) & (hgnc_entrezgene_pandas_df["entrezgene_id"] >= 0)]
+hgnc_entrezgene_id_mapping = dict(pandas_df[["hgnc_symbol", "entrezgene_id"]].values)
+entrezgene_id_chromosome_name_mapping = dict(pandas_df[["entrezgene_id", "chromosome_name"]].values)
 
-hgnc_entrezgene_mapping = dict(hgnc_entrezgene_pandas_df.values)
+hgnc_symbols = list(hgnc_symbols - hgnc_entrezgene_id_mapping.keys())
 
-hgnc_entrezgene_mapping_keys = hgnc_entrezgene_mapping.keys()
-
-# In[ ]:
-
-driver = webdriver.Chrome(ChromeDriverManager().install())
-
-string_to_search = '"https://www.ncbi.nlm.nih.gov/gene/'
-
-for hgnc_symbol in tqdm(hgnc_symbols - set(hgnc_entrezgene_mapping_keys)):
+for hgnc_symbol in tqdm(hgnc_symbols):
     try:
+        string_to_search = '"https://www.ncbi.nlm.nih.gov/gene/'
+
         driver.get(f"https://www.genecards.org/cgi-bin/carddisp.pl?gene={hgnc_symbol}")
         content = driver.page_source
         content = content[content.index(string_to_search)+len(string_to_search):]
-        content = content[:content.index('"')]
-        hgnc_entrezgene_mapping[hgnc_symbol] = int(content)
+        entrezgene_id = int(content[:content.index('"')])
+        hgnc_entrezgene_id_mapping[hgnc_symbol] = entrezgene_id
+
+        url = f"https://www.ensembl.org/Homo_sapiens/Gene/Summary?g={hgnc_symbol}"
+        page = requests.get(url).content.decode()
+        string_to_search = '="constant dynamic-link">Chromosome '
+        page = page[page.index(string_to_search)+len(string_to_search):]
+        chromosome_name = page[:page.index(":")]
+        entrezgene_id_chromosome_name_mapping[entrezgene_id] = chromosome_name
     except Exception as e:
-        print(f"Could not fetch information of the gene with hgnc symbol {hgnc_symbol}.")
+        print(f"Error with hgnc_symbol: {hgnc_symbol}: {e}")
 
-hgnc_entrezgene_pandas_df = pd.DataFrame.from_dict(
-    {
-       "hgnc_symbol": hgnc_entrezgene_mapping.keys(),
-       "entrezgene_id": hgnc_entrezgene_mapping.values()
-    }
-)
+hgnc_entrezgene_id_mapping_df = pd.DataFrame.from_dict({"hgnc_symbol": hgnc_entrezgene_id_mapping.keys(), "entrezgene_id": hgnc_entrezgene_id_mapping.values()})
+hgnc_entrezgene_id_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, "hgnc_to_entrezgene_id_mapping.tsv"), sep="\t", index=False)
 
-# In[ ]:
-
-hgnc_entrezgene_pandas_df.to_csv(os.path.join(data_dir, processed_folder_name, output_file_name), index=False, sep="\t")
-
-# In[ ]:
-
-driver.close()
+entrezgene_id_chromosome_name_mapping_df = pd.DataFrame.from_dict({"entrezgene_id": entrezgene_id_chromosome_name_mapping.keys(), "chromosome_name": entrezgene_id_chromosome_name_mapping.values()})
+entrezgene_id_chromosome_name_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t", index=False)

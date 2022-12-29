@@ -7,6 +7,46 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 
+def calculate_current_regularization_loss(cfg: Dict[str, Any], model: nn.Module, regularization_loss_type: str):
+    if regularization_loss_type == "l1":
+        regularization_diagonal_coeff = cfg["l1_reg_diagonal_coeff"]
+        regularization_nondiagonal_coeff = cfg["l1_reg_nondiagonal_coeff"]
+        regularization_operation = lambda x: x.abs()
+    elif regularization_loss_type == "l2":
+        regularization_diagonal_coeff = cfg["l2_reg_diagonal_coeff"]
+        regularization_nondiagonal_coeff = cfg["l2_reg_nondiagonal_coeff"]
+        regularization_operation = lambda x: x.pow(2.0)
+    else:
+        raise Exception(f"{regularization_loss_type} is not a valid regularization loss type.")
+
+    current_regularization_loss = 0.0
+    if regularization_diagonal_coeff != regularization_nondiagonal_coeff:
+        if regularization_diagonal_coeff != 0.0:
+            for parameter in model.parameters():
+                if len(parameter.shape) == 2:  # weight matrix
+                    for i in range(parameter.shape[0]):
+                        current_regularization_loss += regularization_diagonal_coeff * regularization_operation(parameter[i][i])
+
+        if regularization_nondiagonal_coeff != 0.0:
+            for parameter in model.parameters():
+                if len(parameter.shape) == 2:  # weight matrix
+                    for i in range(parameter.shape[0]):
+                        for j in range(parameter.shape[1]):
+                            if i == j:
+                                continue
+                            else:
+                                current_regularization_loss += regularization_nondiagonal_coeff * regularization_operation(parameter[i][j])
+    else:
+        if regularization_nondiagonal_coeff != 0.0:
+            for parameter in model.parameters():
+                if len(parameter.shape) == 2:  # weight matrix
+                    for i in range(parameter.shape[0]):
+                        for j in range(parameter.shape[1]):
+                            current_regularization_loss += regularization_nondiagonal_coeff * regularization_operation(parameter[i][j])
+
+    return current_regularization_loss
+
+
 def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, optimizer, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter, train_main_loss_values: List[float]) -> None:
     model.train()
     optimizer.zero_grad()
@@ -50,19 +90,8 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         main_loss_sum += float(current_main_loss) * current_batch_size
         main_loss_count += current_batch_size
 
-        if cfg["l1_reg_coeff"] > 0:
-            current_l1_loss = cfg["l1_reg_coeff"] * sum(p.abs().sum() for p in model.parameters())
-            l1_loss_sum += float(current_l1_loss)
-            l1_loss_count += 1.0
-        else:
-            current_l1_loss = 0.0
-
-        if cfg["l2_reg_coeff"] > 0:
-            current_l2_loss = cfg["l2_reg_coeff"] * sum(p.pow(2.0).sum() for p in model.parameters())
-            l2_loss_sum += float(current_l2_loss)
-            l2_loss_count += 1.0
-        else:
-            current_l2_loss = 0.0
+        current_l1_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l1")
+        current_l2_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l2")
 
         current_total_loss = current_main_loss + current_l1_loss + current_l2_loss
         total_loss_sum += float(current_total_loss) * current_batch_size

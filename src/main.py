@@ -30,7 +30,7 @@ if __name__ == "__main__":
     set_model_hidden_dimension(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
     set_hyperparameters_according_to_memory_limits(cfg=cfg)
     data_loaders = get_data_loaders(cfg=cfg, dataset=dataset, logger=logger)
-    model = get_model(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension, logger=logger)
+    model = get_model(cfg=cfg, dataset=dataset, logger=logger)
     set_number_of_parameters(cfg=cfg, model=model)
     save_cfg(cfg=cfg, logger=logger)
     pprint(cfg, indent=4)

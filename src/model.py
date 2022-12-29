@@ -1,5 +1,5 @@
 import math
-from typing import Dict, Any
+from typing import Any, Dict, List, Iterator
 
 import torch.nn.functional as F
 import torch
@@ -9,23 +9,13 @@ from torch.nn.parameter import Parameter
 from layer import NonLinearLayer, OutputLayer
 
 
-class LinearModel(nn.Module):
-    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
-        super().__init__()
-        self.cfg = cfg
-        self.linear = OutputLayer(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.linear(x)
-
-
 class MLP(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
         self.cfg = cfg
 
-        if self.cfg["num_nonlinear_layers"] == 0:
-            raise Exception("Please use LinearModel if num_nonlinear_layers == 0.")
+        if self.cfg["num_nonlinear_layers"] != 0 and ((self.cfg["l1_reg_diagonal_coeff"] != self.cfg["l1_reg_nondiagonal_coeff"]) or (self.cfg["l2_reg_diagonal_coeff"] != self.cfg["l2_reg_nondiagonal_coeff"])):
+            raise Exception("Custom regularization is supported only when num_nonlinear_layers is 0.")
 
         self.layers = nn.ModuleList()
 
@@ -38,9 +28,12 @@ class MLP(nn.Module):
         self.layers.append(OutputLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=output_dimension))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y = x.clone()
+        y = None
         for layer in self.layers:
-            y = layer(y)
+            if y is None:
+                y = layer(x)
+            else:
+                y = layer(y)
         return y
 
 
@@ -87,7 +80,34 @@ class ResConMLP(nn.Module):
         nn.init.uniform_(self.ResConB, -bound, bound)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y = x.clone()
+        y = None
         for layer in self.layers:
-            y = layer(y)
+            if y is None:
+                y = layer(x)
+            else:
+                y = layer(y)
         return y + F.linear(x[:, :self.output_dimension], self.ResConW, self.ResConB)
+
+
+class MMLP(nn.Module):
+    def __init__(self, cfg: Dict[str, Any], chromosome_name_X_column_ids_mapping: Dict[str, List[int]], input_dimension: int, output_dimension: int):
+        super().__init__()
+        self.cfg = cfg
+        self.input_dimension = input_dimension
+        self.output_dimension = output_dimension
+        self.X_column_ids = []
+        self.y_column_ids = []
+        self.mlps = nn.ModuleList()
+        self.nonchromosome_X_column_ids = chromosome_name_X_column_ids_mapping.pop("nonchromosome")
+
+        for _, current_X_column_ids in chromosome_name_X_column_ids_mapping.items():
+            self.X_column_ids.append(current_X_column_ids + self.nonchromosome_X_column_ids)
+            self.y_column_ids.append(current_X_column_ids)
+            current_mlp = MLP(cfg=cfg, input_dimension=len(current_X_column_ids)+len(self.nonchromosome_X_column_ids), output_dimension=len(current_X_column_ids))
+            self.mlps.append(current_mlp)
+
+    def forward(self, x: torch.Tensor):
+        y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
+        for current_X_column_ids, current_y_column_ids, current_mlp in zip(self.X_column_ids, self.y_column_ids, self.mlps):
+            y[:, current_y_column_ids] = current_mlp(x[:, current_X_column_ids])
+        return y
