@@ -17,6 +17,7 @@ module load gcc/8.2.0 python_gpu/3.9.9 eth_proxy
 # Setup and activate Conda environment
 
 ```
+conda config --set channel_priority strict
 conda env create -f environment.yml
 conda activate cna2gex
 ```
