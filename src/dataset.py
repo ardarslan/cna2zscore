@@ -40,11 +40,11 @@ class Dataset(torch.utils.data.Dataset):
     def _process_dataset(self) -> None:
         if self.cfg["model"] in ["linear_per_chromosome_all", "mlp_per_chromosome_all"]:
             entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
-            chromosome_data_entrezgene_ids = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()
+            chromosome_data_entrezgene_ids = [str(entrezgene_id) for entrezgene_id in entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()]
         elif self.cfg["model"] in ["linear_per_chromosome_24", "mlp_per_chromosome_24"]:
             entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
             entrezgene_id_chromosome_name_mapping_df = entrezgene_id_chromosome_name_mapping_df[entrezgene_id_chromosome_name_mapping_df["chromosome_name"].isin(["X", "Y"] + [str(i) for i in range(1, 23)])]
-            chromosome_data_entrezgene_ids = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()
+            chromosome_data_entrezgene_ids = [str(entrezgene_id) for entrezgene_id in entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()]
         else:
             pass
 
@@ -71,7 +71,7 @@ class Dataset(torch.utils.data.Dataset):
                 if self.cfg["gene_type"] == "all_genes":
                     pass
                 elif self.cfg["gene_type"] in ["rppa_genes", "1000_highly_expressed_genes", "5000_highly_expressed_genes"]:
-                    intersecting_columns = set(pd.read_csv(os.path.join(self.processed_data_dir, f"{self.cfg['gene_type']}.tsv"), sep="\t")["gene_id"].tolist()).intersection(intersecting_columns)
+                    intersecting_columns = set([str(entrezgene_id) for entrezgene_id in pd.read_csv(os.path.join(self.processed_data_dir, f"{self.cfg['gene_type']}.tsv"), sep="\t")["gene_id"].tolist()]).intersection(intersecting_columns)
                 else:
                     raise Exception(f"{self.cfg['gene_type']} is not a valid gene_type.")
 

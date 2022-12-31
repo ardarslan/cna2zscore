@@ -13,7 +13,7 @@ from gene_predictability import process_gene_predictability_data
 from utils import get_dfs_with_intersecting_sample_ids, get_dfs_with_intersecting_columns
 
 
-data_dir = "/cluster/scratch/aarslan/cna2gex_data"
+data_dir = "../../data" # FIXME ("/cluster/scratch/aarslan/cna2gex_data")
 raw_folder_name = "raw"
 processed_folder_name = "processed"
 os.makedirs(os.path.join(data_dir, processed_folder_name), exist_ok=True)
@@ -27,8 +27,6 @@ if __name__ == "__main__":
     gex_df = process_gex_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name, tumor_sample_ids=tumor_sample_ids)
     gex_df, unthresholded_cna_df, thresholded_cna_df, tumor_purity_df, cancer_type_df = get_dfs_with_intersecting_sample_ids(dfs=[gex_df, unthresholded_cna_df, thresholded_cna_df, tumor_purity_df, cancer_type_df])
     gex_df, unthresholded_cna_df, thresholded_cna_df = get_dfs_with_intersecting_columns(dfs=[gex_df, unthresholded_cna_df, thresholded_cna_df])
-
-    rppa_df = process_rppa_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name, intersecting_columns=None, intersecting_sample_ids=None)
 
     rppa_df = process_rppa_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name, intersecting_columns=gex_df.columns.tolist(), intersecting_sample_ids=gex_df["sample_id"].tolist())
     rppa_df.to_csv(os.path.join(data_dir, processed_folder_name, "rppa.tsv"), sep="\t", index=False)
