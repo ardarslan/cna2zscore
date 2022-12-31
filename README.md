@@ -1,9 +1,9 @@
 # Install Miniconda
 
 ```
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-chmod +x Miniconda3-latest-Linux-x86_64.sh
-./Miniconda3-latest-Linux-x86_64.sh
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh
+chmod +x Mambaforge-Linux-x86_64.sh
+./Mambaforge-Linux-x86_64.sh
 ```
 
 Close the current terminal and open a new one.
@@ -14,12 +14,11 @@ Close the current terminal and open a new one.
 module load gcc/8.2.0 python_gpu/3.9.9 eth_proxy
 ```
 
-# Setup and activate Conda environment
+# Setup and activate Mamba environment
 
 ```
-conda config --set channel_priority strict
-conda env create -f environment.yml
-conda activate cna2gex
+mamba env create -f environment.yml
+mamba activate cna2gex
 ```
 
 # Download raw data and process it
