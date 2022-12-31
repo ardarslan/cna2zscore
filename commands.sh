@@ -19,7 +19,7 @@ for DATASET in 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex
                     declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(2) # (1 2 3)
                     declare -a L1_REG_COEFF_OPTIONS=(0.001) # (0.001 0.01 0.1 1.0)
                     declare -a L2_REG_COEFF_OPTIONS=(0.001) # (0.001 0.01 0.1 1.0)
-                elif [[ $MODEL = 'mlp_per_chromosome_all' || $MODEL = 'mlp_per_chromosome_24']]; then
+                elif [[ $MODEL = 'mlp_per_chromosome_all' || $MODEL = 'mlp_per_chromosome_24' ]]; then
                     declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
                     declare -a HIDDEN_DIMENSION_OPTIONS=(max)
                     declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(1) # (1 2 3)
