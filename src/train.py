@@ -91,7 +91,12 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         main_loss_count += current_batch_size
 
         current_l1_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l1")
+        l1_loss_sum += current_l1_loss
+        l1_loss_count += 1
+
         current_l2_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l2")
+        l2_loss_sum += current_l2_loss
+        l2_loss_count += 1
 
         current_total_loss = current_main_loss + current_l1_loss + current_l2_loss
         total_loss_sum += float(current_total_loss) * current_batch_size

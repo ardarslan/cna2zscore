@@ -40,11 +40,13 @@ class Dataset(torch.utils.data.Dataset):
     def _process_dataset(self) -> None:
         if self.cfg["model"] in ["linear_per_chromosome_all", "mlp_per_chromosome_all"]:
             entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
-            chromosome_data_entrezgene_ids = [str(entrezgene_id) for entrezgene_id in entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()]
+            entrezgene_id_chromosome_name_mapping_df["entrezgene_id"] = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].apply(lambda x: str(x))
+            chromosome_data_entrezgene_ids = [entrezgene_id for entrezgene_id in entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()]
         elif self.cfg["model"] in ["linear_per_chromosome_24", "mlp_per_chromosome_24"]:
             entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
             entrezgene_id_chromosome_name_mapping_df = entrezgene_id_chromosome_name_mapping_df[entrezgene_id_chromosome_name_mapping_df["chromosome_name"].isin(["X", "Y"] + [str(i) for i in range(1, 23)])]
-            chromosome_data_entrezgene_ids = [str(entrezgene_id) for entrezgene_id in entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()]
+            entrezgene_id_chromosome_name_mapping_df["entrezgene_id"] = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].apply(lambda x: str(x))
+            chromosome_data_entrezgene_ids = [entrezgene_id for entrezgene_id in entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()]
         else:
             pass
 
@@ -129,7 +131,7 @@ class Dataset(torch.utils.data.Dataset):
         if self.cfg["model"] in ["linear_per_chromosome_all", "mlp_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_24"]:
             self.chromosome_name_X_column_ids_mapping = {"nonchromosome": list(range(len(self.entrezgene_ids), self.X.shape[1], 1))}
             for chromosome_name, entrezgene_ids in chromosome_name_entrezgene_ids_mapping.items():
-                self.chromosome_name_X_column_ids_mapping[chromosome_name] = [np.argwhere(self.entrezgene_ids == entrezgene_id).item() for entrezgene_id in entrezgene_ids]
+                self.chromosome_name_X_column_ids_mapping[chromosome_name] = [np.argwhere(np.array(self.entrezgene_ids) == entrezgene_id).item() for entrezgene_id in entrezgene_ids]
 
         self.len_dataset = self.X.shape[0]
 

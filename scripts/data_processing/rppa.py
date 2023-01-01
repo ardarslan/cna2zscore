@@ -34,7 +34,10 @@ def process_rppa_data(data_dir: str, raw_folder_name: str, processed_folder_name
     rppa_df.reset_index(drop=False, inplace=True)
     rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
     rppa_df = rppa_df[list(set(intersecting_columns).intersection(set(rppa_df.columns.tolist())))]
-    rppa_df = rppa_df[["sample_id"] + [column for column in rppa_df.columns if column != "sample_id"]]
+    rppa_df_dropped_sample_id_column = rppa_df.drop(columns=["sample_id"])
+    rppa_df_dropped_sample_id_column.columns = [str(int(column)) for column in rppa_df_dropped_sample_id_column.columns]
+    rppa_df = pd.concat([rppa_df[["sample_id"]], rppa_df_dropped_sample_id_column], axis=1)
+    # rppa_df = rppa_df[["sample_id"] + [column for column in rppa_df.columns if column != "sample_id"]]
     rppa_df = rppa_df[rppa_df["sample_id"].isin(intersecting_sample_ids)]
 
     print("Processed RPPA data.")
