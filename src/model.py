@@ -101,12 +101,14 @@ class MMLP(nn.Module):
         self.X_column_ids = []
         self.y_column_ids = []
         self.mlps = nn.ModuleList()
-        self.nonchromosome_X_column_ids = chromosome_name_X_column_ids_mapping.pop("nonchromosome")
+        nonchromosome_X_column_ids = chromosome_name_X_column_ids_mapping["nonchromosome"]
 
-        for _, current_X_column_ids in chromosome_name_X_column_ids_mapping.items():
-            self.X_column_ids.append(current_X_column_ids + self.nonchromosome_X_column_ids)
+        for chromosome_name, current_X_column_ids in chromosome_name_X_column_ids_mapping.items():
+            if chromosome_name == "nonchromosome":
+                continue
+            self.X_column_ids.append(current_X_column_ids + nonchromosome_X_column_ids)
             self.y_column_ids.append(current_X_column_ids)
-            current_mlp = MLP(cfg=cfg, input_dimension=len(current_X_column_ids)+len(self.nonchromosome_X_column_ids), output_dimension=len(current_X_column_ids))
+            current_mlp = MLP(cfg=cfg, input_dimension=len(current_X_column_ids)+len(nonchromosome_X_column_ids), output_dimension=len(current_X_column_ids))
             self.mlps.append(current_mlp)
 
     def forward(self, x: torch.Tensor):
