@@ -282,7 +282,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rescon_diagonal_W", type=str2bool, default=True, nargs='?', const=True, help="If model is rescon_mlp, whether to use a diagonal weight matrix or not.")
 
     # optimizer
-    parser.add_argument("--optimizer", type=str, default="adamw", help="Which optimizer to use.")
+    parser.add_argument("--optimizer", type=str, default="adam", help="Which optimizer to use.")
 
     # scheduler
     parser.add_argument("--scheduler", type=str, default="reduce_lr_on_plateau", help="Which scheduler to use.")
