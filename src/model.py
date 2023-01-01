@@ -25,7 +25,10 @@ class MLP(nn.Module):
             else:
                 self.layers.append(NonLinearLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=cfg["hidden_dimension"]))
 
-        self.layers.append(OutputLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=output_dimension))
+        if self.cfg["num_nonlinear_layers"] == 0:
+            self.layers.append(OutputLayer(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension))
+        else:
+            self.layers.append(OutputLayer(cfg=cfg, input_dimension=cfg["hidden_dimension"], output_dimension=output_dimension))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = None
