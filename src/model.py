@@ -1,5 +1,5 @@
 import math
-from typing import Any, Dict, List, Iterator
+from typing import Any, Dict, List
 
 import torch.nn.functional as F
 import torch
