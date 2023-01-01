@@ -122,10 +122,10 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         cfg["loss_function"]: main_loss_sum / main_loss_count,
     }
 
-    if cfg["l1_reg_coeff"] > 0:
+    if cfg["l1_reg_diagonal_coeff"] > 0 or cfg["l1_reg_nondiagonal_coeff"] > 0:
         train_loss_dict["l1_loss"] = l1_loss_sum / l1_loss_count
 
-    if cfg["l2_reg_coeff"] > 0:
+    if cfg["l2_reg_diagonal_coeff"] > 0 or cfg["l2_reg_nondiagonal_coeff"] > 0:
         train_loss_dict["l2_loss"] = l2_loss_sum / l2_loss_count
 
     train_main_loss_values.append(train_loss_dict[cfg["loss_function"]])
