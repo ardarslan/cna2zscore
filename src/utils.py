@@ -241,7 +241,7 @@ def save_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) ->
 def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:
     logger.log(level=logging.INFO, msg="Loading the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
-    model = get_model(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension, logger=logger)
+    model = get_model(cfg=cfg, dataset=dataset, logger=logger)
     model.load_state_dict(torch.load(os.path.join(experiment_dir, "best_model")))
     logger.log(level=logging.INFO, msg="Loaded the best model.")
     return model
