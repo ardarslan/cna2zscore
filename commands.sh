@@ -42,11 +42,11 @@ for DATASET in 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex
             fi
 
             if [[ $DATASET = 'rppa2gex' ]]; then
-                declare -a GENE_TYPE_OPTIONS=('rppa_genes')
+                declare -a GENE_TYPE_OPTIONS=(rppa_genes)
             elif [[ $MODEL = 'transformer' ]]; then
-                declare -a GENE_TYPE_OPTIONS=('rppa_genes' '1000_highly_expressed_genes')
+                declare -a GENE_TYPE_OPTIONS=(rppa_genes 1000_highly_expressed_genes)
             else
-                declare -a GENE_TYPE_OPTIONS=('rppa_genes' '1000_highly_expressed_genes' '5000_highly_expressed_genes' 'all_genes')
+                declare -a GENE_TYPE_OPTIONS=(rppa_genes 1000_highly_expressed_genes 5000_highly_expressed_genes all_genes)
             fi
 
             for GENE_TYPE in "${GENE_TYPE_OPTIONS}"; do
