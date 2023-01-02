@@ -238,20 +238,28 @@ def save_loss_values(cfg: Dict[str, Any], train_main_loss_values: List[float], v
     loss_values_df.to_csv(os.path.join(experiment_dir, "loss_values.tsv"), sep="\t")
 
 
-def save_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) -> None:
+def save_best_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) -> None:
     logger.log(level=logging.INFO, msg="Saving the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
     torch.save(model.state_dict(), os.path.join(experiment_dir, "best_model"))
     logger.log(level=logging.INFO, msg="Saved the best model")
 
 
-def load_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:
+def load_best_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> nn.Module:
     logger.log(level=logging.INFO, msg="Loading the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
     model = get_model(cfg=cfg, dataset=dataset, logger=logger)
     model.load_state_dict(torch.load(os.path.join(experiment_dir, "best_model")))
     logger.log(level=logging.INFO, msg="Loaded the best model.")
     return model
+
+
+def delete_best_model(cfg: Dict[str, Any], logger: logging.Logger) -> None:
+    logger.log(level=logging.INFO, msg="Loading the best model...")
+    experiment_dir = get_experiment_dir(cfg=cfg)
+    best_model_path = os.path.join(experiment_dir, "best_model")
+    os.remove(path=best_model_path)
+    logger.log(level=logging.INFO, msg="Loaded the best model.")
 
 
 def str2bool(v: Union[str, bool]) -> bool:

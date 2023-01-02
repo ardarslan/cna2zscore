@@ -11,10 +11,10 @@ from test import save_results
 from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_model_hidden_dimension, set_device, get_logger, \
                    get_dataset, get_data_loaders, get_model, get_optimizer, \
-                   get_scheduler, get_loss_function, save_model, save_cfg, \
-                   load_model, set_early_stopping_epoch, get_summary_writer, \
+                   get_scheduler, get_loss_function, save_best_model, save_cfg, \
+                   load_best_model, set_early_stopping_epoch, get_summary_writer, \
                    set_hyperparameters_according_to_memory_limits, save_loss_values,
-                   set_number_of_parameters)
+                   set_number_of_parameters, delete_best_model)
 
 
 if __name__ == "__main__":
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         if current_val_loss_dict[cfg["loss_function"]] < best_val_loss:
             num_epochs_val_loss_not_decreased = 0
             best_val_loss = current_val_loss_dict[cfg["loss_function"]]
-            save_model(cfg=cfg, model=model, logger=logger)
+            save_best_model(cfg=cfg, model=model, logger=logger)
         else:
             num_epochs_val_loss_not_decreased += 1
 
@@ -75,5 +75,6 @@ if __name__ == "__main__":
     gc.collect()
     torch.cuda.empty_cache()
 
-    model = load_model(cfg=cfg, dataset=dataset, logger=logger)
+    model = load_best_model(cfg=cfg, dataset=dataset, logger=logger)
     save_results(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
+    delete_best_model(cfg=cfg, logger=logger)
