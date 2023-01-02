@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, Dataset, Subset
 from dataset import UnthresholdedCNA2GEXDataset, ThresholdedCNA2GEXDataset, \
                     UnthresholdedCNAPurity2GEXDataset, ThresholdedCNAPurity2GEXDataset, \
                     RPPA2GEXDataset
-from model import MLP, MMLP, ResConMLP
+from model import MLP, MMLP, ResConMLP, Transformer
 
 
 def set_seeds(cfg: Dict[str, Any]) -> None:
@@ -72,12 +72,15 @@ def get_experiment_dir(cfg: Dict[str, Any]) -> str:
 
 
 def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
-    if cfg["hidden_dimension"] > 5000:
+    if cfg["model"] == "transformer" or cfg["hidden_dimension"] > 5000:
         cfg["real_batch_size"] = 1
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = True
-        cfg["normalization_type"] = "instance_normalization"
         cfg["optimizer"] = "sgd"
+        if cfg["model"] == "transformer":
+            cfg["normalization_type"] = "layer_normalization"
+        else:
+            cfg["normalization_type"] = "instance_normalization"
     else:
         cfg["real_batch_size"] = cfg["batch_size"]
         cfg["effective_batch_size"] = cfg["batch_size"]
@@ -179,6 +182,8 @@ def get_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> 
         model = MMLP(cfg=cfg, chromosome_name_X_column_ids_mapping=dataset.chromosome_name_X_column_ids_mapping, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
     elif cfg["model"] == "rescon_mlp":
         model = ResConMLP(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
+    elif cfg["model"] == "transformer":
+        model = Transformer(cfg=cfg, num_genes=len(dataset.entrezgene_ids), d=4, n_heads=1, n_mlp=1)
     else:
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
 
@@ -264,17 +269,17 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=1903, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_data/processed", help="Directory for the processed files.")
-    parser.add_argument("--dataset", type=str, default="rppa2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
+    parser.add_argument("--processed_data_dir", type=str, default="data/processed", help="Directory for the processed files.") # FIXME ("/cluster/scratch/aarslan/cna2gex_data/processed")
+    parser.add_argument("--dataset", type=str, default="unthresholdedcnapurity2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
     parser.add_argument("--gene_type", type=str, default="all_genes", choices=["1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes"])
-    parser.add_argument("--cancer_type", type=str, default="blca", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
+    parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
     parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the input or not.")
     parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the output or not.")
     parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
 
     # model
-    parser.add_argument("--model", type=str, default="linear_per_chromosome_24", choices=["linear", "mlp", "linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24", "rescon_mlp"], help="Which model to use.")
+    parser.add_argument("--model", type=str, default="transformer", choices=["linear", "mlp", "linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24", "rescon_mlp", "transformer"], help="Which model to use.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension", default=5000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
@@ -300,7 +305,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="cna2gex_checkpoints") # FIXME ("/cluster/scratch/aarslan/cna2gex_checkpoints")
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")

@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
 
-from layer import NonLinearLayer, OutputLayer
+from layer import NonLinearLayer, OutputLayer, SelfAttention
 
 
 class MLP(nn.Module):
@@ -116,3 +116,58 @@ class MMLP(nn.Module):
         for current_X_column_ids, current_y_column_ids, current_mlp in zip(self.X_column_ids, self.y_column_ids, self.mlps):
             y[:, current_y_column_ids] = current_mlp(x[:, current_X_column_ids])
         return y
+
+
+class Transformer(nn.Module):
+    """
+    A Transformer consisting of a self attention and a fully connected layer.
+
+    Args:
+        d (int): The embedding dimension.
+        heads (int): The number of attention heads.
+        n_mlp (int): The number of mlp 'blocks'.
+    """
+    def __init__(self, cfg: Dict[str, Any], num_genes: int, d: int, n_heads: int, n_mlp: int):
+        super().__init__()
+
+        self.cfg = cfg
+        if self.cfg["normalization_type"] != "layer_normalization":
+            raise Exception("Only layer normalization was implemented in Transformer model.")
+
+        self.num_genes = num_genes
+        self.gene_embedding = torch.nn.Embedding(num_embeddings=self.num_genes, embedding_dim=d)
+
+        self.attention = SelfAttention(d+1, n_heads=n_heads)
+
+        self.norm1 = nn.LayerNorm(d+1)
+
+        fcn_input_dim = d + 1
+        if "purity" in self.cfg["dataset"]:
+            fcn_input_dim += 1
+        if self.cfg["cancer_type"] == "all":
+            fcn_input_dim += 29
+
+        self.fc = nn.Sequential(
+            nn.Linear(fcn_input_dim, n_mlp*(d+1)),
+            nn.ReLU(),
+            nn.Linear(n_mlp*(d+1), 1)
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            x: Input tensor of shape (N, num_genes+(1, optional, purity column)+(29, optional, cancer type one hot columns)).
+
+        Returns:
+            Output tensor of shape (N, num_genes).
+        """
+        gene_inputs = x[:, :self.num_genes].unsqueeze(-1) # (N, num_genes, 1)
+        nongene_inputs = x[:, self.num_genes:].unsqueeze(1).repeat(1, self.num_genes, 1) # (N, num_genes, 0) or (N, num_genes, 1) or (N, num_genes, 29) or (N, num_genes, 30)
+        gene_embeddings = self.gene_embedding.weight.unsqueeze(0).repeat((x.shape[0], 1, 1)) # (N, num_genes, d)
+        attention_inputs = torch.concat((gene_embeddings, gene_inputs), dim=-1) # (N, num_genes, d+1)
+        out = self.attention(attention_inputs) + attention_inputs # (N, num_genes, d+1)
+        out = self.norm1(out) # (N, num_genes, d+1)
+        out = torch.concat((out, nongene_inputs), dim=-1) # (N, num_genes, d+1) or (N, num_genes, d+2) or (N, num_genes, d+30) or (N, num_genes, d+31)
+        out = self.fc(out) # (N, num_genes, 1)
+        out = out[:, :, 0] # (N, num_genes)
+        return out
