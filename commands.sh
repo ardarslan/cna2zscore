@@ -41,26 +41,26 @@ for DATASET in 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex
                 exit 1
             fi
 
-            if [[ $DATASET = 'rppa2gex' ]]; then
-                declare -a GENE_TYPE_OPTIONS=(rppa_genes)
-            elif [[ $MODEL = 'transformer' ]]; then
-                declare -a GENE_TYPE_OPTIONS=(rppa_genes 1000_highly_expressed_genes)
-            else
-                declare -a GENE_TYPE_OPTIONS=(rppa_genes 1000_highly_expressed_genes 5000_highly_expressed_genes all_genes)
+            declare -a GENE_TYPE_OPTIONS=("rppa_genes" "1000_highly_expressed_genes" "5000_highly_expressed_genes" "all_genes")
+            if [[ $MODEL = 'transformer' ]]; then
+                declare -a GENE_TYPE_OPTIONS=("1000_highly_expressed_genes" "rppa_genes")
+            fi
+            if [[ $MODEL != 'transformer' && $DATASET = 'rppa2gex' ]]; then
+                declare -a GENE_TYPE_OPTIONS=("rppa_genes")
             fi
 
-            for GENE_TYPE in "${GENE_TYPE_OPTIONS}"; do
-                for RESCON_DIAGONAL_W in "${RESCON_DIAGONAL_W_OPTIONS}"; do
-                    for NUM_NONLINEAR_LAYERS in "${NUM_NONLINEAR_LAYERS_OPTIONS}"; do
-                        for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS}"; do
+            for GENE_TYPE in "${GENE_TYPE_OPTIONS[@]}"; do
+                for RESCON_DIAGONAL_W in "${RESCON_DIAGONAL_W_OPTIONS[@]}"; do
+                    for NUM_NONLINEAR_LAYERS in "${NUM_NONLINEAR_LAYERS_OPTIONS[@]}"; do
+                        for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS[@]}"; do
 
                             # No regularization
                             sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout 0.0"
 
                             # L1 regularization
                             if [[ $MODEL = "linear" || $MODEL = "linear_per_chromosome_all" || $MODEL = "linear_per_chromosome_24" ]]; then
-                                for L1_REG_DIAGONAL_COEFF in "${L1_REG_DIAGONAL_COEFF_OPTIONS}"; do
-                                    for L1_REG_NONDIAGONAL_COEFF in "${L1_REG_NONDIAGONAL_COEFF_OPTIONS}"; do
+                                for L1_REG_DIAGONAL_COEFF in "${L1_REG_DIAGONAL_COEFF_OPTIONS[@]}"; do
+                                    for L1_REG_NONDIAGONAL_COEFF in "${L1_REG_NONDIAGONAL_COEFF_OPTIONS[@]}"; do
                                         if [[ $(echo "$L1_REG_NONDIAGONAL_COEFF < $L1_REG_DIAGONAL_COEFF" |bc -l) ]]; then
                                             continue
                                         else
@@ -69,15 +69,15 @@ for DATASET in 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex
                                     done
                                 done
                             else
-                                for L1_REG_COEFF in "${L1_REG_COEFF_OPTIONS}"; do
+                                for L1_REG_COEFF in "${L1_REG_COEFF_OPTIONS[@]}"; do
                                     sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --l1_reg_diagonal_coeff $L1_REG_COEFF --l1_reg_nondiagonal_coeff $L1_REG_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout 0.0"
                                 done
                             fi
 
                             # L2 regularization
                             if [[ $MODEL = "linear" || $MODEL = "linear_per_chromosome_all" || $MODEL = "linear_per_chromosome_24" ]]; then
-                                for L2_REG_DIAGONAL_COEFF in "${L2_REG_DIAGONAL_COEFF_OPTIONS}"; do
-                                    for L2_REG_NONDIAGONAL_COEFF in "${L2_REG_NONDIAGONAL_COEFF_OPTIONS}"; do
+                                for L2_REG_DIAGONAL_COEFF in "${L2_REG_DIAGONAL_COEFF_OPTIONS[@]}"; do
+                                    for L2_REG_NONDIAGONAL_COEFF in "${L2_REG_NONDIAGONAL_COEFF_OPTIONS[@]}"; do
                                         if [[ $(echo "$L2_REG_NONDIAGONAL_COEFF < $L2_REG_DIAGONAL_COEFF" |bc -l) ]]; then
                                             continue
                                         else
@@ -86,7 +86,7 @@ for DATASET in 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex
                                     done
                                 done
                             else
-                                for L2_REG_COEFF in "${L2_REG_COEFF_OPTIONS}"; do
+                                for L2_REG_COEFF in "${L2_REG_COEFF_OPTIONS[@]}"; do
                                     sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_COEFF --l2_reg_nondiagonal_coeff $L2_REG_COEFF --dropout 0.0"
                                 done
                             fi
