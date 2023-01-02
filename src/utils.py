@@ -72,15 +72,17 @@ def get_experiment_dir(cfg: Dict[str, Any]) -> str:
 
 
 def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
-    if cfg["model"] == "transformer" or cfg["hidden_dimension"] > 5000:
+    if cfg["model"] == "transformer":
+        cfg["normalization_type"] = "layer_normalization"
+        cfg["real_batch_size"] = 1
+        cfg["effective_batch_size"] = cfg["batch_size"]
+        cfg["use_gradient_accumulation"] = True
+    elif cfg["hidden_dimension"] > 5000:
+        cfg["normalization_type"] = "instance_normalization"
         cfg["real_batch_size"] = 1
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = True
         cfg["optimizer"] = "sgd"
-        if cfg["model"] == "transformer":
-            cfg["normalization_type"] = "layer_normalization"
-        else:
-            cfg["normalization_type"] = "instance_normalization"
     else:
         cfg["real_batch_size"] = cfg["batch_size"]
         cfg["effective_batch_size"] = cfg["batch_size"]
