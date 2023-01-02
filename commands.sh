@@ -10,32 +10,32 @@ for DATASET in 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex
                 declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(0)
                 declare -a L1_REG_DIAGONAL_COEFF_OPTIONS=(0.0 0.001 0.01 0.1)
                 declare -a L2_REG_DIAGONAL_COEFF_OPTIONS=(0.0 0.001 0.01 0.1)
-                declare -a L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
-                declare -a L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
+                declare -a L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.001 0.01 0.1)
+                declare -a L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.001 0.01 0.1)
             elif [[ $MODEL = 'mlp' ]]; then
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(2500 5000 10000)
                 declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(1 2 3)
-                declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
-                declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
+                declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
+                declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
             elif [[ $MODEL = 'mlp_per_chromosome_all' || $MODEL = 'mlp_per_chromosome_24' ]]; then
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(max)
                 declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(1 2 3)
-                declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
-                declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
+                declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
+                declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
             elif [[ $MODEL = 'rescon_mlp' ]]; then
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false true)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(2500 5000 10000)
                 declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(1 2 3)
-                declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
-                declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
+                declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
+                declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
             elif [[ $MODEL = 'transformer' ]]; then
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(0)
                 declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(0)
-                declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
-                declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1 1.0)
+                declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
+                declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
             else
                 echo "MODEL is not a valid $MODEL."
                 exit 1
@@ -46,7 +46,7 @@ for DATASET in 'unthresholdedcnapurity2gex' 'thresholdedcnapurity2gex' 'rppa2gex
             elif [[ $DATASET = 'rppa2gex' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
             else
-                declare -a GENE_TYPE_OPTIONS=("rppa_genes" "1000_highly_expressed_genes" "5000_highly_expressed_genes" "all_genes")
+                declare -a GENE_TYPE_OPTIONS=("rppa_genes" "1000_highly_expressed_genes" "all_genes")
             fi
 
             for GENE_TYPE in "${GENE_TYPE_OPTIONS[@]}"; do
