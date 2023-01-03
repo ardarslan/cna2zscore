@@ -255,11 +255,11 @@ def load_best_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logge
 
 
 def delete_best_model(cfg: Dict[str, Any], logger: logging.Logger) -> None:
-    logger.log(level=logging.INFO, msg="Loading the best model...")
+    logger.log(level=logging.INFO, msg="Deleting the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
     best_model_path = os.path.join(experiment_dir, "best_model")
     os.remove(path=best_model_path)
-    logger.log(level=logging.INFO, msg="Loaded the best model.")
+    logger.log(level=logging.INFO, msg="Deleted the best model.")
 
 
 def str2bool(v: Union[str, bool]) -> bool:

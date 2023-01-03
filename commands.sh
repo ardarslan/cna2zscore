@@ -1,9 +1,8 @@
 cd src
 
-
-for DATASET in 'unthresholdedcnapurity2gex' 'rppa2gex'; do
-    for CANCER_TYPE in 'blca' 'all'; do
-        for MODEL in 'transformer' 'linear' 'mlp' 'linear_per_chromosome_24' 'mlp_per_chromosome_24' 'rescon_mlp' 'transformer'; do
+for MODEL in 'linear' 'linear_per_chromosome_all' 'mlp_per_chromosome_all' 'mlp' 'rescon_mlp' 'transformer'; do
+    for DATASET in 'unthresholdedcnapurity2gex' 'rppa2gex'; do
+        for CANCER_TYPE in 'blca' 'all'; do
             if [[ $MODEL = 'linear' || $MODEL = 'linear_per_chromosome_all' || $MODEL = 'linear_per_chromosome_24' ]]; then
                 declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
                 declare -a HIDDEN_DIMENSION_OPTIONS=(0)
