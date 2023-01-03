@@ -7,6 +7,7 @@ for CANCER_TYPE in 'blca' 'all'; do
             declare -a GENE_TYPE_OPTIONS=("rppa_genes")
         else
             declare -a GENE_TYPE_OPTIONS=("1000_highly_expressed_genes" "5000_highly_expressed_genes" "rppa_genes")
+        fi
 
         for GENE_TYPE in "${GENE_TYPE_OPTIONS[@]}"; do
             for MODEL in 'linear' 'linear_per_chromosome_24' 'mlp_per_chromosome_24' 'mlp' 'transformer' 'linear_per_chromosome_all' 'mlp_per_chromosome_all' 'rescon_mlp'; do
