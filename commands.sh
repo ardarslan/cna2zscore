@@ -1,6 +1,6 @@
 cd src
 
-for CANCER_TYPE in 'blca' 'all';
+for CANCER_TYPE in 'blca' 'all'; do
     for DATASET in 'unthresholdedcnapurity2gex' 'rppa2gex'; do
 
         if [[ $DATASET = 'rppa2gex' ]]; then
