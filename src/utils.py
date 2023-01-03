@@ -198,9 +198,9 @@ def get_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> 
 
 def get_optimizer(cfg: Dict[str, Any], model: torch.nn.Module):
     if cfg["optimizer"] == "sgd":
-        return SGD(params=model.parameters(), lr=1e-2, momentum=0.90)
+        return SGD(params=model.parameters(), lr=cfg["learning_rate"], momentum=0.90)
     elif cfg["optimizer"] == "adam":
-        return Adam(params=model.parameters())
+        return Adam(params=model.parameters(), lr=cfg["learning_rate"])
     elif cfg["optimizer"] == "adamw":
         return AdamW(params=model.parameters())
     elif cfg["optimizer"] == "rmsprop":
@@ -305,6 +305,8 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scheduler_patience", type=int, default=5, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
 
     # training
+    parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate.")
+    parser.add_argument("--gradient_norm", type=float, default=1.0, help="Gradient norm.")
     parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")

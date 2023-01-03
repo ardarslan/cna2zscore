@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict, List
 
 import numpy as np
+import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -109,10 +110,12 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
                 (current_total_loss / float(num_train_samples % effective_batch_size)).backward()
 
             if (observed_sample_count % effective_batch_size == 0) or observed_sample_count == num_train_samples:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["gradient_norm"])
                 optimizer.step()
                 optimizer.zero_grad()
         else:
             current_total_loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["gradient_norm"])
             optimizer.step()
             optimizer.zero_grad()
 
