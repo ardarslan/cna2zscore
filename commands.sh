@@ -21,21 +21,25 @@ for CANCER_TYPE in 'blca' 'all'; do
                     declare -a L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.001 0.01 0.1)
                 elif [[ $MODEL = 'mlp' ]]; then
                     declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
+                    declare -a HIDDEN_DIMENSION_OPTIONS=(0.25 0.5 1.0)
                     declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(1 2 3)
                     declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
                     declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
                 elif [[ $MODEL = 'mlp_per_chromosome_all' || $MODEL = 'mlp_per_chromosome_24' ]]; then
                     declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
+                    declare -a HIDDEN_DIMENSION_OPTIONS=(0.25 0.5 1.0)
                     declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(1 2 3)
                     declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
                     declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
                 elif [[ $MODEL = 'rescon_mlp' ]]; then
                     declare -a RESCON_DIAGONAL_W_OPTIONS=(false true)
+                    declare -a HIDDEN_DIMENSION_OPTIONS=(0.25 0.5 1.0)
                     declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(1 2 3)
                     declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
                     declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
                 elif [[ $MODEL = 'transformer' ]]; then
                     declare -a RESCON_DIAGONAL_W_OPTIONS=(false)
+                    declare -a HIDDEN_DIMENSION_OPTIONS=(0)
                     declare -a NUM_NONLINEAR_LAYERS_OPTIONS=(0)
                     declare -a L1_REG_COEFF_OPTIONS=(0.001 0.01 0.1)
                     declare -a L2_REG_COEFF_OPTIONS=(0.001 0.01 0.1)

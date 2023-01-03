@@ -53,11 +53,12 @@ def set_model_hidden_dimension(cfg: Dict[str, Any], input_dimension: int, output
         cfg["hidden_dimension"] = np.mean([input_dimension, output_dimension])
     elif cfg["hidden_dimension"] == "min":
         cfg["hidden_dimension"] = np.min([input_dimension, output_dimension])
+    elif isinstance(cfg["hidden_dimension"], float):
+        cfg["hidden_dimension"] = int(np.max([input_dimension, output_dimension]) * cfg["hidden_dimension"])
+    elif isinstance(cfg["hidden_dimension"], int):
+        pass
     else:
-        try:
-            cfg["hidden_dimension"] = int(cfg["hidden_dimension"])
-        except ValueError:
-            raise Exception(f"{cfg['hidden_dimension']} is not a valid hidden_dimension.")
+        raise Exception(f"{cfg['hidden_dimension']} is not a valid hidden_dimension.")
 
 
 def set_early_stopping_epoch(cfg: Dict[str, Any], epoch: int, logger: logging.Logger) -> None:
