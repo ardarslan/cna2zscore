@@ -1,6 +1,6 @@
 cd src
 
-for MODEL in 'linear' 'linear_per_chromosome_all' 'mlp_per_chromosome_all' 'mlp' 'rescon_mlp' 'transformer'; do
+for MODEL in 'linear' 'linear_per_chromosome_all' 'mlp_per_chromosome_all' 'mlp' 'transformer' 'linear_per_chromosome_24' 'mlp_per_chromosome_24' 'rescon_mlp'; do
     for DATASET in 'unthresholdedcnapurity2gex' 'rppa2gex'; do
         for CANCER_TYPE in 'blca' 'all'; do
             if [[ $MODEL = 'linear' || $MODEL = 'linear_per_chromosome_all' || $MODEL = 'linear_per_chromosome_24' ]]; then
