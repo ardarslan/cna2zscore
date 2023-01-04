@@ -1,6 +1,6 @@
 cd src
 
-for MODEL in 'linear' 'linear_per_chromosome_24' 'mlp_per_chromosome_24' 'mlp' 'transformer' 'linear_per_chromosome_all' 'mlp_per_chromosome_all' 'rescon_mlp'; do
+for MODEL in 'linear' 'linear_per_chromosome_24' 'mlp' 'mlp_per_chromosome_24' 'transformer'; do # 'linear_per_chromosome_all' 'mlp_per_chromosome_all' 'rescon_mlp'; do
     for CANCER_TYPE in 'all'; do
         for DATASET in 'unthresholdedcnapurity2gex' 'rppa2gex'; do
 
