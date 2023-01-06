@@ -25,7 +25,7 @@ def calculate_current_regularization_loss(cfg: Dict[str, Any], model: nn.Module,
         if regularization_diagonal_coeff != 0.0:
             for parameter in model.parameters():
                 if len(parameter.shape) == 2:  # weight matrix
-                    current_regularization_loss += (regularization_diagonal_coeff - regularization_nondiagonal_coeff) * regularization_operation(torch.diag(parameter))
+                    current_regularization_loss += (regularization_diagonal_coeff - regularization_nondiagonal_coeff) * regularization_operation(torch.diag(parameter)).sum()
 
         if regularization_nondiagonal_coeff != 0.0:
             for parameter in model.parameters():
