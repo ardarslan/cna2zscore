@@ -46,20 +46,6 @@ def set_device(cfg: Dict[str, Any], logger: logging.Logger) -> None:
     logger.log(level=logging.INFO, msg=f"Using {cfg['device']}...")
 
 
-def set_model_hidden_dimension(cfg: Dict[str, Any], input_dimension: int, output_dimension: int) -> None:
-    if cfg["hidden_dimension"] == "max":
-        cfg["hidden_dimension"] = np.max([input_dimension, output_dimension])
-    elif cfg["hidden_dimension"] == "mean":
-        cfg["hidden_dimension"] = np.mean([input_dimension, output_dimension])
-    elif cfg["hidden_dimension"] == "min":
-        cfg["hidden_dimension"] = np.min([input_dimension, output_dimension])
-    else:
-        try:
-            cfg["hidden_dimension"] = int(np.max([input_dimension, output_dimension]) * float(cfg["hidden_dimension"]))
-        except ValueError:
-            raise Exception(f"{cfg['hidden_dimension']} is not a valid hidden_dimension.")
-
-
 def set_early_stopping_epoch(cfg: Dict[str, Any], epoch: int, logger: logging.Logger) -> None:
     logger.log(level=logging.INFO, msg=f"Stopped early at epoch {epoch}.")
     cfg["early_stopping_epoch"] = epoch
@@ -77,12 +63,12 @@ def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
         cfg["real_batch_size"] = 1
         cfg["effective_batch_size"] = cfg["batch_size"]
         cfg["use_gradient_accumulation"] = True
-    elif cfg["hidden_dimension"] > 5000:
-        cfg["normalization_type"] = "instance_normalization"
-        cfg["real_batch_size"] = 1
-        cfg["effective_batch_size"] = cfg["batch_size"]
-        cfg["use_gradient_accumulation"] = True
-        cfg["optimizer"] = "sgd"
+    # elif "chromosome" not in cfg["model"] and cfg["hidden_dimension"] > 5000:
+    #     cfg["normalization_type"] = "instance_normalization"
+    #     cfg["real_batch_size"] = 1
+    #     cfg["effective_batch_size"] = cfg["batch_size"]
+    #     cfg["use_gradient_accumulation"] = True
+    #     cfg["optimizer"] = "sgd"
     else:
         cfg["real_batch_size"] = cfg["batch_size"]
         cfg["effective_batch_size"] = cfg["batch_size"]
@@ -179,13 +165,13 @@ def get_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> 
     logger.log(level=logging.INFO, msg="Creating the model...")
 
     if cfg["model"] in ["linear", "mlp"]:
-        model = MLP(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
+        model = MLP(cfg=cfg, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
     elif cfg["model"] in ["linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24"]:
-        model = MMLP(cfg=cfg, chromosome_name_X_column_ids_mapping=dataset.chromosome_name_X_column_ids_mapping, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
+        model = MMLP(cfg=cfg, chromosome_name_X_column_ids_mapping=dataset.chromosome_name_X_column_ids_mapping, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
     elif cfg["model"] == "rescon_mlp":
-        model = ResConMLP(cfg=cfg, input_dimension=dataset.input_dimension, output_dimension=dataset.output_dimension)
+        model = ResConMLP(cfg=cfg, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
     elif cfg["model"] == "transformer":
-        model = Transformer(cfg=cfg, num_genes=len(dataset.entrezgene_ids), d=4, n_heads=1, n_mlp=1)
+        model = Transformer(cfg=cfg, num_genes=cfg["num_genes"], gene_embedding_size=cfg["gene_embedding_size"], num_attention_heads=cfg["num_attention_heads"])
     else:
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
 
@@ -279,9 +265,9 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=1903, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_data/processed", help="Directory for the processed files.") # FIXME ("/cluster/scratch/aarslan/cna2gex_data/processed")
+    parser.add_argument("--processed_data_dir", type=str, default="data/processed", help="Directory for the processed files.") # FIXME ("/cluster/scratch/aarslan/cna2gex_data/processed")
     parser.add_argument("--dataset", type=str, default="unthresholdedcnapurity2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
-    parser.add_argument("--gene_type", type=str, default="all_genes", choices=["1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes"])
+    parser.add_argument("--gene_type", type=str, default="all_genes", choices=["1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes", "chromosome_all_genes", "chromosome_24_genes"])
     parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
     parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the input or not.")
@@ -291,10 +277,17 @@ def get_argument_parser() -> argparse.ArgumentParser:
     # model
     parser.add_argument("--model", type=str, default="transformer", choices=["linear", "mlp", "linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24", "rescon_mlp", "transformer"], help="Which model to use.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
-    parser.add_argument("--hidden_dimension", default=5000, help="Number of nodes in each hidden layer. Whether an integer or one of the following strings: 'max', 'min' or 'mean'. When one of these strings, the operation is applied to the input dimension and the output dimension of the model.")
+    parser.add_argument("--hidden_dimension_ratio", type=float, default=0.10, help="Ratio of number of nodes in a hidden layer to max(number of nodes in input layer, number of nodes in output layer).")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
     parser.add_argument("--dropout", type=float, default=0.0, help="Probability of zeroing out an entry in a given vector.")
+
+    # ResConMLP specific hyperparameters
     parser.add_argument("--rescon_diagonal_W", type=str2bool, default=True, nargs='?', const=True, help="If model is rescon_mlp, whether to use a diagonal weight matrix or not.")
+
+    # Transformer specific hyperparameters
+    parser.add_argument("--gene_embedding_size", type=int, default=4, help="Gene embedding size.")
+    parser.add_argument("--num_attention_heads", type=int, default=4, help="Number of attention heads.")
+    parser.add_argument("--num_mlp_blocks", type=int, default=4, help="Number of MLP blocks.")
 
     # optimizer
     parser.add_argument("--optimizer", type=str, default="adam", help="Which optimizer to use.")
@@ -306,7 +299,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # training
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate.")
-    parser.add_argument("--gradient_norm", type=float, default=1.0, help="Gradient norm.")
+    parser.add_argument("--gradient_norm", type=float, default=5.0, help="Gradient norm.")
     parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
@@ -317,7 +310,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="cna2gex_checkpoints")
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")

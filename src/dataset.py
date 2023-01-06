@@ -38,18 +38,6 @@ class Dataset(torch.utils.data.Dataset):
         self._process_dataset()
 
     def _process_dataset(self) -> None:
-        if self.cfg["model"] in ["linear_per_chromosome_all", "mlp_per_chromosome_all"]:
-            entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
-            entrezgene_id_chromosome_name_mapping_df["entrezgene_id"] = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].apply(lambda x: str(x))
-            chromosome_data_entrezgene_ids = [entrezgene_id for entrezgene_id in entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()]
-        elif self.cfg["model"] in ["linear_per_chromosome_24", "mlp_per_chromosome_24"]:
-            entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
-            entrezgene_id_chromosome_name_mapping_df = entrezgene_id_chromosome_name_mapping_df[entrezgene_id_chromosome_name_mapping_df["chromosome_name"].isin(["X", "Y"] + [str(i) for i in range(1, 23)])]
-            entrezgene_id_chromosome_name_mapping_df["entrezgene_id"] = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].apply(lambda x: str(x))
-            chromosome_data_entrezgene_ids = [entrezgene_id for entrezgene_id in entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()]
-        else:
-            pass
-
         cancer_type_df = pd.read_csv(os.path.join(self.processed_data_dir, "cancer_type.tsv"), sep="\t")
         if self.cfg["cancer_type"] != "all":
             cancer_type_sample_ids = cancer_type_df[cancer_type_df["cancer_type"] == self.cfg["cancer_type"]]["sample_id"].tolist()
@@ -74,11 +62,17 @@ class Dataset(torch.utils.data.Dataset):
                     pass
                 elif self.cfg["gene_type"] in ["rppa_genes", "1000_highly_expressed_genes", "5000_highly_expressed_genes"]:
                     intersecting_columns = set([str(entrezgene_id) for entrezgene_id in pd.read_csv(os.path.join(self.processed_data_dir, f"{self.cfg['gene_type']}.tsv"), sep="\t")["gene_id"].tolist()]).intersection(intersecting_columns)
+                elif self.cfg["gene_type"] == "chromosome_24_genes":
+                    entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
+                    entrezgene_id_chromosome_name_mapping_df = entrezgene_id_chromosome_name_mapping_df[entrezgene_id_chromosome_name_mapping_df["chromosome_name"].isin(["X", "Y"] + [str(i) for i in range(1, 23)])]
+                    entrezgene_id_chromosome_name_mapping_df["entrezgene_id"] = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].apply(lambda x: str(x))
+                    intersecting_columns = set(entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()).intersection(intersecting_columns)
+                elif self.cfg["gene_type"] == "chromosome_all_genes":
+                    entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
+                    entrezgene_id_chromosome_name_mapping_df["entrezgene_id"] = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].apply(lambda x: str(x))
+                    intersecting_columns = set(entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()).intersection(intersecting_columns)
                 else:
                     raise Exception(f"{self.cfg['gene_type']} is not a valid gene_type.")
-
-                if self.cfg["model"] in ["linear_per_chromosome_all", "mlp_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_24"]:
-                    intersecting_columns = intersecting_columns.intersection(chromosome_data_entrezgene_ids)
 
                 intersecting_columns = ["sample_id"] + [column for column in sorted(intersecting_columns) if column != "sample_id"]
 
@@ -117,16 +111,17 @@ class Dataset(torch.utils.data.Dataset):
 
         self.one_hot_column_indices = [index for index, column in enumerate(merged_df.columns) if str(column).startswith("cancer_type_")]
 
-        self.input_dimension = input_df.shape[1] - 1
-        self.output_dimension = output_df.shape[1] - 1
+        self.cfg["input_dimension"] = input_df.shape[1] - 1
+        self.cfg["output_dimension"] = output_df.shape[1] - 1
 
-        self.X = merged_df.iloc[:, :self.input_dimension].values
-        self.y = merged_df.iloc[:, self.input_dimension:self.input_dimension+self.output_dimension].values
+        self.X = merged_df.iloc[:, :self.cfg["input_dimension"]].values
+        self.y = merged_df.iloc[:, self.cfg["input_dimension"]:self.cfg["input_dimension"]+self.cfg["output_dimension"]].values
         all_cancer_types = merged_df["cancer_type"].values.ravel()
 
         self.logger.log(level=logging.INFO, msg=f"X.shape: {self.X.shape}, y.shape: {self.y.shape}")
 
         self.entrezgene_ids = [column for column in output_df.columns if column != "sample_id"]
+        self.cfg["num_genes"] = len(self.entrezgene_ids)
 
         if self.cfg["model"] in ["linear_per_chromosome_all", "mlp_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_24"]:
             self.chromosome_name_X_column_ids_mapping = {"nonchromosome": list(range(len(self.entrezgene_ids), self.X.shape[1], 1))}
