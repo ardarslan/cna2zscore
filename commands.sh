@@ -5,9 +5,9 @@ NUM_JOBS=0
 for CANCER_TYPE in 'all'; do
     for DATASET in 'unthresholdedcnapurity2gex' 'rppa2gex'; do
         if [[ $DATASET = 'rppa2gex' ]]; then
-            declare -a MODEL_OPTIONS=("linear" "linear_per_chromosome_24" "mlp" "transformer")
+            declare -a MODEL_OPTIONS=("linear" "linear_per_chromosome_24") #  "mlp" "transformer")
         elif [[ $DATASET = 'unthresholdedcnapurity2gex' ]]; then
-            declare -a MODEL_OPTIONS=("linear" "linear_per_chromosome_24" "mlp" "mlp_per_chromosome_24" "transformer")
+            declare -a MODEL_OPTIONS=("linear" "linear_per_chromosome_24") # "mlp" "mlp_per_chromosome_24" "transformer")
         else
             echo "MODEL is not a valid $MODEL."
             exit 1
