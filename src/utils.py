@@ -58,22 +58,21 @@ def get_experiment_dir(cfg: Dict[str, Any]) -> str:
 
 
 def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
-    if cfg["model"] == "transformer":
-        cfg["normalization_type"] = "layer_normalization"
-        cfg["real_batch_size"] = 1
-        cfg["effective_batch_size"] = cfg["batch_size"]
-        cfg["use_gradient_accumulation"] = True
+    # if cfg["model"] == "transformer":
+    #     cfg["normalization_type"] = "layer_normalization"
+    #     cfg["real_batch_size"] = 1
+    #     cfg["effective_batch_size"] = cfg["batch_size"]
+    #     cfg["use_gradient_accumulation"] = True
     # elif "chromosome" not in cfg["model"] and cfg["hidden_dimension"] > 5000:
     #     cfg["normalization_type"] = "instance_normalization"
     #     cfg["real_batch_size"] = 1
     #     cfg["effective_batch_size"] = cfg["batch_size"]
     #     cfg["use_gradient_accumulation"] = True
     #     cfg["optimizer"] = "sgd"
-    else:
-        cfg["real_batch_size"] = cfg["batch_size"]
-        cfg["effective_batch_size"] = cfg["batch_size"]
-        cfg["use_gradient_accumulation"] = False
-        cfg["normalization_type"] = "batch_normalization"
+    cfg["real_batch_size"] = cfg["batch_size"]
+    cfg["effective_batch_size"] = cfg["batch_size"]
+    cfg["use_gradient_accumulation"] = False
+    cfg["normalization_type"] = "batch_normalization"
 
 
 def set_number_of_parameters(cfg: Dict[str, Any], model: nn.Module) -> None:
@@ -265,7 +264,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=1903, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--processed_data_dir", type=str, default="data/processed", help="Directory for the processed files.") # FIXME ("/cluster/scratch/aarslan/cna2gex_data/processed")
+    parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_data/processed", help="Directory for the processed files.")
     parser.add_argument("--dataset", type=str, default="unthresholdedcnapurity2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
     parser.add_argument("--gene_type", type=str, default="all_genes", choices=["1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes", "chromosome_all_genes", "chromosome_24_genes"])
     parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
@@ -310,7 +309,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="cna2gex_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_checkpoints")
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")
