@@ -5,9 +5,9 @@ NUM_JOBS=0
 for CANCER_TYPE in 'all'; do
     for DATASET in 'rppa2gex'; do
         if [[ $DATASET = 'rppa2gex' ]]; then
-            declare -a MODEL_OPTIONS=("linear") #  "mlp" "transformer")
+            declare -a MODEL_OPTIONS=("linear") #  "linear_per_chromosome_24" #  "mlp" "transformer")
         elif [[ $DATASET = 'unthresholdedcnapurity2gex' ]]; then
-            declare -a MODEL_OPTIONS=("linear") # "mlp" "mlp_per_chromosome_24" "transformer")
+            declare -a MODEL_OPTIONS=("linear") # "linear_per_chromosome_24" "mlp" "mlp_per_chromosome_24" "transformer")
         else
             echo "DATASET is not a valid $DATASET."
             exit 1
@@ -28,42 +28,42 @@ for CANCER_TYPE in 'all'; do
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(0)
-                L1_REG_DIAGONAL_COEFF_OPTIONS=(0.1 1.0)
-                L2_REG_DIAGONAL_COEFF_OPTIONS=(0.1 1.0)
-                L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.1 1.0)
-                L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.1 1.0)
+                L1_REG_DIAGONAL_COEFF_OPTIONS=(0.0001 0.001 0.01)
+                L2_REG_DIAGONAL_COEFF_OPTIONS=(0.0001 0.001 0.01)
+                L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
+                L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
             elif [[ $MODEL = 'mlp' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.10 0.25 0.5 1.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(1 2)
-                L1_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1)
-                L2_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1)
+                L1_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
+                L2_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
             elif [[ $MODEL = 'mlp_per_chromosome_all' || $MODEL = 'mlp_per_chromosome_24' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.10 0.25 0.5 1.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(1 2)
-                L1_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1)
-                L2_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1)
+                L1_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
+                L2_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
             elif [[ $MODEL = 'rescon_mlp' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false true)
                 HIDDEN_DIMENSION_OPTIONS=(0.10 0.25 0.5 1.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(1 2)
-                L1_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1)
-                L2_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1)
+                L1_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
+                L2_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
             elif [[ $MODEL = 'transformer' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(0)
-                L1_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1)
-                L2_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1)
+                L1_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
+                L2_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
                 GENE_EMBEDDING_SIZE_OPTIONS=(4 16 64)
                 NUM_ATTENTION_HEADS_OPTIONS=(4 8)
             else
