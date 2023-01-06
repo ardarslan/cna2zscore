@@ -143,8 +143,7 @@ class Transformer(nn.Module):
 
     Args:
         gene_embedding_size (int): The embedding dimension.
-        num_heads (int): The number of attention heads.
-        n_mlp (int): The number of mlp 'blocks'.
+        num_attention_heads (int): The number of attention heads.
     """
     def __init__(self, cfg: Dict[str, Any], num_genes: int, gene_embedding_size: int, num_attention_heads: int):
         super().__init__()
