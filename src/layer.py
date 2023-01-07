@@ -1,3 +1,4 @@
+import gc
 from typing import Dict, Any
 
 import numpy as np
@@ -102,17 +103,28 @@ class SelfAttention(nn.Module):
         #----------------
         w_prime = torch.bmm(queries, keys.transpose(1, 2)) / np.sqrt(d)
         #----------------
+        del queries
+        del keys
+        gc.collect()
+        torch.cuda.empty_cache()
 
         # Compute w by normalizing w' over the last dimension.
         # Shape: [b*h, l, l]
         #----------------
         w = F.softmax(w_prime, dim=-1)
+        del w_prime
+        gc.collect()
+        torch.cuda.empty_cache()
         #----------------
 
         # Apply the self attention to the values.
         # Shape: [b, h, l, d]
         #----------------
         out = torch.bmm(w, values).view(b, h, l, d)
+        del w
+        del values
+        gc.collect()
+        torch.cuda.empty_cache()
         #----------------
 
         # Swap h, l back.
