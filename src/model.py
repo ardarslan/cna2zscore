@@ -1,3 +1,4 @@
+import gc
 import math
 from typing import Any, Dict, List
 
@@ -173,13 +174,13 @@ class Transformer(nn.Module):
         Returns:
             Output tensor of shape (N, num_genes).
         """
-        gene_inputs = x[:, :self.num_genes].unsqueeze(-1) # (N, num_genes, 1)
-        nongene_inputs = x[:, self.num_genes:].unsqueeze(1).repeat(1, self.num_genes, 1) # (N, num_genes, 0) or (N, num_genes, 1) or (N, num_genes, 29) or (N, num_genes, 30)
-        gene_embeddings = self.gene_embedding.weight.unsqueeze(0).repeat((x.shape[0], 1, 1)) # (N, num_genes, d)
-        attention_inputs = torch.concat((gene_embeddings, gene_inputs), dim=-1) # (N, num_genes, d+1)
+        attention_inputs = torch.concat((self.gene_embedding.weight.unsqueeze(0).repeat((x.shape[0], 1, 1)), x[:, :self.num_genes].unsqueeze(-1)), dim=-1) # (N, num_genes, d+1)
         out = self.attention(attention_inputs) + attention_inputs # (N, num_genes, d+1)
+        del attention_inputs
+        gc.collect()
+        torch.cuda.empty_cache()
         out = self.norm1(out) # (N, num_genes, d+1)
-        out = torch.concat((out, nongene_inputs), dim=-1) # (N, num_genes, d+1) or (N, num_genes, d+2) or (N, num_genes, d+30) or (N, num_genes, d+31)
+        out = torch.concat((out, x[:, self.num_genes:].unsqueeze(1).repeat(1, self.num_genes, 1)), dim=-1) # (N, num_genes, d+1) or (N, num_genes, d+2) or (N, num_genes, d+30) or (N, num_genes, d+31)
         out = self.fc(out) # (N, num_genes, 1)
         out = out[:, :, 0] # (N, num_genes)
         return out
