@@ -149,8 +149,6 @@ class Transformer(nn.Module):
         super().__init__()
 
         self.cfg = cfg
-        if self.cfg["normalization_type"] != "layer_normalization":
-            raise Exception("Only layer normalization was implemented in Transformer model.")
 
         self.num_genes = num_genes
         self.gene_embedding = torch.nn.Embedding(num_embeddings=self.num_genes, embedding_dim=gene_embedding_size)
