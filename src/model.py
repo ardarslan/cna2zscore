@@ -153,7 +153,7 @@ class Transformer(nn.Module):
         self.num_genes = num_genes
         self.gene_embedding = torch.nn.Embedding(num_embeddings=self.num_genes, embedding_dim=gene_embedding_size)
 
-        self.attention = SelfAttention(embedding_size=gene_embedding_size+1, n_heads=num_attention_heads)
+        self.attention = SelfAttention(d=gene_embedding_size+1, n_heads=num_attention_heads)
 
         self.norm1 = nn.LayerNorm(gene_embedding_size+1)
 
