@@ -11,11 +11,24 @@ from torch.nn.parameter import Parameter
 from layer import NonLinearLayer, OutputLayer, SelfAttention
 
 
+def get_single_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+    if cfg["model"] == "baseline":
+        ModelClass = BaselineModel
+    elif cfg["model"] in ["linear", "mlp"]:
+        ModelClass = MLP
+    elif cfg["model"] == "rescon_mlp":
+        ModelClass = ResConMLP
+    elif cfg["model"] == "transformer":
+        ModelClass = Transformer
+    else:
+        raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
+    return ModelClass(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
+
+
 class BaselineModel(nn.Module):
-    def __init__(self, cfg: Dict[str, Any], num_genes: int, input_dimension: int, output_dimension: int):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
         self.cfg = cfg
-        self.num_genes = num_genes
         self.input_dimension = input_dimension
         self.output_dimension = output_dimension
         self.weights = nn.ModuleList()
@@ -141,53 +154,22 @@ class ResConMLP(nn.Module):
         return y + F.linear(x[:, :self.output_dimension], self.ResConW, self.ResConB)
 
 
-class MMLP(nn.Module):
-    def __init__(self, cfg: Dict[str, Any], chromosome_name_X_column_ids_mapping: Dict[str, List[int]], input_dimension: int, output_dimension: int):
-        super().__init__()
-        self.cfg = cfg
-        self.input_dimension = input_dimension
-        self.output_dimension = output_dimension
-        self.X_column_ids = []
-        self.y_column_ids = []
-        self.mlps = nn.ModuleList()
-        nonchromosome_X_column_ids = chromosome_name_X_column_ids_mapping["nonchromosome"]
-
-        for chromosome_name, current_X_column_ids in chromosome_name_X_column_ids_mapping.items():
-            if chromosome_name == "nonchromosome":
-                continue
-            self.X_column_ids.append(current_X_column_ids + nonchromosome_X_column_ids)
-            self.y_column_ids.append(current_X_column_ids)
-            current_mlp = MLP(cfg=cfg, input_dimension=len(current_X_column_ids)+len(nonchromosome_X_column_ids), output_dimension=len(current_X_column_ids))
-            self.mlps.append(current_mlp)
-
-    def forward(self, x: torch.Tensor):
-        y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
-        for current_X_column_ids, current_y_column_ids, current_mlp in zip(self.X_column_ids, self.y_column_ids, self.mlps):
-            y[:, current_y_column_ids] = current_mlp(x[:, current_X_column_ids])
-        return y
-
-
 class Transformer(nn.Module):
     """
     A Transformer consisting of a self attention and a fully connected layer.
-
-    Args:
-        gene_embedding_size (int): The embedding dimension.
-        num_attention_heads (int): The number of attention heads.
     """
-    def __init__(self, cfg: Dict[str, Any], num_genes: int, gene_embedding_size: int, num_attention_heads: int):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
 
         self.cfg = cfg
+        self.input_dimension = input_dimension
+        self.output_dimension = output_dimension
 
-        self.num_genes = num_genes
-        self.gene_embedding = torch.nn.Embedding(num_embeddings=self.num_genes, embedding_dim=gene_embedding_size)
+        self.gene_embedding = torch.nn.Embedding(num_embeddings=self.output_dimension, embedding_dim=self.cfg["gene_embedding_size"])
+        self.attention = SelfAttention(d=self.cfg["gene_embedding_size"]+1, n_heads=self.cfg["num_attention_heads"])
+        self.normalization = nn.LayerNorm(self.cfg["gene_embedding_size"]+1)
 
-        self.attention = SelfAttention(d=gene_embedding_size+1, n_heads=num_attention_heads)
-
-        self.norm1 = nn.LayerNorm(gene_embedding_size+1)
-
-        fcn_input_dim = gene_embedding_size + 1
+        fcn_input_dim = self.cfg["gene_embedding_size"] + 1
         if "purity" in self.cfg["dataset"]:
             fcn_input_dim += 1
         if self.cfg["cancer_type"] == "all":
@@ -203,13 +185,39 @@ class Transformer(nn.Module):
         Returns:
             Output tensor of shape (N, num_genes).
         """
-        attention_inputs = torch.concat((self.gene_embedding.weight.unsqueeze(0).repeat((x.shape[0], 1, 1)), x[:, :self.num_genes].unsqueeze(-1)), dim=-1) # (N, num_genes, d+1)
+        attention_inputs = torch.concat((self.gene_embedding.weight.unsqueeze(0).repeat((x.shape[0], 1, 1)), x[:, :self.output_dimension].unsqueeze(-1)), dim=-1) # (N, num_genes, d+1)
         out = self.attention(attention_inputs) + attention_inputs # (N, num_genes, d+1)
         del attention_inputs
         gc.collect()
         torch.cuda.empty_cache()
-        out = self.norm1(out) # (N, num_genes, d+1)
-        out = torch.concat((out, x[:, self.num_genes:].unsqueeze(1).repeat(1, self.num_genes, 1)), dim=-1) # (N, num_genes, d+1) or (N, num_genes, d+2) or (N, num_genes, d+30) or (N, num_genes, d+31)
+        out = self.normalization(out) # (N, num_genes, d+1)
+        out = torch.concat((out, x[:, self.output_dimension:].unsqueeze(1).repeat(1, self.output_dimension, 1)), dim=-1) # (N, num_genes, d+1) or (N, num_genes, d+2) or (N, num_genes, d+30) or (N, num_genes, d+31)
         out = self.fc(out) # (N, num_genes, 1)
         out = out[:, :, 0] # (N, num_genes)
         return out
+
+
+class PerChromosomeModel(nn.Module):
+    def __init__(self, cfg: Dict[str, Any], chromosome_name_X_column_ids_mapping: Dict[str, List[int]]):
+        super().__init__()
+        self.cfg = cfg
+        self.input_dimension = cfg["input_dimension"]
+        self.output_dimension = cfg["output_dimension"]
+        self.X_column_ids = []
+        self.y_column_ids = []
+        self.models = nn.ModuleList()
+        nonchromosome_X_column_ids = chromosome_name_X_column_ids_mapping["nonchromosome"]
+
+        for chromosome_name, current_X_column_ids in chromosome_name_X_column_ids_mapping.items():
+            if chromosome_name == "nonchromosome":
+                continue
+            self.X_column_ids.append(current_X_column_ids + nonchromosome_X_column_ids)
+            self.y_column_ids.append(current_X_column_ids)
+            current_model = get_single_model(cfg=cfg, input_dimension=len(current_X_column_ids)+len(nonchromosome_X_column_ids), output_dimension=len(current_X_column_ids))
+            self.models.append(current_model)
+
+    def forward(self, x: torch.Tensor):
+        y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
+        for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models):
+            y[:, current_y_column_ids] = current_model(x[:, current_X_column_ids])
+        return y

@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, Dataset, Subset
 from dataset import UnthresholdedCNA2GEXDataset, ThresholdedCNA2GEXDataset, \
                     UnthresholdedCNAPurity2GEXDataset, ThresholdedCNAPurity2GEXDataset, \
                     RPPA2GEXDataset
-from model import BaselineModel, MLP, MMLP, ResConMLP, Transformer
+from model import get_single_model, PerChromosomeModel
 
 
 def set_seeds(cfg: Dict[str, Any]) -> None:
@@ -163,18 +163,10 @@ def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logg
 def get_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> torch.nn.Module:
     logger.log(level=logging.INFO, msg="Creating the model...")
 
-    if cfg["model"] == "baseline":
-        model = BaselineModel(cfg=cfg, num_genes=cfg["num_genes"], input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
-    elif cfg["model"] in ["linear", "mlp"]:
-        model = MLP(cfg=cfg, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
-    elif cfg["model"] in ["linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24"]:
-        model = MMLP(cfg=cfg, chromosome_name_X_column_ids_mapping=dataset.chromosome_name_X_column_ids_mapping, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
-    elif cfg["model"] == "rescon_mlp":
-        model = ResConMLP(cfg=cfg, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
-    elif cfg["model"] == "transformer":
-        model = Transformer(cfg=cfg, num_genes=cfg["num_genes"], gene_embedding_size=cfg["gene_embedding_size"], num_attention_heads=cfg["num_attention_heads"])
+    if cfg["per_chromosome"]:
+        model = PerChromosomeModel(cfg=cfg, chromosome_name_X_column_ids_mapping=dataset.chromosome_name_X_column_ids_mapping)
     else:
-        raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
+        model = get_single_model(cfg=cfg, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
 
     model = model.float().to(cfg["device"])
 
@@ -268,7 +260,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     # data
     parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_data/processed", help="Directory for the processed files.")
     parser.add_argument("--dataset", type=str, default="unthresholdedcnapurity2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
-    parser.add_argument("--gene_type", type=str, default="chromosome_24_genes", choices=["1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes", "chromosome_all_genes", "chromosome_24_genes"])
+    parser.add_argument("--gene_type", type=str, default="250_highly_expressed_genes", choices=["250_highly_expressed_genes", "1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes"])
     parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
     parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the input or not.")
@@ -276,7 +268,8 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
 
     # model
-    parser.add_argument("--model", type=str, default="linear_per_chromosome_24", choices=["baseline", "linear", "mlp", "linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24", "rescon_mlp", "transformer"], help="Which model to use.")
+    parser.add_argument("--model", type=str, default="baseline", choices=["baseline", "linear", "mlp", "rescon_mlp", "transformer"], help="Which model to use.")
+    parser.add_argument("--per_chromosome", type=str2bool, nargs='?', const=True, default=True, help="Whether to use a per chromosome model or not.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension_ratio", type=float, default=0.10, help="Ratio of number of nodes in a hidden layer to max(number of nodes in input layer, number of nodes in output layer).")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
