@@ -31,8 +31,8 @@ class BaselineModel(nn.Module):
         self.cfg = cfg
         self.input_dimension = input_dimension
         self.output_dimension = output_dimension
-        self.weights = nn.ModuleList()
-        self.biases = nn.ModuleList()
+        self.weights = nn.ParameterList()
+        self.biases = nn.ParameterList()
         for _ in range(self.output_dimension):
             current_weight = Parameter(torch.empty((1 + self.input_dimension - self.output_dimension, 1)))
             nn.init.kaiming_uniform_(current_weight, a=math.sqrt(5))
