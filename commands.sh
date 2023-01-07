@@ -5,9 +5,9 @@ NUM_JOBS=0
 for CANCER_TYPE in 'all'; do
     for DATASET in 'rppa2gex' 'unthresholdedcnapurity2gex'; do
         if [[ $DATASET = 'rppa2gex' ]]; then
-            declare -a MODEL_OPTIONS=("mlp" "transformer")
+            declare -a MODEL_OPTIONS=("baseline" "linear")
         elif [[ $DATASET = 'unthresholdedcnapurity2gex' ]]; then
-            declare -a MODEL_OPTIONS=("mlp" "mlp_per_chromosome_24" "transformer")
+            declare -a MODEL_OPTIONS=("baseline" "linear" "linear_per_chromosome_24")
         else
             echo "DATASET is not a valid $DATASET."
             exit 1
@@ -21,17 +21,25 @@ for CANCER_TYPE in 'all'; do
             elif [[ $MODEL = 'linear_per_chromosome_all' || $MODEL = 'mlp_per_chromosome_all' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("chromosome_all_genes")
             else
-                declare -a GENE_TYPE_OPTIONS=("1000_highly_expressed_genes" "rppa_genes" "chromosome_24_genes")
+                declare -a GENE_TYPE_OPTIONS=("250_highly_expressed_genes" "rppa_genes" "chromosome_24_genes")
             fi
 
-            if [[ $MODEL = 'linear' || $MODEL = 'linear_per_chromosome_all' || $MODEL = 'linear_per_chromosome_24' ]]; then
+            if [[ $MODEL = 'baseline' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(0)
-                L1_REG_DIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
-                L2_REG_DIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
-                L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
-                L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01)
+                L1_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1 1.0)
+                L2_REG_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1 1.0)
+                GENE_EMBEDDING_SIZE_OPTIONS=(0)
+                NUM_ATTENTION_HEADS_OPTIONS=(0)
+            elif [[ $MODEL = 'linear' || $MODEL = 'linear_per_chromosome_all' || $MODEL = 'linear_per_chromosome_24' ]]; then
+                RESCON_DIAGONAL_W_OPTIONS=(false)
+                HIDDEN_DIMENSION_OPTIONS=(0.0)
+                NUM_NONLINEAR_LAYERS_OPTIONS=(0)
+                L1_REG_DIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1 1.0)
+                L2_REG_DIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1 1.0)
+                L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1 1.0)
+                L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.00001 0.0001 0.001 0.01 0.1 1.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
             elif [[ $MODEL = 'mlp' ]]; then
@@ -77,7 +85,7 @@ for CANCER_TYPE in 'all'; do
                         for NUM_ATTENTION_HEADS in "${NUM_ATTENTION_HEADS_OPTIONS[@]}"; do
                             for NUM_NONLINEAR_LAYERS in "${NUM_NONLINEAR_LAYERS_OPTIONS[@]}"; do
                                 for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS[@]}"; do
-                                    for DROPOUT in 0.0 0.25 0.33; do
+                                    for DROPOUT in 0.00 0.25 0.33 0.50; do
                                         for LEARNING_RATE in 0.000001 0.00001 0.0001; do
 
                                             # No regularization

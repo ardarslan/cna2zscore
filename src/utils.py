@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, Dataset, Subset
 from dataset import UnthresholdedCNA2GEXDataset, ThresholdedCNA2GEXDataset, \
                     UnthresholdedCNAPurity2GEXDataset, ThresholdedCNAPurity2GEXDataset, \
                     RPPA2GEXDataset
-from model import MLP, MMLP, ResConMLP, Transformer
+from model import BaselineModel, MLP, MMLP, ResConMLP, Transformer
 
 
 def set_seeds(cfg: Dict[str, Any]) -> None:
@@ -163,7 +163,9 @@ def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logg
 def get_model(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> torch.nn.Module:
     logger.log(level=logging.INFO, msg="Creating the model...")
 
-    if cfg["model"] in ["linear", "mlp"]:
+    if cfg["model"] == "baseline":
+        model = BaselineModel(cfg=cfg, num_genes=cfg["num_genes"], input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
+    elif cfg["model"] in ["linear", "mlp"]:
         model = MLP(cfg=cfg, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
     elif cfg["model"] in ["linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24"]:
         model = MMLP(cfg=cfg, chromosome_name_X_column_ids_mapping=dataset.chromosome_name_X_column_ids_mapping, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
@@ -274,7 +276,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
 
     # model
-    parser.add_argument("--model", type=str, default="linear_per_chromosome_24", choices=["linear", "mlp", "linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24", "rescon_mlp", "transformer"], help="Which model to use.")
+    parser.add_argument("--model", type=str, default="linear_per_chromosome_24", choices=["baseline", "linear", "mlp", "linear_per_chromosome_all", "linear_per_chromosome_24", "mlp_per_chromosome_all", "mlp_per_chromosome_24", "rescon_mlp", "transformer"], help="Which model to use.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension_ratio", type=float, default=0.10, help="Ratio of number of nodes in a hidden layer to max(number of nodes in input layer, number of nodes in output layer).")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")

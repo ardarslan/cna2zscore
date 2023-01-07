@@ -11,6 +11,35 @@ from torch.nn.parameter import Parameter
 from layer import NonLinearLayer, OutputLayer, SelfAttention
 
 
+class BaselineModel(nn.Module):
+    def __init__(self, cfg: Dict[str, Any], num_genes: int, input_dimension: int, output_dimension: int):
+        super().__init__()
+        self.cfg = cfg
+        self.num_genes = num_genes
+        self.input_dimension = input_dimension
+        self.output_dimension = output_dimension
+        self.weights = nn.ModuleList()
+        self.biases = nn.ModuleList()
+        for _ in range(self.output_dimension):
+            current_weight = Parameter(torch.empty((1 + self.input_dimension - self.output_dimension, 1)))
+            nn.init.kaiming_uniform_(current_weight, a=math.sqrt(5))
+
+            current_bias = Parameter(torch.empty((1, )))
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(current_weight)
+            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+            nn.init.uniform_(current_bias, -bound, bound)
+
+            self.weights.append(current_weight)
+            self.biases.append(current_bias)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        nongene_inputs = x[:, -(self.input_dimension - self.output_dimension):]
+        y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
+        for j in range(self.output_dimension):
+            y[:, j] = F.linear(torch.concat((x[:, j:j+1], nongene_inputs), dim=1), self.weights[j], self.biases[j])
+        return y
+
+
 class MLP(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
@@ -21,7 +50,7 @@ class MLP(nn.Module):
         self._set_model_hidden_dimension()
 
         if self.cfg["num_nonlinear_layers"] != 0 and ((self.cfg["l1_reg_diagonal_coeff"] != self.cfg["l1_reg_nondiagonal_coeff"]) or (self.cfg["l2_reg_diagonal_coeff"] != self.cfg["l2_reg_nondiagonal_coeff"])):
-            raise Exception("Custom regularization is supported only when num_nonlinear_layers is 0.")
+            raise Exception("Custom regularization is supported only when num_nonlinear_layers is not 0.")
 
         self.layers = nn.ModuleList()
 
