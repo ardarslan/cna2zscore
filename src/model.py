@@ -37,7 +37,7 @@ class BaselineModel(nn.Module):
             current_weight = Parameter(torch.empty((1, 1 + self.input_dimension - self.output_dimension)))
             nn.init.kaiming_uniform_(current_weight, a=math.sqrt(5))
 
-            current_bias = Parameter(torch.empty((1, )))
+            current_bias = Parameter(torch.empty((1, 1)))
             fan_in, _ = nn.init._calculate_fan_in_and_fan_out(current_weight)
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(current_bias, -bound, bound)
@@ -49,7 +49,7 @@ class BaselineModel(nn.Module):
         nongene_inputs = x[:, -(self.input_dimension - self.output_dimension):]
         y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
         for j in range(self.output_dimension):
-            y[:, j] = F.linear(torch.concat((x[:, j:j+1], nongene_inputs), dim=1), self.weights[j], self.biases[j])
+            y[:, j] = F.linear(torch.concat((x[:, j:j+1], nongene_inputs), dim=1), self.weights[j], self.biases[j]).squeeze()
         return y
 
 
