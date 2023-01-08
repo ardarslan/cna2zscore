@@ -290,6 +290,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scheduler", type=str, default="reduce_lr_on_plateau", help="Which scheduler to use.")
     parser.add_argument("--scheduler_factor", type=float, default=0.5, help="Multiplicative factor used by ReduceLROnPlateau scheduler while reducing the learning rate.")
     parser.add_argument("--scheduler_patience", type=int, default=4, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
+    parser.add_argument("--min_lr", type=float, default=2.5e-5, help="Minimum learning rate.")
 
     # training
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate.")

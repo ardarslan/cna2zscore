@@ -48,14 +48,14 @@ if __name__ == "__main__":
         current_train_loss_dict = train(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=train_loss_function, dataset=dataset, optimizer=optimizer, epoch=epoch, logger=logger, summary_writer=summary_writer, train_main_loss_values=train_main_loss_values)
         current_val_loss_dict = validate(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, epoch=epoch, logger=logger, summary_writer=summary_writer, val_main_loss_values=val_main_loss_values)
 
-        if current_val_loss_dict[cfg["loss_function"]] < best_val_loss:
+        if np.round(current_val_loss_dict[cfg["loss_function"]], 2) < best_val_loss:
             num_epochs_val_loss_not_decreased = 0
-            best_val_loss = current_val_loss_dict[cfg["loss_function"]]
+            best_val_loss = np.round(current_val_loss_dict[cfg["loss_function"]], 2)
             save_best_model(cfg=cfg, model=model, logger=logger)
         else:
             num_epochs_val_loss_not_decreased += 1
 
-        if num_epochs_val_loss_not_decreased == cfg["early_stopping_patience"]:
+        if num_epochs_val_loss_not_decreased == cfg["early_stopping_patience"] or float(optimizer.param_groups[0]['lr']) < cfg["min_lr"]:
             set_early_stopping_epoch(cfg=cfg, epoch=epoch, logger=logger)
             break
         else:
