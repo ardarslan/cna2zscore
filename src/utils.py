@@ -211,9 +211,9 @@ def save_cfg(cfg: Dict[str, Any], logger: logging.Logger) -> None:
         file_handler.write(pprint.pformat(cfg, indent=4))
 
 
-def save_loss_values(cfg: Dict[str, Any], main_loss_values: Dict[str, List[float]]) -> None:
+def save_loss_values(cfg: Dict[str, Any], train_main_loss_values: List[float], val_main_loss_values: List[float]) -> None:
     experiment_dir = get_experiment_dir(cfg=cfg)
-    loss_values_df = pd.DataFrame.from_dict({"epoch": np.arange(1, len(main_loss_values["train"])+1), f"train_{cfg['loss_function']}": main_loss_values["train"], f"val_{cfg['loss_function']}": main_loss_values["val"]})
+    loss_values_df = pd.DataFrame.from_dict({"epoch": np.arange(1, len(train_main_loss_values)+1), f"train_{cfg['loss_function']}": train_main_loss_values, f"val_{cfg['loss_function']}": val_main_loss_values})
     loss_values_df.to_csv(os.path.join(experiment_dir, "loss_values.tsv"), sep="\t")
 
 

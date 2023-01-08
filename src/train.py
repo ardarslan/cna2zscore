@@ -40,7 +40,7 @@ def calculate_current_regularization_loss(cfg: Dict[str, Any], model: nn.Module,
     return current_regularization_loss
 
 
-def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, optimizer, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter) -> None:
+def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, optimizer, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter, train_main_loss_values: List[float]) -> None:
     model.train()
     optimizer.zero_grad()
 
@@ -111,6 +111,8 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
             optimizer.step()
             optimizer.zero_grad()
 
+    logger.log(level=logging.INFO, msg=f"Epoch {str(epoch).zfill(3)}, {(5 - len('train')) * ' ' + 'train'.capitalize()} {cfg['loss_function']} loss is {np.round(main_loss_sum / main_loss_count, 2)}.")
+
     train_loss_dict = {
         cfg["loss_function"]: main_loss_sum / main_loss_count,
     }
@@ -121,5 +123,9 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
     if cfg["l2_reg_diagonal_coeff"] > 0 or cfg["l2_reg_nondiagonal_coeff"] > 0:
         train_loss_dict["l2_loss"] = l2_loss_sum / l2_loss_count
 
+    train_main_loss_values.append(train_loss_dict[cfg["loss_function"]])
+
     for loss_name, loss_value in train_loss_dict.items():
         summary_writer.add_scalar(f"train_{loss_name}", loss_value, epoch)
+
+    return train_loss_dict
