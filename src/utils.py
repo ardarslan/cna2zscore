@@ -293,8 +293,8 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # training
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate.")
-    parser.add_argument("--gradient_norm", type=float, default=5.0, help="Gradient norm.")
-    parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
+    parser.add_argument("--gradient_norm", type=float, default=10.0, help="Gradient norm.")
+    parser.add_argument("--num_epochs", type=int, default=100, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
     parser.add_argument("--l1_reg_diagonal_coeff", type=float, default=0.0, help="L1 regularization coefficient for diagonal elements.")
