@@ -37,7 +37,7 @@ for CANCER_TYPE in 'all'; do
                 L2_REG_COEFF_OPTIONS=(0.0001) # (0.0001 0.001 0.01 0.1 1.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(4) # (4 16 64)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
-                PER_CHROMOSOME_OPTIONS=(false true)
+                PER_CHROMOSOME_OPTIONS=(false) # (false true)
             elif [[ $MODEL = 'linear' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
@@ -88,7 +88,7 @@ for CANCER_TYPE in 'all'; do
                             for NUM_NONLINEAR_LAYERS in "${NUM_NONLINEAR_LAYERS_OPTIONS[@]}"; do
                                 for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS[@]}"; do
                                     for DROPOUT in 0.33; do # 0.00 0.25 0.33 0.50; do
-                                        for LEARNING_RATE in 0.00005; do # 0.00005 0.0001 0.001; do
+                                        for LEARNING_RATE in 0.001; do # 0.00005 0.0001 0.001; do
                                             for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
 
                                                 # No regularization
