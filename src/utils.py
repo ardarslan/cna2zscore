@@ -211,9 +211,9 @@ def save_cfg(cfg: Dict[str, Any], logger: logging.Logger) -> None:
         file_handler.write(pprint.pformat(cfg, indent=4))
 
 
-def save_loss_values(cfg: Dict[str, Any], train_main_loss_values: List[float], val_main_loss_values: List[float]) -> None:
+def save_loss_values(cfg: Dict[str, Any], main_loss_values: Dict[str, List[float]]) -> None:
     experiment_dir = get_experiment_dir(cfg=cfg)
-    loss_values_df = pd.DataFrame.from_dict({"epoch": np.arange(1, len(train_main_loss_values)+1), f"train_{cfg['loss_function']}": train_main_loss_values, f"val_{cfg['loss_function']}": val_main_loss_values})
+    loss_values_df = pd.DataFrame.from_dict({"epoch": np.arange(1, len(main_loss_values["train"])+1), f"train_{cfg['loss_function']}": main_loss_values["train"], f"val_{cfg['loss_function']}": main_loss_values["val"]})
     loss_values_df.to_csv(os.path.join(experiment_dir, "loss_values.tsv"), sep="\t")
 
 
@@ -255,21 +255,21 @@ def str2bool(v: Union[str, bool]) -> bool:
 def get_argument_parser() -> argparse.ArgumentParser:
     """Initialize basic CLI argument parser."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=1903, help="Random seed for reproducibility.")
+    parser.add_argument("--seed", type=int, default=0, help="Random seed for reproducibility.")
 
     # data
     parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_data/processed", help="Directory for the processed files.")
-    parser.add_argument("--dataset", type=str, default="unthresholdedcnapurity2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
-    parser.add_argument("--gene_type", type=str, default="250_highly_expressed_genes", choices=["250_highly_expressed_genes", "1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes"])
+    parser.add_argument("--dataset", type=str, default="rppa2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
+    parser.add_argument("--gene_type", type=str, default="rppa_genes", choices=["250_highly_expressed_genes", "1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes"])
     parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
-    parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the input or not.")
-    parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the output or not.")
+    parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the input or not.")
+    parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the output or not.")
     parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
 
     # model
     parser.add_argument("--model", type=str, default="baseline", choices=["baseline", "linear", "mlp", "rescon_mlp", "transformer"], help="Which model to use.")
-    parser.add_argument("--per_chromosome", type=str2bool, nargs='?', const=True, default=True, help="Whether to use a per chromosome model or not.")
+    parser.add_argument("--per_chromosome", type=str2bool, nargs='?', const=True, default=False, help="Whether to use a per chromosome model or not.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension_ratio", type=float, default=0.10, help="Ratio of number of nodes in a hidden layer to max(number of nodes in input layer, number of nodes in output layer).")
     parser.add_argument("--hidden_activation", type=str, default="leaky_relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
