@@ -289,7 +289,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     # scheduler
     parser.add_argument("--scheduler", type=str, default="reduce_lr_on_plateau", help="Which scheduler to use.")
     parser.add_argument("--scheduler_factor", type=float, default=0.5, help="Multiplicative factor used by ReduceLROnPlateau scheduler while reducing the learning rate.")
-    parser.add_argument("--scheduler_patience", type=int, default=5, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
+    parser.add_argument("--scheduler_patience", type=int, default=4, help="Number of patience epochs used by ReduceLROnPlateau scheduler.")
 
     # training
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate.")
@@ -301,7 +301,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--l1_reg_nondiagonal_coeff", type=float, default=0.0, help="L1 regularization coefficient for nondiagonal elements.")
     parser.add_argument("--l2_reg_diagonal_coeff", type=float, default=0.0, help="L2 regularization coefficient for diagonal elements.")
     parser.add_argument("--l2_reg_nondiagonal_coeff", type=float, default=0.0, help="L2 regularization coefficient for nondiagonal elements.")
-    parser.add_argument("--early_stopping_patience", type=int, default=10, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
+    parser.add_argument("--early_stopping_patience", type=int, default=8, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
     parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_checkpoints")

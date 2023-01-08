@@ -74,7 +74,7 @@ for CANCER_TYPE in 'all'; do
                             for NUM_NONLINEAR_LAYERS in "${NUM_NONLINEAR_LAYERS_OPTIONS[@]}"; do
                                 for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS[@]}"; do
                                     for DROPOUT in 0.00 0.25 0.33 0.50; do
-                                        for LEARNING_RATE in 0.0001 0.001; do
+                                        for LEARNING_RATE in 0.00005 0.0001 0.001; do
                                             for PER_CHROMOSOME in false true; do
 
                                                 # No regularization
