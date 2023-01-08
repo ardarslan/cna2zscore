@@ -59,7 +59,7 @@ if __name__ == "__main__":
             set_early_stopping_epoch(cfg=cfg, epoch=epoch, logger=logger)
             break
         else:
-            scheduler.step(current_val_loss_dict[cfg["loss_function"]])
+            scheduler.step(np.round(current_val_loss_dict[cfg["loss_function"]], 2))
 
         summary_writer.add_scalar(f"learning_rate", optimizer.param_groups[0]['lr'], epoch)
 
