@@ -12,8 +12,10 @@ from layer import NonLinearLayer, OutputLayer, SelfAttention
 
 
 def get_single_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
-    if cfg["model"] == "baseline":
-        ModelClass = BaselineModel
+    if cfg["model"] == "per_gene":
+        ModelClass = PerGeneModel
+    elif cfg["model"] == "gene_embeddings":
+        ModelClass = GeneEmbeddingsModel
     elif cfg["model"] in ["linear", "mlp"]:
         ModelClass = MLP
     elif cfg["model"] == "rescon_mlp":
@@ -25,7 +27,7 @@ def get_single_model(cfg: Dict[str, Any], input_dimension: int, output_dimension
     return ModelClass(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
 
 
-class BaselineModel(nn.Module):
+class PerGeneModel(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
         self.cfg = cfg
@@ -50,6 +52,22 @@ class BaselineModel(nn.Module):
         y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
         for j in range(self.output_dimension):
             y[:, j] = F.linear(torch.concat((x[:, j:j+1], nongene_inputs), dim=1), self.weights[j], self.biases[j]).squeeze()
+        return y
+
+
+class GeneEmbeddingsModel(nn.Module):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+        self.cfg = cfg
+        self.input_dimension = input_dimension
+        self.output_dimension = output_dimension
+        self.gene_embeddings = nn.Embedding(num_embeddings=cfg["num_genes"], embedding_dim=cfg["gene_embedding_size"])
+        self.fc = nn.Linear((self.input_dimension - self.output_dimension) + cfg["gene_embedding_size"] + 1, 1)
+
+    def forward(self, x: torch.Tensor):
+        nongene_inputs = x[:, -(self.input_dimension - self.output_dimension):]
+        y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
+        for j in range(self.output_dimension):
+            y[:, j] = self.fc(torch.concat((nongene_inputs, x[:, j:j+1], self.gene_embeddings.weight[j, :].unsqueeze(0).repeat(x.shape[0], 1)), axis=1)).squeeze()
         return y
 
 
@@ -165,7 +183,7 @@ class Transformer(nn.Module):
         self.input_dimension = input_dimension
         self.output_dimension = output_dimension
 
-        self.gene_embedding = torch.nn.Embedding(num_embeddings=self.output_dimension, embedding_dim=self.cfg["gene_embedding_size"])
+        self.gene_embeddings = torch.nn.Embedding(num_embeddings=self.output_dimension, embedding_dim=self.cfg["gene_embedding_size"])
         self.attention = SelfAttention(d=self.cfg["gene_embedding_size"]+1, n_heads=self.cfg["num_attention_heads"])
         self.normalization = nn.LayerNorm(self.cfg["gene_embedding_size"]+1)
 
@@ -185,7 +203,7 @@ class Transformer(nn.Module):
         Returns:
             Output tensor of shape (N, num_genes).
         """
-        attention_inputs = torch.concat((self.gene_embedding.weight.unsqueeze(0).repeat((x.shape[0], 1, 1)), x[:, :self.output_dimension].unsqueeze(-1)), dim=-1) # (N, num_genes, d+1)
+        attention_inputs = torch.concat((self.gene_embeddings.weight.unsqueeze(0).repeat((x.shape[0], 1, 1)), x[:, :self.output_dimension].unsqueeze(-1)), dim=-1) # (N, num_genes, d+1)
         out = self.attention(attention_inputs) + attention_inputs # (N, num_genes, d+1)
         del attention_inputs
         gc.collect()

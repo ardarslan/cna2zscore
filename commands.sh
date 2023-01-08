@@ -5,9 +5,9 @@ NUM_JOBS=0
 for CANCER_TYPE in 'all'; do
     for DATASET in 'rppa2gex' 'unthresholdedcnapurity2gex'; do
         if [[ $DATASET = 'rppa2gex' ]]; then
-            declare -a MODEL_OPTIONS=("baseline" "linear")
+            declare -a MODEL_OPTIONS=("per_gene" "gene_embeddings" "linear")
         elif [[ $DATASET = 'unthresholdedcnapurity2gex' ]]; then
-            declare -a MODEL_OPTIONS=("baseline" "linear")
+            declare -a MODEL_OPTIONS=("per_gene" "gene_embeddings" "linear")
         else
             echo "DATASET is not a valid $DATASET."
             exit 1
@@ -20,7 +20,7 @@ for CANCER_TYPE in 'all'; do
                 declare -a GENE_TYPE_OPTIONS=("250_highly_expressed_genes" "1000_highly_expressed_genes" "rppa_genes")
             fi
 
-            if [[ $MODEL = 'baseline' ]]; then
+            if [[ $MODEL = 'per_gene' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(0)
@@ -28,6 +28,16 @@ for CANCER_TYPE in 'all'; do
                 L2_REG_COEFF_OPTIONS=(0.0001 0.001 0.01 0.1 1.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
+                PER_CHROMOSOME_OPTIONS=(false)
+            elif [[ $MODEL = 'gene_embeddings' ]]; then
+                RESCON_DIAGONAL_W_OPTIONS=(false)
+                HIDDEN_DIMENSION_OPTIONS=(0.0)
+                NUM_NONLINEAR_LAYERS_OPTIONS=(0)
+                L1_REG_COEFF_OPTIONS=(0.0001 0.001 0.01 0.1 1.0)
+                L2_REG_COEFF_OPTIONS=(0.0001 0.001 0.01 0.1 1.0)
+                GENE_EMBEDDING_SIZE_OPTIONS=(4 16 64)
+                NUM_ATTENTION_HEADS_OPTIONS=(0)
+                PER_CHROMOSOME_OPTIONS=(false true)
             elif [[ $MODEL = 'linear' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
@@ -38,6 +48,7 @@ for CANCER_TYPE in 'all'; do
                 L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0001 0.001 0.01 0.1 1.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
+                PER_CHROMOSOME_OPTIONS=(false true)
             elif [[ $MODEL = 'mlp' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.10 0.25 0.5)
@@ -46,6 +57,7 @@ for CANCER_TYPE in 'all'; do
                 L2_REG_COEFF_OPTIONS=(0.0001 0.001 0.01 0.1 1.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
+                PER_CHROMOSOME_OPTIONS=(false true)
             elif [[ $MODEL = 'rescon_mlp' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false true)
                 HIDDEN_DIMENSION_OPTIONS=(0.10 0.25 0.5)
@@ -54,6 +66,7 @@ for CANCER_TYPE in 'all'; do
                 L2_REG_COEFF_OPTIONS=(0.0001 0.001 0.01 0.1 1.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
+                PER_CHROMOSOME_OPTIONS=(false true)
             elif [[ $MODEL = 'transformer' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
@@ -62,6 +75,7 @@ for CANCER_TYPE in 'all'; do
                 L2_REG_COEFF_OPTIONS=(0.0001 0.001 0.01 0.1 1.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(4 16 64)
                 NUM_ATTENTION_HEADS_OPTIONS=(4 8)
+                PER_CHROMOSOME_OPTIONS=(false true)
             else
                 echo "MODEL is not a valid $MODEL."
                 exit 1
@@ -75,7 +89,7 @@ for CANCER_TYPE in 'all'; do
                                 for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS[@]}"; do
                                     for DROPOUT in 0.00 0.25 0.33 0.50; do
                                         for LEARNING_RATE in 0.00005 0.0001 0.001; do
-                                            for PER_CHROMOSOME in false true; do
+                                            for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
 
                                                 # No regularization
                                                 sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"

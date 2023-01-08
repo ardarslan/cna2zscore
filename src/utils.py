@@ -268,7 +268,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
 
     # model
-    parser.add_argument("--model", type=str, default="baseline", choices=["baseline", "linear", "mlp", "rescon_mlp", "transformer"], help="Which model to use.")
+    parser.add_argument("--model", type=str, default="gene_embeddings", choices=["gene_embeddings", "per_gene", "linear", "mlp", "rescon_mlp", "transformer"], help="Which model to use.")
     parser.add_argument("--per_chromosome", type=str2bool, nargs='?', const=True, default=False, help="Whether to use a per chromosome model or not.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension_ratio", type=float, default=0.10, help="Ratio of number of nodes in a hidden layer to max(number of nodes in input layer, number of nodes in output layer).")
