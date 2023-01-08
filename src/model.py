@@ -57,6 +57,7 @@ class PerGeneModel(nn.Module):
 
 class GeneEmbeddingsModel(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+        super().__init__()
         self.cfg = cfg
         self.input_dimension = input_dimension
         self.output_dimension = output_dimension
