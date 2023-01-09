@@ -75,4 +75,4 @@ if __name__ == "__main__":
 
     model = load_best_model(cfg=cfg, dataset=dataset, logger=logger)
     save_results(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
-    delete_best_model(cfg=cfg, logger=logger)
+    # delete_best_model(cfg=cfg, logger=logger)
