@@ -5,9 +5,9 @@ NUM_JOBS=0
 for CANCER_TYPE in 'all'; do
     for DATASET in 'rppa2gex' 'unthresholdedcnapurity2gex'; do
         if [[ $DATASET = 'rppa2gex' ]]; then
-            declare -a MODEL_OPTIONS=("per_gene" "gene_embeddings" "linear")
+            declare -a MODEL_OPTIONS=("mlp" "rescon_mlp" "transformer")
         elif [[ $DATASET = 'unthresholdedcnapurity2gex' ]]; then
-            declare -a MODEL_OPTIONS=("per_gene" "gene_embeddings" "linear")
+            declare -a MODEL_OPTIONS=("mlp" "rescon_mlp" "transformer")
         else
             echo "DATASET is not a valid $DATASET."
             exit 1
