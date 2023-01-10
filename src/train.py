@@ -21,16 +21,20 @@ def calculate_current_regularization_loss(cfg: Dict[str, Any], model: nn.Module,
         raise Exception(f"{regularization_loss_type} is not a valid regularization loss type.")
 
     current_regularization_loss = 0.0
+
     if regularization_diagonal_coeff != regularization_nondiagonal_coeff:
+        # regularize diagonal elements
         if regularization_diagonal_coeff != 0.0:
             for parameter in model.parameters():
                 if len(parameter.shape) == 2:  # weight matrix
-                    current_regularization_loss += (regularization_diagonal_coeff - regularization_nondiagonal_coeff) * regularization_operation(torch.diag(parameter)).sum()
+                    current_regularization_loss += regularization_diagonal_coeff * regularization_operation(torch.diag(parameter)).sum()
 
+        # regularize nondiagonal elements
         if regularization_nondiagonal_coeff != 0.0:
             for parameter in model.parameters():
                 if len(parameter.shape) == 2:  # weight matrix
-                    current_regularization_loss += regularization_nondiagonal_coeff * regularization_operation(parameter).sum()
+                    nondiagonal_mask = torch.concat([~torch.eye(parameter.shape[0], dtype=bool, device=parameter.device), torch.ones(size=(parameter.shape[0], parameter.shape[1] - parameter.shape[0]), dtype=torch.bool, device=parameter.device)], axis=1)
+                    current_regularization_loss += regularization_nondiagonal_coeff * regularization_operation(parameter[nondiagonal_mask]).sum()
     else:
         if regularization_nondiagonal_coeff != 0.0:
             for parameter in model.parameters():
