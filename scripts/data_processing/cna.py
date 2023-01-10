@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 
-def process_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name: str) -> pd.DataFrame:
+def get_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name: str) -> pd.DataFrame:
     print("Processing CNA data...")
 
     thresholded_cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_all_thresholded.by_genes"
@@ -12,7 +12,7 @@ def process_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name:
     hgnc_symbol_to_entrezgene_id_mapping_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
     hgnc_symbol_to_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, hgnc_symbol_to_entrezgene_id_mapping_file_name), sep="\t").values)
 
-    def process_cna_data_helper(cna_file_name):
+    def get_cna_data_helper(cna_file_name):
         cna_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cna_file_name), sep="\t")
 
         for index, row in cna_df.iterrows():
@@ -54,8 +54,8 @@ def process_cna_data(data_dir: str, raw_folder_name: str, processed_folder_name:
 
         return cna_df
 
-    thresholded_cna_df = process_cna_data_helper(cna_file_name=thresholded_cna_file_name)
-    unthresholded_cna_df = process_cna_data_helper(cna_file_name=unthresholded_cna_file_name)
+    thresholded_cna_df = get_cna_data_helper(cna_file_name=thresholded_cna_file_name)
+    unthresholded_cna_df = get_cna_data_helper(cna_file_name=unthresholded_cna_file_name)
 
     print("Processed CNA data.")
 

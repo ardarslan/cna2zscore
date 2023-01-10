@@ -17,9 +17,9 @@ from torch.optim import Adam, AdamW, RMSprop, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, Subset
 
-from dataset import UnthresholdedCNA2GEXDataset, ThresholdedCNA2GEXDataset, \
-                    UnthresholdedCNAPurity2GEXDataset, ThresholdedCNAPurity2GEXDataset, \
-                    RPPA2GEXDataset
+from dataset import UnthresholdedCNA2ZScoreDataset, ThresholdedCNA2ZScoreDataset, \
+                    UnthresholdedCNAPurity2ZScoreDataset, ThresholdedCNAPurity2ZScoreDataset, \
+                    RPPA2ZScoreDataset
 from model import get_single_model, PerChromosomeModel
 
 
@@ -83,16 +83,16 @@ def set_number_of_parameters(cfg: Dict[str, Any], model: nn.Module) -> None:
 def get_dataset(cfg: Dict[str, Any], logger: logging.Logger) -> Dataset:
     logger.log(level=logging.INFO, msg="Creating the dataset...")
 
-    if cfg["dataset"] == "unthresholdedcna2gex":
-        dataset = UnthresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
-    elif cfg["dataset"] == "thresholdedcna2gex":
-        dataset = ThresholdedCNA2GEXDataset(cfg=cfg, logger=logger)
-    elif cfg["dataset"] == "unthresholdedcnapurity2gex":
-        dataset = UnthresholdedCNAPurity2GEXDataset(cfg=cfg, logger=logger)
-    elif cfg["dataset"] == "thresholdedcnapurity2gex":
-        dataset = ThresholdedCNAPurity2GEXDataset(cfg=cfg, logger=logger)
-    elif cfg["dataset"] == "rppa2gex":
-        dataset = RPPA2GEXDataset(cfg=cfg, logger=logger)
+    if cfg["dataset"] == "unthresholdedcna2zscore":
+        dataset = UnthresholdedCNA2ZScoreDataset(cfg=cfg, logger=logger)
+    elif cfg["dataset"] == "thresholdedcna2zscore":
+        dataset = ThresholdedCNA2ZScoreDataset(cfg=cfg, logger=logger)
+    elif cfg["dataset"] == "unthresholdedcnapurity2zscore":
+        dataset = UnthresholdedCNAPurity2ZScoreDataset(cfg=cfg, logger=logger)
+    elif cfg["dataset"] == "thresholdedcnapurity2zscore":
+        dataset = ThresholdedCNAPurity2ZScoreDataset(cfg=cfg, logger=logger)
+    elif cfg["dataset"] == "rppa2zscore":
+        dataset = RPPA2ZScoreDataset(cfg=cfg, logger=logger)
     else:
         raise NotImplementedError(f"{cfg['dataset']} is not an implemented dataset.")
 
@@ -258,14 +258,11 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_data/processed", help="Directory for the processed files.")
-    parser.add_argument("--dataset", type=str, default="rppa2gex", choices=["unthresholdedcnapurity2gex", "thresholdedcnapurity2gex", "unthresholdedcnapurity2gex", "thresholdedcna2gex", "unthresholdedcna2gex", "rppa2gex"], help="Name of the dataset.")
-    parser.add_argument("--gene_type", type=str, default="rppa_genes", choices=["250_highly_expressed_genes", "1000_highly_expressed_genes", "5000_highly_expressed_genes", "rppa_genes", "all_genes"])
+    parser.add_argument("--processed_data_dir", type=str, default="data/processed", help="Directory for the processed files.")
+    parser.add_argument("--dataset", type=str, default="rppa2zscore", choices=["unthresholdedcnapurity2zscore", "thresholdedcnapurity2zscore", "unthresholdedcnapurity2zscore", "thresholdedcna2zscore", "unthresholdedcna2zscore", "rppa2zscore"], help="Name of the dataset.")
+    parser.add_argument("--gene_type", type=str, default="rppa_genes", choices=["168_highly_expressed_genes" "1000_highly_expressed_genes", "rppa_genes", "all_genes"])
     parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
-    parser.add_argument("--normalize_input", type=str2bool, nargs='?', const=True, default=False, help="Whether to normalize the input or not.")
-    parser.add_argument("--normalize_output", type=str2bool, nargs='?', const=True, default=True, help="Whether to normalize the output or not.")
-    parser.add_argument("--normalization_eps", type=float, default=1e-10, help="Epsilon value used during normalizing input or output, for numerical stability.")
 
     # model
     parser.add_argument("--model", type=str, default="linear", choices=["gene_embeddings", "per_gene", "linear", "mlp", "rescon_mlp", "transformer"], help="Which model to use.")
@@ -305,7 +302,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early_stopping_patience", type=int, default=8, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2gex_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="cna2zscore_checkpoints")
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")

@@ -6,4 +6,4 @@
 data
 checkpoints
 *lsf.*
-cna2gex_checkpoints
+cna2zscore_checkpoints

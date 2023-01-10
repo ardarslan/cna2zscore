@@ -18,14 +18,8 @@ def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn
         for batch in data_loaders["val"]:
             X = batch["X"]
             y = batch["y"]
-            y_train_mean = batch["y_train_mean"]
-            y_train_std = batch["y_train_std"]
 
             yhat = model(X)
-
-            if cfg["normalize_output"]:
-                yhat = yhat * y_train_std + y_train_mean
-                y = y * y_train_std + y_train_mean
 
             main_loss_count += float(y.shape[0] * y.shape[1])
             main_loss_sum += float(loss_function(yhat, y))

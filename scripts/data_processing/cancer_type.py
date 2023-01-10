@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 
-def process_cancer_type_data(data_dir: str, raw_folder_name: str, processed_folder_name: str) -> pd.DataFrame:
+def get_cancer_type_data(data_dir: str, raw_folder_name: str, processed_folder_name: str) -> pd.DataFrame:
     print("Processing Cancer Type data...")
 
     cancer_type_file_name = "TCGA_phenotype_denseDataOnlyDownload.tsv"

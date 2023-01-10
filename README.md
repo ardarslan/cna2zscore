@@ -18,7 +18,7 @@ module load gcc/8.2.0 python_gpu/3.9.9 eth_proxy
 
 ```
 mamba env create -f environment.yml
-mamba activate cna2gex
+mamba activate cna2zscore
 ```
 
 # Download raw data and process it
@@ -26,8 +26,8 @@ mamba activate cna2gex
 Download raw data
 ```
 cd /cluster/scratch/aarslan
-mkdir cna2gex_data
-cd cna2gex_data
+mkdir cna2zscore_data
+cd cna2zscore_data
 gdown 1aJo5IdlI545lKniNjX33GD_cH4hurQ2Y
 unzip raw.zip
 rm -rf raw.zip
@@ -49,8 +49,8 @@ cd ../..
 
 ```
 cd /cluster/scratch/aarslan
-mkdir cna2gex_data
-cd cna2gex_data
+mkdir cna2zscore_data
+cd cna2zscore_data
 gdown 1CPdjSSt7QhJZgpbPWmf_uFnWJgthP4l-
 unzip processed.zip
 rm -rf processed.zip
@@ -59,13 +59,9 @@ cd ..
 
 # Run the code
 
-DATASET: thresholdedcnapurity2gex | unthresholdedcnapurity2gex | thresholdedcna2gex | unthresholdedcna2gex | rppa2gex
+DATASET: thresholdedcnapurity2zscore | unthresholdedcnapurity2zscore | thresholdedcna2zscore | unthresholdedcna2zscore | rppa2zscore
 
 CANCER_TYPE: blca | all
-
-NORMALIZE_INPUT: true | false
-
-NORMALIZE_OUTPUT: true | false
 
 HIDDEN_DIMENSION: {int} | max | min | mean
 
@@ -75,5 +71,5 @@ USE_RESIDUAL_CONNECTION: true | false
 
 ```
 cd src
-sbatch --time=1440 --ntasks=2 --mem-per-cpu=16384 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset DATASET --cancer_type CANCER_TYPE --normalize_input NORMALIZE_INPUT --normalize_output NORMALIZE_OUTPUT --num_hidden_layers NUM_HIDDEN_LAYERS --hidden_dimension HIDDEN_DIMENSION --use_residual_connection USE_RESIDUAL_CONNECTION"
+sbatch --time=1440 --ntasks=2 --mem-per-cpu=16384 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset DATASET --cancer_type CANCER_TYPE --num_hidden_layers NUM_HIDDEN_LAYERS --hidden_dimension HIDDEN_DIMENSION --use_residual_connection USE_RESIDUAL_CONNECTION"
 ```

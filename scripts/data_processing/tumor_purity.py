@@ -4,7 +4,7 @@ from typing import List
 import pandas as pd
 
 
-def process_tumor_purity_data(data_dir: str, raw_folder_name: str, tumor_sample_ids: List[str]) -> pd.DataFrame:
+def get_tumor_purity_data(data_dir: str, raw_folder_name: str, tumor_sample_ids: List[str]) -> pd.DataFrame:
     print("Processing Tumor Purity data...")
 
     tumor_purity_cpe_file_name = "tumor_purity.csv"

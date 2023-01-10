@@ -136,112 +136,62 @@ class Dataset(torch.utils.data.Dataset):
         self.val_indices = val_test_indices[val_test_split_indices[0]]
         self.test_indices = val_test_indices[val_test_split_indices[1]]
 
-        if self.cfg["normalize_output"]:
-            y_train = self.y[self.train_indices, :]
-
-            def get_y_mean_std(x):
-                y_train_mean = np.mean(np.vstack(x["y_train"].values), axis=0, where=np.vstack(x["thresholded_cna_mask"]))
-                y_train_std = np.std(np.vstack(x["y_train"].values), axis=0, where=np.vstack(x["thresholded_cna_mask"])) + self.cfg["normalization_eps"]
-                return y_train_mean, y_train_std
-
-            train_sample_ids = self.sample_ids[self.train_indices]
-            train_sample_ids = pd.DataFrame.from_dict({"sample_id": train_sample_ids})
-            thresholded_cna_mask_df = train_sample_ids.merge(thresholded_cna_mask_df, on="sample_id", how="left").drop(columns=["sample_id"])
-            thresholded_cna_mask_df = (thresholded_cna_mask_df.values == 0.0)
-            normalization_df = pd.DataFrame(data=list(zip(y_train, self.all_cancer_types[self.train_indices], thresholded_cna_mask_df)), columns=["y_train", "train_cancer_types", "thresholded_cna_mask"])
-
-            self.cancer_type_y_train_mean_std_mapping = dict(normalization_df.groupby("train_cancer_types").apply(lambda x: get_y_mean_std(x)).reset_index(drop=False).values)
-            self.y_train_means = np.zeros_like(self.y)
-            self.y_train_stds = np.zeros_like(self.y)
-
-            for i in range(self.y.shape[0]):
-                current_cancer_type = self.all_cancer_types[i]
-                current_y_train_mean, current_y_train_std = self.cancer_type_y_train_mean_std_mapping[current_cancer_type]
-                self.y[i, :] = (self.y[i, :] - current_y_train_mean) / current_y_train_std
-                self.y_train_means[i, :] = current_y_train_mean
-                self.y_train_stds[i, :] = current_y_train_std
-
-        if self.cfg["normalize_input"]:
-            def get_X_mean_std(x):
-                X_train_mean = np.hstack([np.mean(np.vstack(x["X_train_non_one_hot"].values), axis=0), np.zeros_like(x["X_train_one_hot"].iloc[0])])
-                X_train_std = np.hstack([np.std(np.vstack(x["X_train_non_one_hot"].values), axis=0), np.ones_like(x["X_train_one_hot"].iloc[0])]) + self.cfg["normalization_eps"]
-                return X_train_mean, X_train_std
-
-            X_train = self.X[self.train_indices, :]
-            non_one_hot_size = self.y.shape[1]
-            if "purity" in self.cfg["dataset"]:
-                non_one_hot_size += 1
-            X_train_non_one_hot = X_train[:, :non_one_hot_size]
-            X_train_one_hot = X_train[:, non_one_hot_size:]
-            normalization_df = pd.DataFrame(data=list(zip(X_train_non_one_hot, X_train_one_hot, self.all_cancer_types[self.train_indices])), columns=["X_train_non_one_hot", "X_train_one_hot", "train_cancer_types"])
-            self.cancer_type_X_train_mean_std_mapping = dict(normalization_df.groupby("train_cancer_types").apply(lambda x: get_X_mean_std(x)).reset_index(drop=False).values)
-            for i in range(self.X.shape[0]):
-                current_cancer_type = self.all_cancer_types[i]
-                current_X_train_mean, current_X_train_std = self.cancer_type_X_train_mean_std_mapping[current_cancer_type]
-                self.X[i, :] = (self.X[i, :] - current_X_train_mean) / current_X_train_std
-
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
-        return_value = {
-                "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
-                "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32),
-                "sample_id_indices": torch.as_tensor(self.sample_id_indices[idx], dtype=torch.long)
+        return {
+            "X": torch.as_tensor(self.X[idx, :], device=self.device, dtype=torch.float32),
+            "y": torch.as_tensor(self.y[idx, :], device=self.device, dtype=torch.float32),
+            "sample_id_indices": torch.as_tensor(self.sample_id_indices[idx], dtype=torch.long)
         }
-
-        if self.cfg["normalize_output"]:
-            return_value["y_train_mean"] = torch.as_tensor(self.y_train_means[idx, :], device=self.device, dtype=torch.float32)
-            return_value["y_train_std"] = torch.as_tensor(self.y_train_stds[idx, :], device=self.device, dtype=torch.float32)
-
-        return return_value
 
     def __len__(self) -> int:
         return self.len_dataset
 
 
-class UnthresholdedCNAPurity2GEXDataset(Dataset):
+class UnthresholdedCNAPurity2ZScoreDataset(Dataset):
     def __init__(self, cfg: Dict[str, Any], logger: logging.Logger):
         super().__init__(
             cfg=cfg,
             input_data_types=["unthresholded_cna", "tumor_purity"],
-            output_data_type="gex",
+            output_data_type="zscore",
             logger=logger
         )
 
 
-class UnthresholdedCNA2GEXDataset(Dataset):
+class UnthresholdedCNA2ZScoreDataset(Dataset):
     def __init__(self, cfg: Dict[str, Any], logger: logging.Logger):
         super().__init__(
             cfg=cfg,
             input_data_types=["unthresholded_cna"],
-            output_data_type="gex",
+            output_data_type="zscore",
             logger=logger
         )
 
 
-class ThresholdedCNAPurity2GEXDataset(Dataset):
+class ThresholdedCNAPurity2ZScoreDataset(Dataset):
     def __init__(self, cfg: Dict[str, Any], logger: logging.Logger):
         super().__init__(
             cfg=cfg,
             input_data_types=["thresholded_cna", "tumor_purity"],
-            output_data_type="gex",
+            output_data_type="zscore",
             logger=logger
         )
 
 
-class ThresholdedCNA2GEXDataset(Dataset):
+class ThresholdedCNA2ZScoreDataset(Dataset):
     def __init__(self, cfg: Dict[str, Any], logger: logging.Logger):
         super().__init__(
             cfg=cfg,
             input_data_types=["thresholded_cna"],
-            output_data_type="gex",
+            output_data_type="zscore",
             logger=logger
         )
 
 
-class RPPA2GEXDataset(Dataset):
+class RPPA2ZScoreDataset(Dataset):
     def __init__(self, cfg: Dict[str, Any], logger: logging.Logger):
         super().__init__(
             cfg=cfg,
             input_data_types=["rppa"],
-            output_data_type="gex",
+            output_data_type="zscore",
             logger=logger
         )

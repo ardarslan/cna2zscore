@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def process_rppa_data(data_dir: str, raw_folder_name: str, processed_folder_name: str, intersecting_columns: List[str], intersecting_sample_ids: List[str]) -> pd.DataFrame:
+def get_rppa_data(data_dir: str, raw_folder_name: str, processed_folder_name: str, intersecting_columns: List[str], intersecting_sample_ids: List[str]) -> pd.DataFrame:
     print("Processing RPPA data...")
 
     rppa_file_name = "TCGA-RPPA-pancan-clean.xena"

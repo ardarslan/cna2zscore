@@ -20,26 +20,15 @@ def get_mse_corr_p_value(ground_truths: np.ndarray, predictions: np.ndarray) -> 
 
 
 def get_evaluation_metrics(cancer_type: str, all_ground_truths: pd.DataFrame, all_predictions: pd.DataFrame, current_sample_ids: List[str]) -> Dict[str, float]:
-    # current_thresholded_cna_mask = thresholded_cna_mask[thresholded_cna_mask["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"])
-    # current_thresholded_cna_mask = (current_thresholded_cna_mask.values.ravel() != 0)
-
     current_ground_truths = all_ground_truths[all_ground_truths["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"])
     current_ground_truths = current_ground_truths.values.ravel()
 
     current_predictions = all_predictions[all_predictions["sample_id"].isin(current_sample_ids)].drop(columns=["sample_id"])
     current_predictions = current_predictions.values.ravel()
 
-    # current_cna_ground_truths = current_ground_truths[np.argwhere(current_thresholded_cna_mask)].ravel()
-    # current_cna_predictions = current_predictions[np.argwhere(current_thresholded_cna_mask)].ravel()
-
-    # current_noncna_ground_truths = current_ground_truths[np.argwhere((1 - current_thresholded_cna_mask).astype(np.bool_))].ravel()
-    # current_noncna_predictions = current_predictions[np.argwhere((1 - current_thresholded_cna_mask).astype(np.bool_))].ravel()
-
     all_mse, all_corr, all_p_value = get_mse_corr_p_value(ground_truths=current_ground_truths, predictions=current_predictions)
-    # cna_mse, cna_corr, cna_p_value = get_mse_corr_p_value(ground_truths=current_cna_ground_truths, predictions=current_cna_predictions)
-    # noncna_mse, noncna_corr, noncna_p_value = get_mse_corr_p_value(ground_truths=current_noncna_ground_truths, predictions=current_noncna_predictions)
 
-    return (cancer_type, all_mse, all_corr, all_p_value) # , cna_mse, cna_corr, cna_p_value, noncna_mse, noncna_corr, noncna_p_value)
+    return (cancer_type, all_mse, all_corr, all_p_value)
 
 
 def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
@@ -57,14 +46,8 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
             sample_id_indices = batch["sample_id_indices"]
             X = batch["X"]
             y = batch["y"]
-            y_train_mean = batch["y_train_mean"]
-            y_train_std = batch["y_train_std"]
 
             yhat = model(X)
-
-            if cfg["normalize_output"]:
-                yhat = yhat * y_train_std + y_train_mean
-                y = y * y_train_std + y_train_mean
 
             total_count += float(y.shape[0] * y.shape[1])
             total_loss += float(loss_function(yhat, y))
@@ -106,33 +89,9 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
 
     for current_cancer_type, current_sample_ids in all_cancer_types.items():
         evaluation_metrics.append(get_evaluation_metrics(cancer_type=current_cancer_type, all_ground_truths=all_ground_truths, all_predictions=all_predictions, current_sample_ids=current_sample_ids))
-        # plot_scatter_plot(cfg=cfg, split_name=split_name, current_cancer_type=current_cancer_type, current_sample_ids=current_sample_ids, all_ground_truths=all_ground_truths, all_predictions=all_predictions)
-        # plot_box_plots(cfg=cfg, split_name=split_name, current_cancer_type=current_cancer_type, current_sample_ids=current_sample_ids, all_ground_truths=all_ground_truths, all_predictions=all_predictions, thresholded_cna_mask=thresholded_cna_mask, dataset=dataset)
 
     evaluation_metrics = pd.DataFrame(data=evaluation_metrics, columns=["cancer_type", "all_mse", "all_corr", "all_p_value"])
     evaluation_metrics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "evaluation_metrics_all.tsv"), sep="\t", index=False)
-
-    # y_train_statistics = pd.DataFrame.from_dict({"entrezgene_id": dataset.entrezgene_ids,
-    #                                              "y_train_mean": dataset.y_train_mean.cpu().numpy(),
-    #                                              "y_train_std": dataset.y_train_std.cpu().numpy()})
-    # y_train_statistics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "y_train_statistics.tsv"), sep="\t", index=False)
-
-    # gene_based_evaluation_metrics_df = get_gene_based_evaluation_metrics(cfg=cfg, all_ground_truths=all_ground_truths, all_predictions=all_predictions, dataset=dataset)
-    # entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping_df = pd.read_csv(os.path.join(cfg["processed_data_dir"], "entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping.tsv"), sep="\t")
-    # gene_based_evaluation_metrics_df = pd.merge(gene_based_evaluation_metrics_df, entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping_df, how="inner", on="entrezgene_id")
-    # gene_based_evaluation_metrics_df["gene_predictability"] = gene_based_evaluation_metrics_df["aug"].values + gene_based_evaluation_metrics_df["ddg"].values
-    # gene_based_evaluation_metrics_df["gene_nonpredictability"] = gene_based_evaluation_metrics_df["adg"].values + gene_based_evaluation_metrics_df["dug"].values
-
-    # gene_predictability_normalized_mse_corr, gene_predictability_normalized_mse_p_value = pearsonr(gene_based_evaluation_metrics_df["gene_predictability"].values, gene_based_evaluation_metrics_df["gene_normalized_mse"].values)
-    # gene_predictability_corr_corr, gene_predictability_corr_p_value = pearsonr(gene_based_evaluation_metrics_df["gene_predictability"], gene_based_evaluation_metrics_df["gene_corr"])
-    # gene_nonpredictability_normalized_mse_corr, gene_nonpredictability_normalized_mse_p_value = pearsonr(gene_based_evaluation_metrics_df["gene_nonpredictability"], gene_based_evaluation_metrics_df["gene_normalized_mse"])
-    # gene_nonpredictability_corr_corr, gene_nonpredictability_corr_p_value = pearsonr(gene_based_evaluation_metrics_df["gene_nonpredictability"], gene_based_evaluation_metrics_df["gene_corr"])
-
-    # gene_predictability_evaluation_metrics = pd.DataFrame.from_dict({"evaluation_metric_name": ["gene_predictability_normalized_mse_corr", "gene_predictability_normalized_mse_p_value", "gene_predictability_corr_corr", "gene_predictability_corr_p_value", "gene_nonpredictability_normalized_mse_corr", "gene_nonpredictability_normalized_mse_p_value", "gene_nonpredictability_corr_corr", "gene_nonpredictability_corr_p_value"],
-    #                                                                  "evaluation_metric_value": [gene_predictability_normalized_mse_corr, gene_predictability_normalized_mse_p_value, gene_predictability_corr_corr, gene_predictability_corr_p_value, gene_nonpredictability_normalized_mse_corr, gene_nonpredictability_normalized_mse_p_value, gene_nonpredictability_corr_corr, gene_nonpredictability_corr_p_value]})
-    # gene_predictability_evaluation_metrics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "gene_predictability_evaluation_metrics.tsv"), sep="\t", index=False)
-
-    # plot_distributions_of_gene_based_pearson_corrs(cfg=cfg, all_ground_truths=all_ground_truths, all_predictions=all_predictions, thresholded_cna_mask=thresholded_cna_mask, split_name=split_name)
 
     logger.log(level=logging.INFO, msg=f"Saved results for {split_name} split.")
 

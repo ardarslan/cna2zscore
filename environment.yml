@@ -1,4 +1,4 @@
-name: cna2gex
+name: cna2zscore
 channels:
   - conda-forge
   - anaconda

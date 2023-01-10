@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def process_gex_data(data_dir: str, raw_folder_name: str, processed_folder_name: str, tumor_sample_ids: List[str]) -> pd.DataFrame:
+def get_gex_data(data_dir: str, raw_folder_name: str, processed_folder_name: str, tumor_sample_ids: List[str]) -> pd.DataFrame:
     print("Processing GEX data...")
 
     gex_file_name = "EB++AdjustPANCAN_IlluminaHiSeq_RNASeqV2.geneExp.xena"
