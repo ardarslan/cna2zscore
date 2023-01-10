@@ -72,12 +72,6 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
 
         observed_sample_count += current_batch_size
 
-        if cfg["normalize_input"]:
-            X = (X - dataset.X_train_mean) / dataset.X_train_std
-
-        if cfg["normalize_output"]:
-            y = (y - dataset.y_train_mean) / dataset.y_train_std
-
         yhat = model(X)
         current_main_loss = loss_function(yhat, y)
         main_loss_sum += float(current_main_loss) * current_batch_size

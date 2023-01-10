@@ -4,11 +4,11 @@ from typing import Any, Dict, List
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 
-def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter, val_main_loss_values: List[float]) -> np.float32:
+def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter, val_main_loss_values: List[float]) -> np.float32:
     model.eval()
 
     with torch.no_grad():
@@ -18,16 +18,14 @@ def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn
         for batch in data_loaders["val"]:
             X = batch["X"]
             y = batch["y"]
-
-            if cfg["normalize_input"]:
-                X = (X - dataset.X_train_mean) / dataset.X_train_std
+            y_train_mean = batch["y_train_mean"]
+            y_train_std = batch["y_train_std"]
 
             yhat = model(X)
 
             if cfg["normalize_output"]:
-                # then during training y was manually normalized, and yhat comes as normalized as well.
-                # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
-                yhat = yhat * dataset.y_train_std + dataset.y_train_mean
+                yhat = yhat * y_train_std + y_train_mean
+                y = y * y_train_std + y_train_mean
 
             main_loss_count += float(y.shape[0] * y.shape[1])
             main_loss_sum += float(loss_function(yhat, y))

@@ -2,7 +2,7 @@ cd src
 
 NUM_JOBS=0
 
-for NORMALIZE_OUTPUT in true; do
+for NORMALIZE_OUTPUT in false true; do
     for CANCER_TYPE in 'all'; do
         for DATASET in 'rppa2gex' 'unthresholdedcnapurity2gex'; do
             if [[ $DATASET = 'rppa2gex' ]]; then
@@ -43,9 +43,9 @@ for NORMALIZE_OUTPUT in true; do
                     RESCON_DIAGONAL_W_OPTIONS=(false)
                     HIDDEN_DIMENSION_OPTIONS=(0.0)
                     NUM_NONLINEAR_LAYERS_OPTIONS=(0)
-                    L1_REG_DIAGONAL_COEFF_OPTIONS=(0.0 0.0000001 0.000000333 0.000001 0.00000333 0.00001 0.0000333 0.0001 0.000333 0.001 0.00333)
+                    L1_REG_DIAGONAL_COEFF_OPTIONS=(0.0 0.0000001 0.000000333 0.000001 0.00000333 0.00001 0.0000333 0.0001 0.000333 0.001 0.00333 0.01)
                     L2_REG_DIAGONAL_COEFF_OPTIONS=(0.0)
-                    L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0 0.0000001 0.000000333 0.000001 0.00000333 0.00001 0.0000333 0.0001 0.000333 0.001 0.00333)
+                    L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0 0.0000001 0.000000333 0.000001 0.00000333 0.00001 0.0000333 0.0001 0.000333 0.001 0.00333 0.01)
                     L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0)
                     GENE_EMBEDDING_SIZE_OPTIONS=(0)
                     NUM_ATTENTION_HEADS_OPTIONS=(0)
@@ -88,7 +88,7 @@ for NORMALIZE_OUTPUT in true; do
                             for NUM_ATTENTION_HEADS in "${NUM_ATTENTION_HEADS_OPTIONS[@]}"; do
                                 for NUM_NONLINEAR_LAYERS in "${NUM_NONLINEAR_LAYERS_OPTIONS[@]}"; do
                                     for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS[@]}"; do
-                                        for DROPOUT in 0.00; do
+                                        for DROPOUT in 0.00; do # 0.25 0.33 0.50; do
                                             for LEARNING_RATE in 0.001 0.01; do
                                                 for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
 
@@ -115,7 +115,7 @@ for NORMALIZE_OUTPUT in true; do
                                                         done
                                                     fi
 
-                                                    # # L2 regularization
+                                                    # L2 regularization
                                                     # if [[ $MODEL = "linear" ]]; then
                                                     #     for L2_REG_DIAGONAL_COEFF in "${L2_REG_DIAGONAL_COEFF_OPTIONS[@]}"; do
                                                     #         for L2_REG_NONDIAGONAL_COEFF in "${L2_REG_NONDIAGONAL_COEFF_OPTIONS[@]}"; do

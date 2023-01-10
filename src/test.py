@@ -57,16 +57,14 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
             sample_id_indices = batch["sample_id_indices"]
             X = batch["X"]
             y = batch["y"]
-
-            if cfg["normalize_input"]:
-                X = (X - dataset.X_train_mean) / dataset.X_train_std
+            y_train_mean = batch["y_train_mean"]
+            y_train_std = batch["y_train_std"]
 
             yhat = model(X)
 
             if cfg["normalize_output"]:
-                # then during training y was manually normalized, and yhat is produced as normalized as well.
-                # we should unnormalize yhat so that it is comparable to y above, which was not normalized manually during evaluation.
-                yhat = yhat * dataset.y_train_std + dataset.y_train_mean
+                yhat = yhat * y_train_std + y_train_mean
+                y = y * y_train_std + y_train_mean
 
             total_count += float(y.shape[0] * y.shape[1])
             total_loss += float(loss_function(yhat, y))
@@ -114,10 +112,10 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
     evaluation_metrics = pd.DataFrame(data=evaluation_metrics, columns=["cancer_type", "all_mse", "all_corr", "all_p_value"])
     evaluation_metrics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "evaluation_metrics_all.tsv"), sep="\t", index=False)
 
-    y_train_statistics = pd.DataFrame.from_dict({"entrezgene_id": dataset.entrezgene_ids,
-                                                 "y_train_mean": dataset.y_train_mean.cpu().numpy(),
-                                                 "y_train_std": dataset.y_train_std.cpu().numpy()})
-    y_train_statistics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "y_train_statistics.tsv"), sep="\t", index=False)
+    # y_train_statistics = pd.DataFrame.from_dict({"entrezgene_id": dataset.entrezgene_ids,
+    #                                              "y_train_mean": dataset.y_train_mean.cpu().numpy(),
+    #                                              "y_train_std": dataset.y_train_std.cpu().numpy()})
+    # y_train_statistics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "y_train_statistics.tsv"), sep="\t", index=False)
 
     # gene_based_evaluation_metrics_df = get_gene_based_evaluation_metrics(cfg=cfg, all_ground_truths=all_ground_truths, all_predictions=all_predictions, dataset=dataset)
     # entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping_df = pd.read_csv(os.path.join(cfg["processed_data_dir"], "entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping.tsv"), sep="\t")

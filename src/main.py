@@ -46,7 +46,7 @@ if __name__ == "__main__":
     logger.log(level=logging.INFO, msg="Starting training...")
     for epoch in range(1, cfg["num_epochs"] + 1):
         current_train_loss_dict = train(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=train_loss_function, dataset=dataset, optimizer=optimizer, epoch=epoch, logger=logger, summary_writer=summary_writer, train_main_loss_values=train_main_loss_values)
-        current_val_loss_dict = validate(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, epoch=epoch, logger=logger, summary_writer=summary_writer, val_main_loss_values=val_main_loss_values)
+        current_val_loss_dict = validate(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, epoch=epoch, logger=logger, summary_writer=summary_writer, val_main_loss_values=val_main_loss_values)
 
         if np.round(current_val_loss_dict[cfg["loss_function"]], 2) < best_val_loss:
             num_epochs_val_loss_not_decreased = 0
