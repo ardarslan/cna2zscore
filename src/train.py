@@ -48,11 +48,11 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
     model.train()
     optimizer.zero_grad()
 
-    effective_batch_size = cfg["effective_batch_size"]
+    # effective_batch_size = cfg["effective_batch_size"]
     train_data_loader = data_loaders["train"]
-    num_train_samples = len(dataset.train_indices)
-    num_batches = len(train_data_loader)
-    observed_sample_count = 0.0
+    # num_train_samples = len(dataset.train_indices)
+    # num_batches = len(train_data_loader)
+    # observed_sample_count = 0.0
 
     main_loss_sum = 0.0
     main_loss_count = 0.0
@@ -71,10 +71,10 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         y = batch["y"]
         current_batch_size = X.shape[0]
 
-        if cfg["normalization_type"] == "batch_normalization" and current_batch_size == 1:
+        if batch_idx == len(train_data_loader) - 1 and current_batch_size == 1:
             continue
 
-        observed_sample_count += current_batch_size
+        # observed_sample_count += current_batch_size
 
         yhat = model(X)
         current_main_loss = loss_function(yhat, y)
@@ -93,21 +93,21 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         total_loss_sum += float(current_total_loss) * current_batch_size
         total_loss_count += current_batch_size
 
-        if cfg["use_gradient_accumulation"]:
-            if ((batch_idx + 1) < num_batches) or (num_train_samples % effective_batch_size == 0):
-                (current_total_loss / float(effective_batch_size)).backward()
-            else:
-                (current_total_loss / float(num_train_samples % effective_batch_size)).backward()
+        # if cfg["use_gradient_accumulation"]:
+        #     if ((batch_idx + 1) < num_batches) or (num_train_samples % effective_batch_size == 0):
+        #         (current_total_loss / float(effective_batch_size)).backward()
+        #     else:
+        #         (current_total_loss / float(num_train_samples % effective_batch_size)).backward()
 
-            if (observed_sample_count % effective_batch_size == 0) or observed_sample_count == num_train_samples:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["gradient_norm"])
-                optimizer.step()
-                optimizer.zero_grad()
-        else:
-            current_total_loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["gradient_norm"])
-            optimizer.step()
-            optimizer.zero_grad()
+        #     if (observed_sample_count % effective_batch_size == 0) or observed_sample_count == num_train_samples:
+        #         torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["gradient_norm"])
+        #         optimizer.step()
+        #         optimizer.zero_grad()
+        # else:
+        current_total_loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["gradient_norm"])
+        optimizer.step()
+        optimizer.zero_grad()
 
     logger.log(level=logging.INFO, msg=f"Epoch {str(epoch).zfill(3)}, {(5 - len('train')) * ' ' + 'train'.capitalize()} {cfg['loss_function']} loss is {np.round(main_loss_sum / main_loss_count, 2)}.")
 

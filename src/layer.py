@@ -22,26 +22,29 @@ class NonLinearLayer(nn.Module):
 
         self.linear = nn.Linear(input_dimension, output_dimension, bias=False)
 
-        if cfg["normalization_type"] == "batch_normalization":
-            self.normalization = nn.BatchNorm1d(num_features=output_dimension)
-        elif cfg["normalization_type"] == "instance_normalization":
-            self.normalization = nn.InstanceNorm1d(num_features=output_dimension)
+        # if cfg["normalization_type"] == "batch_normalization":
+        if cfg["model"] == "transformer":
+            self.normalization = nn.LayerNorm(normalized_shape=output_dimension)
         else:
-            raise Exception(f"{cfg['normalization_type']} is not an implemented normalization type.")
+            self.normalization = nn.BatchNorm1d(num_features=output_dimension)
+        # elif cfg["normalization_type"] == "instance_normalization":
+        #         self.normalization = nn.InstanceNorm1d(num_features=output_dimension)
+        # else:
+        #     raise Exception(f"{cfg['normalization_type']} is not an implemented normalization type.")
 
         self.dropout = nn.Dropout(cfg["dropout"])
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = self.linear(x)
 
-        if self.cfg["normalization_type"] == "instance_normalization":
-            y = y.view(*y.shape, 1).permute((0, 2, 1))
-            y = self.normalization(y)
-            y = y[:, 0, :]
-        elif self.cfg["normalization_type"] == "batch_normalization":
-            y = self.normalization(y)
-        else:
-            raise Exception(f"{self.cfg['normalization_type']} is not an implemented normalization type.")
+        # if self.cfg["normalization_type"] == "instance_normalization":
+        #     y = y.view(*y.shape, 1).permute((0, 2, 1))
+        #     y = self.normalization(y)
+        #     y = y[:, 0, :]
+        # elif self.cfg["normalization_type"] == "batch_normalization":
+        y = self.normalization(y)
+        # else:
+        #     raise Exception(f"{self.cfg['normalization_type']} is not an implemented normalization type.")
         y = self.activation(y)
         if self.cfg["dropout"] > 0.0:
             y = self.dropout(y)

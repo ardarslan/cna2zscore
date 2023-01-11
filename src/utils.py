@@ -57,22 +57,22 @@ def get_experiment_dir(cfg: Dict[str, Any]) -> str:
     return experiment_dir
 
 
-def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
-    # if cfg["model"] == "transformer":
-    #     cfg["normalization_type"] = "layer_normalization"
-    #     cfg["real_batch_size"] = 1
-    #     cfg["effective_batch_size"] = cfg["batch_size"]
-    #     cfg["use_gradient_accumulation"] = True
-    # elif "chromosome" not in cfg["model"] and cfg["hidden_dimension"] > 5000:
-    #     cfg["normalization_type"] = "instance_normalization"
-    #     cfg["real_batch_size"] = 1
-    #     cfg["effective_batch_size"] = cfg["batch_size"]
-    #     cfg["use_gradient_accumulation"] = True
-    #     cfg["optimizer"] = "sgd"
-    cfg["real_batch_size"] = cfg["batch_size"]
-    cfg["effective_batch_size"] = cfg["batch_size"]
-    cfg["use_gradient_accumulation"] = False
-    cfg["normalization_type"] = "batch_normalization"
+# def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
+        # if cfg["model"] == "transformer":
+        #     cfg["normalization_type"] = "layer_normalization"
+        #     cfg["real_batch_size"] = 1
+        #     cfg["effective_batch_size"] = cfg["batch_size"]
+        #     cfg["use_gradient_accumulation"] = True
+        # elif "chromosome" not in cfg["model"] and cfg["hidden_dimension"] > 5000:
+        #     cfg["normalization_type"] = "instance_normalization"
+        #     cfg["real_batch_size"] = 1
+        #     cfg["effective_batch_size"] = cfg["batch_size"]
+        #     cfg["use_gradient_accumulation"] = True
+        #     cfg["optimizer"] = "sgd"
+#     cfg["real_batch_size"] = cfg["batch_size"]
+#     cfg["effective_batch_size"] = cfg["batch_size"]
+#     cfg["use_gradient_accumulation"] = False
+#     cfg["normalization_type"] = "batch_normalization"
 
 
 def set_number_of_parameters(cfg: Dict[str, Any], model: nn.Module) -> None:
@@ -145,9 +145,9 @@ def get_summary_writer(cfg: Dict[str, Any]):
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> Dict[str, DataLoader]:
     logger.log(level=logging.INFO, msg="Creating the data loaders...")
 
-    train_data_loader = DataLoader(Subset(dataset, dataset.train_indices), batch_size=cfg["real_batch_size"], shuffle=True)
-    val_data_loader = DataLoader(Subset(dataset, dataset.val_indices), batch_size=cfg["real_batch_size"], shuffle=False)
-    test_data_loader = DataLoader(Subset(dataset, dataset.test_indices), batch_size=cfg["real_batch_size"], shuffle=False)
+    train_data_loader = DataLoader(Subset(dataset, dataset.train_indices), batch_size=cfg["batch_size"], shuffle=True)
+    val_data_loader = DataLoader(Subset(dataset, dataset.val_indices), batch_size=cfg["batch_size"], shuffle=False)
+    test_data_loader = DataLoader(Subset(dataset, dataset.test_indices), batch_size=cfg["batch_size"], shuffle=False)
 
     data_loaders = {
         "train": train_data_loader,
@@ -265,7 +265,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
 
     # model
-    parser.add_argument("--model", type=str, default="linear", choices=["gene_embeddings", "per_gene", "linear", "mlp", "rescon_mlp", "transformer"], help="Which model to use.")
+    parser.add_argument("--model", type=str, default="transformer", choices=["gene_embeddings", "per_gene", "linear", "mlp", "rescon_mlp", "transformer"], help="Which model to use.")
     parser.add_argument("--per_chromosome", type=str2bool, nargs='?', const=True, default=False, help="Whether to use a per chromosome model or not.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension_ratio", type=float, default=0.10, help="Ratio of number of nodes in a hidden layer to max(number of nodes in input layer, number of nodes in output layer).")

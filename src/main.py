@@ -12,8 +12,7 @@ from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_device, get_logger, get_dataset, get_data_loaders, get_model, \
                    get_optimizer, get_scheduler, get_loss_function, save_best_model, save_cfg, \
                    load_best_model, set_early_stopping_epoch, get_summary_writer, \
-                   set_hyperparameters_according_to_memory_limits, save_loss_values,
-                   set_number_of_parameters, delete_best_model)
+                   save_loss_values, set_number_of_parameters, delete_best_model)
 
 
 if __name__ == "__main__":
@@ -26,7 +25,6 @@ if __name__ == "__main__":
     summary_writer = get_summary_writer(cfg=cfg)
     set_device(cfg=cfg, logger=logger)
     dataset = get_dataset(cfg=cfg, logger=logger)
-    set_hyperparameters_according_to_memory_limits(cfg=cfg)
     data_loaders = get_data_loaders(cfg=cfg, dataset=dataset, logger=logger)
     model = get_model(cfg=cfg, logger=logger)
     set_number_of_parameters(cfg=cfg, model=model)

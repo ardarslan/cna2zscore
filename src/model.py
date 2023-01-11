@@ -188,13 +188,13 @@ class Transformer(nn.Module):
         self.attention = SelfAttention(d=self.cfg["gene_embedding_size"]+1, n_heads=self.cfg["num_attention_heads"])
         self.normalization = nn.LayerNorm(self.cfg["gene_embedding_size"]+1)
 
-        fcn_input_dim = self.cfg["gene_embedding_size"] + 1
+        mlp_input_dim = self.cfg["gene_embedding_size"] + 1
         if "purity" in self.cfg["dataset"]:
-            fcn_input_dim += 1
+            mlp_input_dim += 1
         if self.cfg["cancer_type"] == "all":
-            fcn_input_dim += 29
+            mlp_input_dim += 29
 
-        self.fc = nn.Linear(fcn_input_dim, 1)
+        self.mlp = MLP(cfg=cfg, input_dimension=mlp_input_dim, output_dimension=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -211,7 +211,7 @@ class Transformer(nn.Module):
         torch.cuda.empty_cache()
         out = self.normalization(out) # (N, num_genes, d+1)
         out = torch.concat((out, x[:, self.output_dimension:].unsqueeze(1).repeat(1, self.output_dimension, 1)), dim=-1) # (N, num_genes, d+1) or (N, num_genes, d+2) or (N, num_genes, d+30) or (N, num_genes, d+31)
-        out = self.fc(out) # (N, num_genes, 1)
+        out = self.mlp(out) # (N, num_genes, 1)
         out = out[:, :, 0] # (N, num_genes)
         return out
 
