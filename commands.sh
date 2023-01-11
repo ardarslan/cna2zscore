@@ -4,7 +4,7 @@ NUM_JOBS=0
 
 for CANCER_TYPE in 'all'; do
     for DATASET in 'rppa2zscore' 'unthresholdedcnapurity2zscore'; do
-        for MODEL in 'per_gene' 'gene_embeddings' 'linear' 'mlp' 'rescon_mlp' 'transformer'; do
+        for MODEL in 'linear' do
             if [[ $DATASET = 'rppa2zscore' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
             elif [[ $MODEL = 'per_gene' ]]; then
