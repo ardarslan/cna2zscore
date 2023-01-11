@@ -5,9 +5,9 @@ NUM_JOBS=0
 for CANCER_TYPE in 'all'; do
     for DATASET in 'rppa2zscore' 'unthresholdedcnapurity2zscore'; do
         if [[ $DATASET = 'rppa2zscore' ]]; then
-            declare -a MODEL_OPTIONS=("per_gene")
+            declare -a MODEL_OPTIONS=("mlp" "gene_embeddings")
         elif [[ $DATASET = 'unthresholdedcnapurity2zscore' ]]; then
-            declare -a MODEL_OPTIONS=("per_gene")
+            declare -a MODEL_OPTIONS=("mlp" "gene_embeddings")
         else
             echo "DATASET is not a valid $DATASET."
             exit 1
@@ -35,8 +35,8 @@ for CANCER_TYPE in 'all'; do
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(0)
-                L1_REG_COEFF_OPTIONS=(0.0001 0.001 0.01 0.1 1.0)
-                L2_REG_COEFF_OPTIONS=(0.0001 0.001 0.01 0.1 1.0)
+                L1_REG_COEFF_OPTIONS=(0.0 0.0000001 0.000001 0.00001 0.0001 0.001 0.01)
+                L2_REG_COEFF_OPTIONS=(0.0 0.0000001 0.000001 0.00001 0.0001 0.001 0.01)
                 GENE_EMBEDDING_SIZE_OPTIONS=(4 16 64)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
                 PER_CHROMOSOME_OPTIONS=(false true)
