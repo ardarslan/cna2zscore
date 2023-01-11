@@ -4,16 +4,7 @@ NUM_JOBS=0
 
 for CANCER_TYPE in 'all'; do
     for DATASET in 'rppa2zscore' 'unthresholdedcnapurity2zscore'; do
-        if [[ $DATASET = 'rppa2zscore' ]]; then
-            declare -a MODEL_OPTIONS=("transformer" "rescon_mlp")
-        elif [[ $DATASET = 'unthresholdedcnapurity2zscore' ]]; then
-            declare -a MODEL_OPTIONS=("transformer" "rescon_mlp")
-        else
-            echo "DATASET is not a valid $DATASET."
-            exit 1
-        fi
-
-        for MODEL in "${MODEL_OPTIONS[@]}"; do
+        for MODEL in 'per_gene' 'gene_embeddings' 'linear' 'mlp' 'rescon_mlp' 'transformer'; do
             if [[ $DATASET = 'rppa2zscore' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
             elif [[ $MODEL = 'per_gene' ]]; then

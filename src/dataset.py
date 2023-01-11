@@ -115,13 +115,13 @@ class Dataset(torch.utils.data.Dataset):
 
         self.logger.log(level=logging.INFO, msg=f"X.shape: {self.X.shape}, y.shape: {self.y.shape}")
 
-        self.entrezgene_ids = [column for column in output_df.columns if column != "sample_id"]
-        self.cfg["num_genes"] = len(self.entrezgene_ids)
+        self.cfg["entrezgene_ids"] = [column for column in output_df.columns if column != "sample_id"]
+        self.cfg["num_genes"] = len(self.cfg["entrezgene_ids"])
 
         if self.cfg["per_chromosome"]:
-            self.cfg["chromosome_name_X_column_ids_mapping"] = {"nonchromosome": list(range(len(self.entrezgene_ids), self.X.shape[1], 1))}
+            self.cfg["chromosome_name_X_column_ids_mapping"] = {"nonchromosome": list(range(len(self.cfg["entrezgene_ids"]), self.X.shape[1], 1))}
             for chromosome_name, entrezgene_ids in chromosome_name_entrezgene_ids_mapping.items():
-                self.cfg["chromosome_name_X_column_ids_mapping"][chromosome_name] = [np.argwhere(np.array(self.entrezgene_ids) == entrezgene_id).item() for entrezgene_id in entrezgene_ids]
+                self.cfg["chromosome_name_X_column_ids_mapping"][chromosome_name] = [np.argwhere(np.array(self.cfg["entrezgene_ids"]) == entrezgene_id).item() for entrezgene_id in entrezgene_ids]
 
         self.len_dataset = self.X.shape[0]
 

@@ -67,12 +67,12 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
     experiment_dir = get_experiment_dir(cfg=cfg)
     os.makedirs(os.path.join(experiment_dir, f"{split_name}_results"), exist_ok=True)
 
-    all_ground_truths = pd.DataFrame(data=all_ground_truths, columns=dataset.entrezgene_ids, index=all_sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
+    all_ground_truths = pd.DataFrame(data=all_ground_truths, columns=cfg["entrezgene_ids"], index=all_sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
     all_ground_truths = all_ground_truths.sort_values(by=["sample_id"])
     all_ground_truths = all_ground_truths[["sample_id"] + sorted([column for column in all_ground_truths.drop(columns=["sample_id"]).columns])]
     all_ground_truths.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "ground_truths.tsv"), sep="\t", index=False)
 
-    all_predictions = pd.DataFrame(data=all_predictions, columns=dataset.entrezgene_ids, index=all_sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
+    all_predictions = pd.DataFrame(data=all_predictions, columns=cfg["entrezgene_ids"], index=all_sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
     all_predictions = all_predictions.sort_values(by=["sample_id"])
     all_predictions = all_predictions[["sample_id"] + sorted([column for column in all_predictions.drop(columns=["sample_id"]).columns])]
     all_predictions.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "predictions.tsv"), sep="\t", index=False)
