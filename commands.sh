@@ -89,7 +89,7 @@ for CANCER_TYPE in 'all'; do
                         for NUM_ATTENTION_HEADS in "${NUM_ATTENTION_HEADS_OPTIONS[@]}"; do
                             for NUM_NONLINEAR_LAYERS in "${NUM_NONLINEAR_LAYERS_OPTIONS[@]}"; do
                                 for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS[@]}"; do
-                                    for DROPOUT in 0.00; do # 0.25 0.33 0.50
+                                    for DROPOUT in 0.25 0.33 0.50; do
                                         for LEARNING_RATE in 0.001 0.01; do
                                             for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
 
