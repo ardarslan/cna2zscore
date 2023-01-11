@@ -28,7 +28,7 @@ if __name__ == "__main__":
     dataset = get_dataset(cfg=cfg, logger=logger)
     set_hyperparameters_according_to_memory_limits(cfg=cfg)
     data_loaders = get_data_loaders(cfg=cfg, dataset=dataset, logger=logger)
-    model = get_model(cfg=cfg, dataset=dataset, logger=logger)
+    model = get_model(cfg=cfg, logger=logger)
     set_number_of_parameters(cfg=cfg, model=model)
     save_cfg(cfg=cfg, logger=logger)
     pprint(cfg, indent=4)
@@ -73,6 +73,6 @@ if __name__ == "__main__":
     gc.collect()
     torch.cuda.empty_cache()
 
-    model = load_best_model(cfg=cfg, dataset=dataset, logger=logger)
+    model = load_best_model(cfg=cfg, logger=logger)
     save_results(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
     # delete_best_model(cfg=cfg, logger=logger)

@@ -119,9 +119,9 @@ class Dataset(torch.utils.data.Dataset):
         self.cfg["num_genes"] = len(self.entrezgene_ids)
 
         if self.cfg["per_chromosome"]:
-            self.chromosome_name_X_column_ids_mapping = {"nonchromosome": list(range(len(self.entrezgene_ids), self.X.shape[1], 1))}
+            self.cfg["chromosome_name_X_column_ids_mapping"] = {"nonchromosome": list(range(len(self.entrezgene_ids), self.X.shape[1], 1))}
             for chromosome_name, entrezgene_ids in chromosome_name_entrezgene_ids_mapping.items():
-                self.chromosome_name_X_column_ids_mapping[chromosome_name] = [np.argwhere(np.array(self.entrezgene_ids) == entrezgene_id).item() for entrezgene_id in entrezgene_ids]
+                self.cfg["chromosome_name_X_column_ids_mapping"][chromosome_name] = [np.argwhere(np.array(self.entrezgene_ids) == entrezgene_id).item() for entrezgene_id in entrezgene_ids]
 
         self.len_dataset = self.X.shape[0]
 

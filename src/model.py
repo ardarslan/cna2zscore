@@ -217,7 +217,7 @@ class Transformer(nn.Module):
 
 
 class PerChromosomeModel(nn.Module):
-    def __init__(self, cfg: Dict[str, Any], chromosome_name_X_column_ids_mapping: Dict[str, List[int]]):
+    def __init__(self, cfg: Dict[str, Any]):
         super().__init__()
         self.cfg = cfg
         self.input_dimension = cfg["input_dimension"]
@@ -225,9 +225,9 @@ class PerChromosomeModel(nn.Module):
         self.X_column_ids = []
         self.y_column_ids = []
         self.models = nn.ModuleList()
-        nonchromosome_X_column_ids = chromosome_name_X_column_ids_mapping["nonchromosome"]
+        nonchromosome_X_column_ids = self.cfg["chromosome_name_X_column_ids_mapping"]["nonchromosome"]
 
-        for chromosome_name, current_X_column_ids in chromosome_name_X_column_ids_mapping.items():
+        for chromosome_name, current_X_column_ids in self.cfg["chromosome_name_X_column_ids_mapping"].items():
             if chromosome_name == "nonchromosome":
                 continue
             self.X_column_ids.append(current_X_column_ids + nonchromosome_X_column_ids)
