@@ -2,6 +2,14 @@ cd src
 
 NUM_JOBS=0
 
+
+sleep_if_necessary() {
+    if [ $(expr $(($NUM_JOBS+1)) % 100) == "0" ]; then
+        echo "Number of submitted jobs: $NUM_JOBS. Sleeping for 3 seconds..."
+        sleep 3
+    fi
+}
+
 for CANCER_TYPE in 'all'; do
     for DATASET in 'rppa2zscore' 'unthresholdedcnapurity2zscore'; do
         for MODEL in 'linear'; do
@@ -85,6 +93,7 @@ for CANCER_TYPE in 'all'; do
                                             for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
 
                                                 # # No regularization
+                                                sleep_if_necessary
                                                 sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                 let NUM_JOBS=NUM_JOBS+1
 
@@ -95,6 +104,7 @@ for CANCER_TYPE in 'all'; do
                                                             if (( $(echo "$L1_REG_DIAGONAL_COEFF > $L1_REG_NONDIAGONAL_COEFF" |bc -l) )); then
                                                                 continue
                                                             else
+                                                                sleep_if_necessary
                                                                 sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_DIAGONAL_COEFF --l1_reg_nondiagonal_coeff $L1_REG_NONDIAGONAL_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                                 let NUM_JOBS=NUM_JOBS+1
                                                             fi
@@ -102,6 +112,7 @@ for CANCER_TYPE in 'all'; do
                                                     done
                                                 else
                                                     for L1_REG_COEFF in "${L1_REG_COEFF_OPTIONS}"; do
+                                                        sleep_if_necessary
                                                         sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_COEFF --l1_reg_nondiagonal_coeff $L1_REG_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                         let NUM_JOBS=NUM_JOBS+1
                                                     done
@@ -114,6 +125,7 @@ for CANCER_TYPE in 'all'; do
                                                             if (( $(echo "$L2_REG_DIAGONAL_COEFF > $L2_REG_NONDIAGONAL_COEFF" |bc -l) )); then
                                                                 continue
                                                             else
+                                                                sleep_if_necessary
                                                                 sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_DIAGONAL_COEFF --l2_reg_nondiagonal_coeff $L2_REG_NONDIAGONAL_COEFF --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                                 let NUM_JOBS=NUM_JOBS+1
                                                             fi
@@ -121,6 +133,7 @@ for CANCER_TYPE in 'all'; do
                                                     done
                                                 else
                                                     for L2_REG_COEFF in "${L2_REG_COEFF_OPTIONS[@]}"; do
+                                                        sleep_if_necessary
                                                         sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 --gpus=1 --gres=gpumem:12288 --wrap="python main.py --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_COEFF --l2_reg_nondiagonal_coeff $L2_REG_COEFF --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                         let NUM_JOBS=NUM_JOBS+1
                                                     done
@@ -139,4 +152,4 @@ for CANCER_TYPE in 'all'; do
     done
 done
 
-echo "Number of jobs is $NUM_JOBS."
+echo "Number of submitted jobs: $NUM_JOBS."
