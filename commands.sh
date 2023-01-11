@@ -5,8 +5,7 @@ NUM_JOBS=0
 
 sleep_if_necessary() {
     if [ $(expr $(($NUM_JOBS+1)) % 100) == "0" ]; then
-        echo "Number of submitted jobs: $NUM_JOBS. Sleeping for 3 seconds..."
-        sleep 3
+        read -p "Number of submitted jobs: $NUM_JOBS. Sleeping for 3 seconds..." -t 3
     fi
 }
 
