@@ -65,13 +65,12 @@ class Dataset(torch.utils.data.Dataset):
                 else:
                     raise Exception(f"{self.cfg['gene_type']} is not a valid gene_type.")
 
-                if self.cfg["per_chromosome"]:
-                    entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
-                    entrezgene_id_chromosome_name_mapping_df = entrezgene_id_chromosome_name_mapping_df[entrezgene_id_chromosome_name_mapping_df["chromosome_name"].isin(["X", "Y"] + [str(i) for i in range(1, 23)])]
-                    entrezgene_id_chromosome_name_mapping_df["entrezgene_id"] = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].apply(lambda x: str(x))
-                    intersecting_columns = set(entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()).intersection(intersecting_columns)
-                    entrezgene_id_chromosome_name_mapping_df = entrezgene_id_chromosome_name_mapping_df[entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].isin(intersecting_columns)]
-                    chromosome_name_entrezgene_ids_mapping = dict(entrezgene_id_chromosome_name_mapping_df.groupby("chromosome_name")["entrezgene_id"].apply(list).reset_index(drop=False).values)
+                entrezgene_id_chromosome_name_mapping_df = pd.read_csv(os.path.join(self.processed_data_dir, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
+                entrezgene_id_chromosome_name_mapping_df = entrezgene_id_chromosome_name_mapping_df[entrezgene_id_chromosome_name_mapping_df["chromosome_name"].isin(["X", "Y"] + [str(i) for i in range(1, 23)])]
+                entrezgene_id_chromosome_name_mapping_df["entrezgene_id"] = entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].apply(lambda x: str(x))
+                intersecting_columns = set(entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].tolist()).intersection(intersecting_columns)
+                entrezgene_id_chromosome_name_mapping_df = entrezgene_id_chromosome_name_mapping_df[entrezgene_id_chromosome_name_mapping_df["entrezgene_id"].isin(intersecting_columns)]
+                chromosome_name_entrezgene_ids_mapping = dict(entrezgene_id_chromosome_name_mapping_df.groupby("chromosome_name")["entrezgene_id"].apply(list).reset_index(drop=False).values)
 
                 intersecting_columns = ["sample_id"] + [column for column in sorted(intersecting_columns) if column != "sample_id"]
 
@@ -118,10 +117,9 @@ class Dataset(torch.utils.data.Dataset):
         self.cfg["entrezgene_ids"] = [column for column in output_df.columns if column != "sample_id"]
         self.cfg["num_genes"] = len(self.cfg["entrezgene_ids"])
 
-        if self.cfg["per_chromosome"]:
-            self.cfg["chromosome_name_X_column_ids_mapping"] = {"nonchromosome": list(range(len(self.cfg["entrezgene_ids"]), self.X.shape[1], 1))}
-            for chromosome_name, entrezgene_ids in chromosome_name_entrezgene_ids_mapping.items():
-                self.cfg["chromosome_name_X_column_ids_mapping"][chromosome_name] = [np.argwhere(np.array(self.cfg["entrezgene_ids"]) == entrezgene_id).item() for entrezgene_id in entrezgene_ids]
+        self.cfg["chromosome_name_X_column_ids_mapping"] = {"nonchromosome": list(range(len(self.cfg["entrezgene_ids"]), self.X.shape[1], 1))}
+        for chromosome_name, entrezgene_ids in chromosome_name_entrezgene_ids_mapping.items():
+            self.cfg["chromosome_name_X_column_ids_mapping"][chromosome_name] = [np.argwhere(np.array(self.cfg["entrezgene_ids"]) == entrezgene_id).item() for entrezgene_id in entrezgene_ids]
 
         self.len_dataset = self.X.shape[0]
 
