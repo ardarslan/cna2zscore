@@ -50,7 +50,18 @@ for CANCER_TYPE in 'all'; do
                 GENE_EMBEDDING_SIZE_OPTIONS=(4 16 64)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
                 PER_CHROMOSOME_OPTIONS=(false true)
-            elif [[ $MODEL = 'sklearn_linear' || $MODEL = 'dl_linear' ]]; then
+            elif [[ $MODEL = 'sklearn_linear' ]]; then
+                RESCON_DIAGONAL_W_OPTIONS=(false)
+                HIDDEN_DIMENSION_OPTIONS=(0.0)
+                NUM_NONLINEAR_LAYERS_OPTIONS=(0)
+                L1_REG_DIAGONAL_COEFF_OPTIONS=(0.0)
+                L2_REG_DIAGONAL_COEFF_OPTIONS=(0.0)
+                L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0 0.0000001 0.000001 0.00001 0.0001 0.001 0.01)
+                L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0)
+                GENE_EMBEDDING_SIZE_OPTIONS=(0)
+                NUM_ATTENTION_HEADS_OPTIONS=(0)
+                PER_CHROMOSOME_OPTIONS=(false true)
+            elif [[ $MODEL = 'dl_linear' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(0)
