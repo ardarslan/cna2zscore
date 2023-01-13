@@ -31,6 +31,43 @@ def get_evaluation_metrics(cancer_type: str, all_ground_truths: pd.DataFrame, al
     return (cancer_type, all_mse, all_corr, all_p_value)
 
 
+def save_results_split_helper_helper(cfg: Dict[str, Any], matrix: np.ndarray, sample_ids: np.ndarray, split_name: str, file_name: str, experiment_dir: str):
+    matrix = pd.DataFrame(data=matrix, columns=cfg["entrezgene_ids"], index=sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
+    matrix = matrix.sort_values(by=["sample_id"])
+    matrix = matrix[["sample_id"] + sorted([column for column in matrix.drop(columns=["sample_id"]).columns])]
+    matrix.to_csv(os.path.join(experiment_dir, f"{split_name}_results", file_name), sep="\t", index=False)
+
+
+def save_results_split_helper(cfg: Dict[str, Any], predictions: np.ndarray, ground_truths: np.ndarray, sample_ids: np.ndarray, split_name: str, logger: logging.Logger):
+    logger.log(level=logging.INFO, msg=f"Saving results for {split_name} split.")
+    experiment_dir = get_experiment_dir(cfg=cfg)
+    os.makedirs(os.path.join(experiment_dir, f"{split_name}_results"), exist_ok=True)
+    all_cancer_types = pd.read_csv(os.path.join(cfg["processed_data_dir"], "cancer_type.tsv"), sep="\t")
+    all_cancer_types = all_cancer_types[all_cancer_types["sample_id"].isin(sample_ids)]
+    all_cancer_types = all_cancer_types.sort_values(by=["sample_id"])
+    all_cancer_types.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "cancer_types.tsv"), sep="\t", index=False)
+    all_cancer_types = dict(all_cancer_types.groupby("cancer_type")["sample_id"].apply(list).reset_index(name="sample_ids").values)
+    all_cancer_types["all"] = sample_ids.tolist()
+
+    predictions = pd.DataFrame(data=predictions, columns=cfg["entrezgene_ids"], index=sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
+    predictions = predictions.sort_values(by=["sample_id"])
+    predictions = predictions[["sample_id"] + sorted([column for column in predictions.drop(columns=["sample_id"]).columns])]
+    predictions.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "predictions.tsv"), sep="\t", index=False)
+
+    ground_truths = pd.DataFrame(data=ground_truths, columns=cfg["entrezgene_ids"], index=sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
+    ground_truths = ground_truths.sort_values(by=["sample_id"])
+    ground_truths = ground_truths[["sample_id"] + sorted([column for column in ground_truths.drop(columns=["sample_id"]).columns])]
+    ground_truths.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "ground_truths.tsv"), sep="\t", index=False)
+
+    evaluation_metrics = []
+    for current_cancer_type, current_sample_ids in all_cancer_types.items():
+        evaluation_metrics.append(get_evaluation_metrics(cancer_type=current_cancer_type, all_ground_truths=ground_truths, all_predictions=predictions, current_sample_ids=current_sample_ids))
+
+    evaluation_metrics = pd.DataFrame(data=evaluation_metrics, columns=["cancer_type", "all_mse", "all_corr", "all_p_value"])
+    evaluation_metrics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "evaluation_metrics_all.tsv"), sep="\t", index=False)
+    logger.log(level=logging.INFO, msg=f"Saved results for {split_name} split.")
+
+
 def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], split_name: str, model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:
     model.eval()
 
@@ -62,38 +99,8 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
     all_loss = total_loss / total_count
 
     logger.log(level=logging.INFO, msg=f"{split_name.capitalize()} {cfg['loss_function']} loss is {np.round(all_loss, 2)}.")
-    logger.log(level=logging.INFO, msg=f"Saving results for {split_name} split.")
 
-    experiment_dir = get_experiment_dir(cfg=cfg)
-    os.makedirs(os.path.join(experiment_dir, f"{split_name}_results"), exist_ok=True)
-
-    all_ground_truths = pd.DataFrame(data=all_ground_truths, columns=cfg["entrezgene_ids"], index=all_sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
-    all_ground_truths = all_ground_truths.sort_values(by=["sample_id"])
-    all_ground_truths = all_ground_truths[["sample_id"] + sorted([column for column in all_ground_truths.drop(columns=["sample_id"]).columns])]
-    all_ground_truths.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "ground_truths.tsv"), sep="\t", index=False)
-
-    all_predictions = pd.DataFrame(data=all_predictions, columns=cfg["entrezgene_ids"], index=all_sample_ids).reset_index(drop=False).rename(columns={"index": "sample_id"})
-    all_predictions = all_predictions.sort_values(by=["sample_id"])
-    all_predictions = all_predictions[["sample_id"] + sorted([column for column in all_predictions.drop(columns=["sample_id"]).columns])]
-    all_predictions.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "predictions.tsv"), sep="\t", index=False)
-
-    all_cancer_types = pd.read_csv(os.path.join(cfg["processed_data_dir"], "cancer_type.tsv"), sep="\t")
-    all_cancer_types = all_cancer_types[all_cancer_types["sample_id"].isin(all_sample_ids)]
-    all_cancer_types = all_cancer_types.sort_values(by=["sample_id"])
-    all_cancer_types.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "cancer_types.tsv"), sep="\t", index=False)
-
-    all_cancer_types = dict(all_cancer_types.groupby("cancer_type")["sample_id"].apply(list).reset_index(name="sample_ids").values)
-    all_cancer_types["all"] = all_sample_ids.tolist()
-
-    evaluation_metrics = []
-
-    for current_cancer_type, current_sample_ids in all_cancer_types.items():
-        evaluation_metrics.append(get_evaluation_metrics(cancer_type=current_cancer_type, all_ground_truths=all_ground_truths, all_predictions=all_predictions, current_sample_ids=current_sample_ids))
-
-    evaluation_metrics = pd.DataFrame(data=evaluation_metrics, columns=["cancer_type", "all_mse", "all_corr", "all_p_value"])
-    evaluation_metrics.to_csv(os.path.join(experiment_dir, f"{split_name}_results", "evaluation_metrics_all.tsv"), sep="\t", index=False)
-
-    logger.log(level=logging.INFO, msg=f"Saved results for {split_name} split.")
+    save_results_split_helper(cfg=cfg, predictions=all_predictions, ground_truths=all_ground_truths, sample_ids=all_sample_ids, split_name=split_name, logger=logger)
 
 
 def save_results(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, logger: logging.Logger) -> None:

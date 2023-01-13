@@ -7,27 +7,32 @@ import torch.nn.functional as F
 import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
+from sklearn.linear_model import Lasso, MultiTaskLasso
 
 from layer import NonLinearLayer, OutputLayer, SelfAttention
 
 
 def get_single_model(cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
-    if cfg["model"] == "per_gene":
-        ModelClass = PerGeneModel
-    elif cfg["model"] == "gene_embeddings":
-        ModelClass = GeneEmbeddingsModel
-    elif cfg["model"] in ["linear", "mlp"]:
-        ModelClass = MLP
-    elif cfg["model"] == "rescon_mlp":
-        ModelClass = ResConMLP
-    elif cfg["model"] == "transformer":
-        ModelClass = Transformer
+    if cfg["model"] == "dl_per_gene":
+        ModelClass = DLPerGene
+    elif cfg["model"] == "dl_gene_embeddings":
+        ModelClass = DLGeneEmbeddings
+    elif cfg["model"] in ["dl_linear", "dl_mlp"]:
+        ModelClass = DLMLP
+    elif cfg["model"] == "dl_rescon_mlp":
+        ModelClass = DLResConMLP
+    elif cfg["model"] == "dl_transformer":
+        ModelClass = DLTransformer
+    elif cfg["model"] == "sklearn_linear":
+        ModelClass = SklearnLinear
+    elif cfg["model"] == "sklearn_per_gene":
+        ModelClass = SklearnPerGene
     else:
         raise NotImplementedError(f"{cfg['model']} is not an implemented model.")
     return ModelClass(cfg=cfg, input_dimension=input_dimension, output_dimension=output_dimension)
 
 
-class PerGeneModel(nn.Module):
+class DLPerGene(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
         self.cfg = cfg
@@ -55,7 +60,7 @@ class PerGeneModel(nn.Module):
         return y
 
 
-class GeneEmbeddingsModel(nn.Module):
+class DLGeneEmbeddings(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
         self.cfg = cfg
@@ -72,7 +77,7 @@ class GeneEmbeddingsModel(nn.Module):
         return y
 
 
-class MLP(nn.Module):
+class DLMLP(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
         self.cfg = cfg
@@ -113,7 +118,7 @@ class MLP(nn.Module):
         return y
 
 
-class ResConMLP(nn.Module):
+class DLResConMLP(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
         self.cfg = cfg
@@ -173,7 +178,7 @@ class ResConMLP(nn.Module):
         return y + F.linear(x[:, :self.output_dimension], self.ResConW, self.ResConB)
 
 
-class Transformer(nn.Module):
+class DLTransformer(nn.Module):
     """
     A Transformer consisting of a self attention and a fully connected layer.
     """
@@ -194,7 +199,7 @@ class Transformer(nn.Module):
         if self.cfg["cancer_type"] == "all":
             mlp_input_dim += 29
 
-        self.mlp = MLP(cfg=cfg, input_dimension=mlp_input_dim, output_dimension=1)
+        self.mlp = DLMLP(cfg=cfg, input_dimension=mlp_input_dim, output_dimension=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -216,7 +221,7 @@ class Transformer(nn.Module):
         return out
 
 
-class PerChromosomeModel(nn.Module):
+class DLPerChromosome(nn.Module):
     def __init__(self, cfg: Dict[str, Any]):
         super().__init__()
         self.cfg = cfg
@@ -240,3 +245,67 @@ class PerChromosomeModel(nn.Module):
         for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models):
             y[:, current_y_column_ids] = current_model(x[:, current_X_column_ids])
         return y
+
+
+class SklearnPerChromosome(object):
+    def __init__(self, cfg: Dict[str, Any]):
+        super().__init__()
+        self.cfg = cfg
+        self.input_dimension = cfg["input_dimension"]
+        self.output_dimension = cfg["output_dimension"]
+        self.X_column_ids = []
+        self.y_column_ids = []
+        self.models = []
+        nonchromosome_X_column_ids = self.cfg["chromosome_name_X_column_ids_mapping"]["nonchromosome"]
+
+        for chromosome_name, current_X_column_ids in self.cfg["chromosome_name_X_column_ids_mapping"].items():
+            if chromosome_name == "nonchromosome":
+                continue
+            self.X_column_ids.append(current_X_column_ids + nonchromosome_X_column_ids)
+            self.y_column_ids.append(current_X_column_ids)
+            current_model = get_single_model(cfg=cfg, input_dimension=len(current_X_column_ids)+len(nonchromosome_X_column_ids), output_dimension=len(current_X_column_ids))
+            self.models.append(current_model)
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
+        for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models):
+            current_model.fit(X[:, current_X_column_ids], y[:, current_y_column_ids])
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        yhat = np.zeros(shape=(X.shape[0], self.output_dimension))
+        for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models):
+            yhat[current_y_column_ids] = current_model.predict(X[current_X_column_ids])
+        return yhat
+
+
+class SklearnPerGene(object):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+        self.cfg = cfg
+        self.input_dimension = input_dimension
+        self.output_dimension = output_dimension
+        self.models = [Lasso(alpha=cfg["l1_reg_nondiagonal_coeff"]) for _ in range(self.output_dimension)]
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
+        self.number_of_samples = y.shape[0]
+        for j in range(y.shape[1]):
+            self.models[j].fit(X[:, j].reshape(X.shape[0], 1), y[:, j].ravel())
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        yhat = []
+        for j in range(self.output_dimension):
+            yhat.append(self.models[j].predict(X[:, j].reshape(X.shape[0], 1)).reshape(X.shape[0], 1))
+        yhat = np.hstack(yhat)
+        return yhat
+
+
+class SklearnLinear(object):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+        self.cfg = cfg
+        self.input_dimension = input_dimension
+        self.output_dimension = output_dimension
+        self.model = MultiTaskLasso(alpha=cfg["l1_reg_nondiagonal_coeff"], max_iter=5000)
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
+        self.model.fit(X, y)
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        return self.model.predict(X)

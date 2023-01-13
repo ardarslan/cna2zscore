@@ -16,11 +16,12 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.optim import Adam, AdamW, RMSprop, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, Subset
+import joblib
 
 from dataset import UnthresholdedCNA2ZScoreDataset, ThresholdedCNA2ZScoreDataset, \
                     UnthresholdedCNAPurity2ZScoreDataset, ThresholdedCNAPurity2ZScoreDataset, \
                     RPPA2ZScoreDataset
-from model import get_single_model, PerChromosomeModel
+from model import get_single_model, DLPerChromosome, SklearnPerChromosome
 
 
 def set_seeds(cfg: Dict[str, Any]) -> None:
@@ -55,24 +56,6 @@ def get_experiment_dir(cfg: Dict[str, Any]) -> str:
     experiment_dir = os.path.join(cfg["checkpoints_dir"], cfg["experiment_name"])
     os.makedirs(experiment_dir, exist_ok=True)
     return experiment_dir
-
-
-# def set_hyperparameters_according_to_memory_limits(cfg: Dict[str, Any]) -> None:
-        # if cfg["model"] == "transformer":
-        #     cfg["normalization_type"] = "layer_normalization"
-        #     cfg["real_batch_size"] = 1
-        #     cfg["effective_batch_size"] = cfg["batch_size"]
-        #     cfg["use_gradient_accumulation"] = True
-        # elif "chromosome" not in cfg["model"] and cfg["hidden_dimension"] > 5000:
-        #     cfg["normalization_type"] = "instance_normalization"
-        #     cfg["real_batch_size"] = 1
-        #     cfg["effective_batch_size"] = cfg["batch_size"]
-        #     cfg["use_gradient_accumulation"] = True
-        #     cfg["optimizer"] = "sgd"
-#     cfg["real_batch_size"] = cfg["batch_size"]
-#     cfg["effective_batch_size"] = cfg["batch_size"]
-#     cfg["use_gradient_accumulation"] = False
-#     cfg["normalization_type"] = "batch_normalization"
 
 
 def set_number_of_parameters(cfg: Dict[str, Any], model: nn.Module) -> None:
@@ -145,9 +128,11 @@ def get_summary_writer(cfg: Dict[str, Any]):
 def get_data_loaders(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> Dict[str, DataLoader]:
     logger.log(level=logging.INFO, msg="Creating the data loaders...")
 
-    train_data_loader = DataLoader(Subset(dataset, dataset.train_indices), batch_size=cfg["batch_size"], shuffle=True)
-    val_data_loader = DataLoader(Subset(dataset, dataset.val_indices), batch_size=cfg["batch_size"], shuffle=False)
-    test_data_loader = DataLoader(Subset(dataset, dataset.test_indices), batch_size=cfg["batch_size"], shuffle=False)
+    train_indices, val_indices, test_indices = dataset.train_val_test_indices[0]
+
+    train_data_loader = DataLoader(Subset(dataset, train_indices), batch_size=cfg["batch_size"], shuffle=True)
+    val_data_loader = DataLoader(Subset(dataset, val_indices), batch_size=cfg["batch_size"], shuffle=False)
+    test_data_loader = DataLoader(Subset(dataset, test_indices), batch_size=cfg["batch_size"], shuffle=False)
 
     data_loaders = {
         "train": train_data_loader,
@@ -164,11 +149,17 @@ def get_model(cfg: Dict[str, Any], logger: logging.Logger) -> torch.nn.Module:
     logger.log(level=logging.INFO, msg="Creating the model...")
 
     if cfg["per_chromosome"]:
-        model = PerChromosomeModel(cfg=cfg)
+        if "dl" in cfg["model"]:
+            model = DLPerChromosome(cfg=cfg)
+        elif "sklearn" in cfg["model"]:
+            model = SklearnPerChromosome(cfg=cfg)
+        else:
+            raise Exception(f"{cfg['model']} is not a valid model name.")
     else:
         model = get_single_model(cfg=cfg, input_dimension=cfg["input_dimension"], output_dimension=cfg["output_dimension"])
 
-    model = model.float().to(cfg["device"])
+    if "dl" in cfg["model"]:
+        model = model.float().to(cfg["device"])
 
     logger.log(level=logging.INFO, msg="Created the model.")
 
@@ -220,15 +211,21 @@ def save_loss_values(cfg: Dict[str, Any], train_main_loss_values: List[float], v
 def save_best_model(cfg: Dict[str, Any], model: nn.Module, logger: logging.Logger) -> None:
     logger.log(level=logging.INFO, msg="Saving the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
-    torch.save(model.state_dict(), os.path.join(experiment_dir, "best_model"))
+    if "dl" in cfg["model"]:
+        torch.save(model.state_dict(), os.path.join(experiment_dir, "best_model"))
+    else:
+        joblib.dump(model, os.path.join(experiment_dir, "best_model"))
     logger.log(level=logging.INFO, msg="Saved the best model")
 
 
 def load_best_model(cfg: Dict[str, Any], logger: logging.Logger) -> nn.Module:
     logger.log(level=logging.INFO, msg="Loading the best model...")
     experiment_dir = get_experiment_dir(cfg=cfg)
-    model = get_model(cfg=cfg, logger=logger)
-    model.load_state_dict(torch.load(os.path.join(experiment_dir, "best_model")))
+    if "dl" in cfg["model"]:
+        model = get_model(cfg=cfg, logger=logger)
+        model.load_state_dict(torch.load(os.path.join(experiment_dir, "best_model")))
+    else:
+        model = joblib.load(os.path.join(experiment_dir, "best_model"))
     logger.log(level=logging.INFO, msg="Loaded the best model.")
     return model
 
@@ -258,14 +255,14 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2zscore_data/processed", help="Directory for the processed files.")
+    parser.add_argument("--processed_data_dir", type=str, default="data/processed", help="Directory for the processed files.")
     parser.add_argument("--dataset", type=str, default="rppa2zscore", choices=["unthresholdedcnapurity2zscore", "thresholdedcnapurity2zscore", "unthresholdedcnapurity2zscore", "thresholdedcna2zscore", "unthresholdedcna2zscore", "rppa2zscore"], help="Name of the dataset.")
     parser.add_argument("--gene_type", type=str, default="rppa_genes", choices=["168_highly_expressed_genes", "1000_highly_expressed_genes", "rppa_genes", "all_genes"])
-    parser.add_argument("--cancer_type", type=str, default="all", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
+    parser.add_argument("--cancer_type", type=str, default="blca", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
 
     # model
-    parser.add_argument("--model", type=str, default="transformer", choices=["gene_embeddings", "per_gene", "linear", "mlp", "rescon_mlp", "transformer"], help="Which model to use.")
+    parser.add_argument("--model", type=str, default="dl_linear", choices=["dl_gene_embeddings", "dl_per_gene", "dl_linear", "dl_mlp", "dl_rescon_mlp", "dl_transformer", "sklearn_linear", "sklearn_per_gene"], help="Which model to use.")
     parser.add_argument("--per_chromosome", type=str2bool, nargs='?', const=True, default=False, help="Whether to use a per chromosome model or not.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension_ratio", type=float, default=0.10, help="Ratio of number of nodes in a hidden layer to max(number of nodes in input layer, number of nodes in output layer).")
@@ -295,14 +292,14 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
     parser.add_argument("--loss_function", type=str, default="mse", help="Loss function.")
-    parser.add_argument("--l1_reg_diagonal_coeff", type=float, default=0.0, help="L1 regularization coefficient for diagonal elements.")
-    parser.add_argument("--l1_reg_nondiagonal_coeff", type=float, default=0.0, help="L1 regularization coefficient for nondiagonal elements.")
+    parser.add_argument("--l1_reg_diagonal_coeff", type=float, default=1e-4, help="L1 regularization coefficient for diagonal elements.")
+    parser.add_argument("--l1_reg_nondiagonal_coeff", type=float, default=1e-4, help="L1 regularization coefficient for nondiagonal elements.")
     parser.add_argument("--l2_reg_diagonal_coeff", type=float, default=0.0, help="L2 regularization coefficient for diagonal elements.")
     parser.add_argument("--l2_reg_nondiagonal_coeff", type=float, default=0.0, help="L2 regularization coefficient for nondiagonal elements.")
     parser.add_argument("--early_stopping_patience", type=int, default=8, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2zscore_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="cna2zscore_checkpoints")
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")

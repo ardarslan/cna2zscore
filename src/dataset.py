@@ -123,16 +123,28 @@ class Dataset(torch.utils.data.Dataset):
 
         self.len_dataset = self.X.shape[0]
 
-        all_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=1, train_size=self.split_ratios["train"], random_state=self.seed)
-        all_split_indices = next(all_stratified_shuffle_split.split(X=self.sample_id_indices, y=self.all_cancer_types))
-        self.train_indices = all_split_indices[0]
-        val_test_indices = all_split_indices[1]
+        if "dl" in self.cfg["model"]:
+            all_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=1, train_size=self.split_ratios["train"], random_state=self.seed)
+            all_split_indices = next(all_stratified_shuffle_split.split(X=self.sample_id_indices, y=self.all_cancer_types))
+            train_indices = all_split_indices[0]
+            val_test_indices = all_split_indices[1]
 
-        val_test_cancer_types = self.all_cancer_types[val_test_indices]
-        val_test_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=1, train_size=(self.split_ratios["val"] / (self.split_ratios["val"] + self.split_ratios["test"])), random_state=self.seed)
-        val_test_split_indices = next(val_test_stratified_shuffle_split.split(X=val_test_indices, y=val_test_cancer_types))
-        self.val_indices = val_test_indices[val_test_split_indices[0]]
-        self.test_indices = val_test_indices[val_test_split_indices[1]]
+            val_test_cancer_types = self.all_cancer_types[val_test_indices]
+            val_test_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=1, train_size=(self.split_ratios["val"] / (self.split_ratios["val"] + self.split_ratios["test"])), random_state=self.seed)
+            val_test_split_indices = next(val_test_stratified_shuffle_split.split(X=val_test_indices, y=val_test_cancer_types))
+            val_indices = val_test_indices[val_test_split_indices[0]]
+            test_indices = val_test_indices[val_test_split_indices[1]]
+            self.train_val_test_indices = [(train_indices.tolist(), val_indices.tolist(), test_indices.tolist())]
+        else:
+            all_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=1, test_size=self.split_ratios["test"], random_state=self.seed)
+            all_split_indices = next(all_stratified_shuffle_split.split(X=self.sample_id_indices, y=self.all_cancer_types))
+            test_indices = all_split_indices[1]
+            train_val_indices = all_split_indices[0]
+            train_val_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=5, test_size=(self.split_ratios["val"]/(self.split_ratios["train"]+self.split_ratios["val"])), random_state=self.seed)
+            train_val_cancer_types = self.all_cancer_types[train_val_indices]
+            self.train_val_test_indices = []
+            for current_train_indices, current_val_indices in train_val_stratified_shuffle_split.split(X=train_val_indices, y=train_val_cancer_types):
+                self.train_val_test_indices.append((train_val_indices[current_train_indices].tolist(), train_val_indices[current_val_indices].tolist(), test_indices.tolist()))
 
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         return {
