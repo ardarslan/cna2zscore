@@ -273,7 +273,7 @@ class SklearnPerChromosome(object):
     def predict(self, X: np.ndarray) -> np.ndarray:
         yhat = np.zeros(shape=(X.shape[0], self.output_dimension))
         for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models):
-            yhat[current_y_column_ids] = current_model.predict(X[current_X_column_ids])
+            yhat[current_y_column_ids] = current_model.predict(X[:, current_X_column_ids])
         return yhat
 
 
