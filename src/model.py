@@ -1,11 +1,12 @@
 import gc
 import math
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import numpy as np
 import torch.nn.functional as F
 import torch
 import torch.nn as nn
+from joblib import delayed, Parallel
 from torch.nn.parameter import Parameter
 from sklearn.linear_model import Lasso, MultiTaskLasso
 
@@ -266,14 +267,23 @@ class SklearnPerChromosome(object):
             current_model = get_single_model(cfg=cfg, input_dimension=len(current_X_column_ids)+len(nonchromosome_X_column_ids), output_dimension=len(current_X_column_ids))
             self.models.append(current_model)
 
+    def fit_helper(self, X: np.ndarray, y: np.ndarray, current_X_column_ids: List[int], current_y_column_ids: List[int], current_model: Any) -> None:
+        current_model.fit(X[:, current_X_column_ids], y[:, current_y_column_ids])
+
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
-        for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models):
-            current_model.fit(X[:, current_X_column_ids], y[:, current_y_column_ids])
+        Parallel(n_jobs=24)([delayed(self.fit_helper)(X, y, current_X_column_ids, current_y_column_ids, current_model) for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models)])
+
+    def predict_helper(self, X: np.ndarray, current_X_column_ids: List[int], current_y_column_ids: List[int], current_model: Any) -> None:
+        return current_model.predict(X[:, current_X_column_ids]), current_y_column_ids
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         yhat = np.zeros(shape=(X.shape[0], self.output_dimension))
-        for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models):
-            yhat[current_y_column_ids] = current_model.predict(X[:, current_X_column_ids])
+
+        results = Parallel(n_jobs=24)([delayed(self.predict_helper)(X, current_X_column_ids, current_y_column_ids, current_model) for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models)])
+
+        for current_y_column_ids, current_yhat in results:
+            yhat[current_y_column_ids] = current_yhat
+
         return yhat
 
 
