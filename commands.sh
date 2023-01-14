@@ -118,7 +118,6 @@ for CANCER_TYPE in 'all'; do
                                         for DROPOUT in "${DROPOUT_OPTIONS[@]}"; do
                                             for LEARNING_RATE in "${LEARNING_RATE_OPTIONS[@]}"; do
 
-
                                                 # No regularization
                                                 # sleep_if_necessary
                                                 # sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
