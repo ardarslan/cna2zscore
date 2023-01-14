@@ -269,9 +269,10 @@ class SklearnPerChromosome(object):
 
     def fit_helper(self, X: np.ndarray, y: np.ndarray, current_X_column_ids: List[int], current_y_column_ids: List[int], current_model: Any) -> None:
         current_model.fit(X[:, current_X_column_ids], y[:, current_y_column_ids])
+        return current_model
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
-        Parallel(n_jobs=24)([delayed(self.fit_helper)(X, y, current_X_column_ids, current_y_column_ids, current_model) for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models)])
+        self.models = Parallel(n_jobs=24)([delayed(self.fit_helper)(X, y, current_X_column_ids, current_y_column_ids, current_model) for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models)])
 
     def predict_helper(self, X: np.ndarray, current_X_column_ids: List[int], current_y_column_ids: List[int], current_model: Any) -> None:
         return current_model.predict(X[:, current_X_column_ids]), current_y_column_ids
