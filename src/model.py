@@ -283,7 +283,7 @@ class SklearnPerChromosome(object):
         results = Parallel(n_jobs=24)([delayed(self.predict_helper)(X, current_X_column_ids, current_model) for current_X_column_ids, current_model in zip(self.X_column_ids, self.models)])
 
         for current_y_column_ids, current_yhat in zip(self.y_column_ids, results):
-            yhat[current_y_column_ids] = current_yhat
+            yhat[:, current_y_column_ids] = current_yhat
 
         return yhat
 
