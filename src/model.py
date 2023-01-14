@@ -287,12 +287,12 @@ class SklearnPerGene(object):
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         self.number_of_samples = y.shape[0]
         for j in range(y.shape[1]):
-            self.models[j].fit(X[:, j].reshape(X.shape[0], 1), y[:, j].ravel())
+            self.models[j].fit(X[:, [j] + [i for i in range(self.output_dimension, self.input_dimension)]], y[:, j].ravel())
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         yhat = []
         for j in range(self.output_dimension):
-            yhat.append(self.models[j].predict(X[:, j].reshape(X.shape[0], 1)).reshape(X.shape[0], 1))
+            yhat.append(self.models[j].predict(X[:, [j] + [i for i in range(self.output_dimension, self.input_dimension)]]).reshape(X.shape[0], 1))
         yhat = np.hstack(yhat)
         return yhat
 

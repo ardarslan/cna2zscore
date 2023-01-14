@@ -27,7 +27,7 @@ for CANCER_TYPE in 'all'; do
                 DROPOUT_OPTIONS=(0.00 0.25 0.33 0.50)
                 LEARNING_RATE_OPTIONS=(0.001 0.01)
                 MAIN_FILE_NAME="main_dl.py"
-                GPU_SETTINGS="--gpus=1 --gres=gpumem:12288 "
+                GPU_SETTINGS="--gpus=1 --gres=gpumem:12288"
             fi
 
             if [[ $MODEL = 'sklearn_per_gene' || $MODEL = 'dl_per_gene' ]]; then
@@ -100,19 +100,28 @@ for CANCER_TYPE in 'all'; do
                 exit 1
             fi
 
-            for GENE_TYPE in "${GENE_TYPE_OPTIONS[@]}"; do
-                for RESCON_DIAGONAL_W in "${RESCON_DIAGONAL_W_OPTIONS[@]}"; do
-                    for GENE_EMBEDDING_SIZE in "${GENE_EMBEDDING_SIZE_OPTIONS[@]}"; do
-                        for NUM_ATTENTION_HEADS in "${NUM_ATTENTION_HEADS_OPTIONS[@]}"; do
-                            for NUM_NONLINEAR_LAYERS in "${NUM_NONLINEAR_LAYERS_OPTIONS[@]}"; do
-                                for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS[@]}"; do
-                                    for DROPOUT in "${DROPOUT_OPTIONS[@]}"; do
-                                        for LEARNING_RATE in "${LEARNING_RATE_OPTIONS[@]}"; do
-                                            for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
+            for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
+                if [[ $MODEL = 'sklearn_linear' && $PER_CHROMOSOME ]]; then
+                    TIME_SETTINGS="--time=7200"
+                    CPU_SETTINGS="--ntasks=25 --mem-per-cpu=32768"
+                else
+                    TIME_SETTINGS="--time=1440"
+                    CPU_SETTINGS="--ntasks=2 --mem-per-cpu=32768"
+                fi
+
+                for GENE_TYPE in "${GENE_TYPE_OPTIONS[@]}"; do
+                    for RESCON_DIAGONAL_W in "${RESCON_DIAGONAL_W_OPTIONS[@]}"; do
+                        for GENE_EMBEDDING_SIZE in "${GENE_EMBEDDING_SIZE_OPTIONS[@]}"; do
+                            for NUM_ATTENTION_HEADS in "${NUM_ATTENTION_HEADS_OPTIONS[@]}"; do
+                                for NUM_NONLINEAR_LAYERS in "${NUM_NONLINEAR_LAYERS_OPTIONS[@]}"; do
+                                    for HIDDEN_DIMENSION in "${HIDDEN_DIMENSION_OPTIONS[@]}"; do
+                                        for DROPOUT in "${DROPOUT_OPTIONS[@]}"; do
+                                            for LEARNING_RATE in "${LEARNING_RATE_OPTIONS[@]}"; do
+
 
                                                 # No regularization
                                                 # sleep_if_necessary
-                                                # sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
+                                                # sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                 # let NUM_JOBS=NUM_JOBS+1
 
                                                 # L1 regularization
@@ -123,7 +132,7 @@ for CANCER_TYPE in 'all'; do
                                                                 continue
                                                             else
                                                                 sleep_if_necessary
-                                                                sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_DIAGONAL_COEFF --l1_reg_nondiagonal_coeff $L1_REG_NONDIAGONAL_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
+                                                                sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_DIAGONAL_COEFF --l1_reg_nondiagonal_coeff $L1_REG_NONDIAGONAL_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                                 let NUM_JOBS=NUM_JOBS+1
                                                             fi
                                                         done
@@ -131,7 +140,7 @@ for CANCER_TYPE in 'all'; do
                                                 else
                                                     for L1_REG_COEFF in "${L1_REG_COEFF_OPTIONS[@]}"; do
                                                         sleep_if_necessary
-                                                        sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_COEFF --l1_reg_nondiagonal_coeff $L1_REG_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
+                                                        sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_COEFF --l1_reg_nondiagonal_coeff $L1_REG_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                         let NUM_JOBS=NUM_JOBS+1
                                                     done
                                                 fi
@@ -144,7 +153,7 @@ for CANCER_TYPE in 'all'; do
                                                 #                 continue
                                                 #             else
                                                 #                 sleep_if_necessary
-                                                #                 sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_DIAGONAL_COEFF --l2_reg_nondiagonal_coeff $L2_REG_NONDIAGONAL_COEFF --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
+                                                #                 sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_DIAGONAL_COEFF --l2_reg_nondiagonal_coeff $L2_REG_NONDIAGONAL_COEFF --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                 #                 let NUM_JOBS=NUM_JOBS+1
                                                 #             fi
                                                 #         done
@@ -152,7 +161,7 @@ for CANCER_TYPE in 'all'; do
                                                 # else
                                                 #     for L2_REG_COEFF in "${L2_REG_COEFF_OPTIONS[@]}"; do
                                                 #         sleep_if_necessary
-                                                #         sbatch --time=1440 --ntasks=2 --mem-per-cpu=32768 $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_COEFF --l2_reg_nondiagonal_coeff $L2_REG_COEFF --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
+                                                #         sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_COEFF --l2_reg_nondiagonal_coeff $L2_REG_COEFF --dropout $DROPOUT --per_chromosome $PER_CHROMOSOME"
                                                 #         let NUM_JOBS=NUM_JOBS+1
                                                 #     done
                                                 # fi
