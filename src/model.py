@@ -20,6 +20,8 @@ def get_single_model(cfg: Dict[str, Any], input_dimension: int, output_dimension
         ModelClass = DLGeneEmbeddings
     elif cfg["model"] in ["dl_linear", "dl_mlp"]:
         ModelClass = DLMLP
+    elif cfg["model"] == "dl_interpretable_mlp":
+        ModelClass = DLInterpretableMLP
     elif cfg["model"] == "dl_rescon_mlp":
         ModelClass = DLResConMLP
     elif cfg["model"] == "dl_transformer":
@@ -70,7 +72,7 @@ class DLGeneEmbeddings(nn.Module):
         self.gene_embeddings = nn.Embedding(num_embeddings=cfg["num_genes"], embedding_dim=cfg["gene_embedding_size"])
         self.fc = nn.Linear((self.input_dimension - self.output_dimension) + cfg["gene_embedding_size"] + 1, 1)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         nongene_inputs = x[:, -(self.input_dimension - self.output_dimension):]
         y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
         for j in range(self.output_dimension):
@@ -241,11 +243,31 @@ class DLPerChromosome(nn.Module):
             current_model = get_single_model(cfg=cfg, input_dimension=len(current_X_column_ids)+len(nonchromosome_X_column_ids), output_dimension=len(current_X_column_ids))
             self.models.append(current_model)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
         for current_X_column_ids, current_y_column_ids, current_model in zip(self.X_column_ids, self.y_column_ids, self.models):
             y[:, current_y_column_ids] = current_model(x[:, current_X_column_ids])
         return y
+
+
+class DLInterpretableMLP(object):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+        super().__init__()
+        self.cfg = cfg
+        self.input_dimension = input_dimension
+        self.output_dimension = output_dimension
+        self.mlp = DLMLP(cfg=cfg, input_dimension=self.input_dimension, output_dimension=self.output_dimension * self.input_dimension + self.output_dimension)
+
+    def get_weights_and_biases(self, x: torch.Tensor) -> torch.Tensor:
+        weights_and_biases = self.mlp(x)
+        weights = weights_and_biases[:, :-self.output_dimension].view(x.shape[0], self.output_dimension, self.input_dimension)  # (N, output_dim, input_dim)
+        biases = weights_and_biases[:, -self.output_dimension:]  # (N, output_dim)
+        return weights, biases
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        weights, biases = self.get_weights_and_biases(x)
+        x = torch.bmm(weights, x.unsqueeze(0)) # (N, output_dim, input_dim) * (N, input_dim, 1) = (N, output_dim, 1)
+        return x[:, :, 0] + biases # (N, output_dim)
 
 
 class SklearnPerChromosome(object):

@@ -262,7 +262,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
 
     # model
-    parser.add_argument("--model", type=str, default="dl_linear", choices=["dl_gene_embeddings", "dl_per_gene", "dl_linear", "dl_mlp", "dl_rescon_mlp", "dl_transformer", "sklearn_linear", "sklearn_per_gene"], help="Which model to use.")
+    parser.add_argument("--model", type=str, default="dl_linear", choices=["dl_gene_embeddings", "dl_per_gene", "dl_linear", "dl_interpretable_mlp", "dl_mlp", "dl_rescon_mlp", "dl_transformer", "sklearn_linear", "sklearn_per_gene"], help="Which model to use.")
     parser.add_argument("--per_chromosome", type=str2bool, nargs='?', const=True, default=False, help="Whether to use a per chromosome model or not.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension_ratio", type=float, default=0.10, help="Ratio of number of nodes in a hidden layer to max(number of nodes in input layer, number of nodes in output layer).")
