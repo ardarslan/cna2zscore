@@ -238,15 +238,21 @@ def delete_best_model(cfg: Dict[str, Any], logger: logging.Logger) -> None:
     logger.log(level=logging.INFO, msg="Deleted the best model.")
 
 
-def save_train_val_X(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> None:
-    logger.log(level=logging.INFO, msg="Saving background samples...")
+def save_features(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logger) -> None:
+    logger.log(level=logging.INFO, msg="Saving features...")
     experiment_dir = get_experiment_dir(cfg=cfg)
     train_val_X_path = os.path.join(experiment_dir, "train_val_X.npy")
     train_val_indices = dataset.train_val_test_indices[0][0] + dataset.train_val_test_indices[0][1]
     train_val_X = dataset.X[train_val_indices, :]
     with open(train_val_X_path, "wb") as file:
         np.save(file, train_val_X)
-    logger.log(level=logging.INFO, msg="Saved background samples...")
+
+    test_X_path = os.path.join(experiment_dir, "test_X.npy")
+    test_indices = dataset.train_val_test_indices[0][2]
+    test_X = dataset.X[test_indices, :]
+    with open(test_X_path, "wb") as file:
+        np.save(file, test_X)
+    logger.log(level=logging.INFO, msg="Saved features...")
 
 
 def str2bool(v: Union[str, bool]) -> bool:
