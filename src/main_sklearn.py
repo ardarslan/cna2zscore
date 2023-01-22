@@ -2,7 +2,7 @@ import numpy as np
 from pprint import pprint
 from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_device, get_logger, get_dataset, get_model, save_cfg,
-                   save_best_model)
+                   save_train_val_X, save_best_model)
 from test import save_results_split_helper
 
 
@@ -56,6 +56,6 @@ if __name__ == "__main__":
     save_best_model(cfg=cfg, model=model, logger=logger)
     test_predictions = model.predict(X_test)
     test_sample_ids = dataset.sample_ids[test_indices]
-
     save_results_split_helper(cfg=cfg, predictions=val_predictions, ground_truths=val_ground_truths, sample_ids=val_sample_ids, split_name="val", logger=logger)
     save_results_split_helper(cfg=cfg, predictions=test_predictions, ground_truths=test_ground_truths, sample_ids=test_sample_ids, split_name="test", logger=logger)
+    save_train_val_X(cfg=cfg, dataset=dataset, logger=logger)

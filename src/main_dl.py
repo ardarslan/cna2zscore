@@ -12,7 +12,8 @@ from utils import (get_argument_parser, set_seeds, set_experiment_name, \
                    set_device, get_logger, get_dataset, get_data_loaders, get_model, \
                    get_optimizer, get_scheduler, get_loss_function, save_best_model, save_cfg, \
                    load_best_model, set_early_stopping_epoch, get_summary_writer, \
-                   save_loss_values, set_number_of_parameters, delete_best_model)
+                   save_loss_values, set_number_of_parameters, save_train_val_X, \
+                   delete_best_model)
 
 
 if __name__ == "__main__":
@@ -73,4 +74,4 @@ if __name__ == "__main__":
 
     model = load_best_model(cfg=cfg, logger=logger)
     save_results(cfg=cfg, data_loaders=data_loaders, model=model, loss_function=val_test_loss_function, dataset=dataset, logger=logger)
-    # delete_best_model(cfg=cfg, logger=logger)
+    save_train_val_X(cfg=cfg, dataset=dataset, logger=logger)
