@@ -242,7 +242,7 @@ def save_train_val_X(cfg: Dict[str, Any], dataset: Dataset, logger: logging.Logg
     logger.log(level=logging.INFO, msg="Saving background samples...")
     experiment_dir = get_experiment_dir(cfg=cfg)
     train_val_X_path = os.path.join(experiment_dir, "train_val_X.npy")
-    train_val_indices = dataset.train_val_indices[0] + dataset.train_val_indices[1]
+    train_val_indices = dataset.train_val_test_indices[0] + dataset.train_val_test_indices[1]
     train_val_X = dataset.X[train_val_indices, :]
     with open(train_val_X_path, "wb") as file:
         np.save(file, train_val_X)
