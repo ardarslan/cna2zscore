@@ -9,6 +9,15 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 def calculate_current_regularization_loss(cfg: Dict[str, Any], model: nn.Module, regularization_loss_type: str):
+    """
+    Calculates total regularization loss for a batch.
+
+    Args:
+        cfg: Config
+        model: Model whose parameters will be optimized.
+        regularization_loss_type: "l1" or "l2".
+    """
+
     if regularization_loss_type == "l1":
         regularization_diagonal_coeff = cfg["l1_reg_diagonal_coeff"]
         regularization_nondiagonal_coeff = cfg["l1_reg_nondiagonal_coeff"]
@@ -74,6 +83,7 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         X = batch["X"]
         y = batch["y"]
         current_batch_size = X.shape[0]
+        current_count = y.shape[0] * y.shape[1]
 
         if batch_idx == len(train_data_loader) - 1 and current_batch_size == 1:
             continue
@@ -87,15 +97,15 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
 
         current_main_loss = loss_function(yhat, y)
         main_loss_sum += float(current_main_loss)
-        main_loss_count += current_batch_size
+        main_loss_count += current_count
 
         current_l1_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l1")
         l1_loss_sum += float(current_l1_loss)
-        l1_loss_count += current_batch_size
+        l1_loss_count += current_count
 
         current_l2_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l2")
         l2_loss_sum += float(current_l2_loss)
-        l2_loss_count += current_batch_size
+        l2_loss_count += current_count
 
         current_total_loss = current_main_loss + current_l1_loss + current_l2_loss
 
@@ -106,7 +116,7 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
             current_total_loss += current_interpretable_mlp_predicted_weights_l1_loss
 
         total_loss_sum += float(current_total_loss)
-        total_loss_count += current_batch_size
+        total_loss_count += current_count
 
         # if cfg["use_gradient_accumulation"]:
         #     if ((batch_idx + 1) < num_batches) or (num_train_samples % effective_batch_size == 0):
@@ -119,13 +129,16 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         #         optimizer.step()
         #         optimizer.zero_grad()
         # else:
-        (current_total_loss / float(cfg["batch_size"])).backward()
+
+        # Backpropagate averaged loss.
+        (current_total_loss / current_count).backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["gradient_norm"])
         optimizer.step()
         optimizer.zero_grad()
 
     logger.log(level=logging.INFO, msg=f"Epoch {str(epoch).zfill(3)}, {(5 - len('train')) * ' ' + 'train'.capitalize()} {cfg['loss_function']} loss is {np.round(main_loss_sum / main_loss_count, 2)}.")
 
+    # We store the averaged loss.
     train_loss_dict = {
         cfg["loss_function"]: main_loss_sum / main_loss_count,
     }
