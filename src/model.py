@@ -267,7 +267,7 @@ class DLInterpretableMLP(object):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         weights, biases = self.get_weights_and_biases(x)
         x = torch.bmm(weights, x.unsqueeze(0)) # (N, output_dim, input_dim) * (N, input_dim, 1) = (N, output_dim, 1)
-        return x[:, :, 0] + biases # (N, output_dim)
+        return x[:, :, 0] + biases, weights # (N, output_dim)
 
 
 class SklearnPerChromosome(object):

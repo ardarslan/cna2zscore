@@ -63,6 +63,10 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
     l2_loss_sum = 0.0
     l2_loss_count = 0.0
 
+    if cfg["model"] == "dl_interpretable_mlp":
+        interpretable_mlp_predicted_weights_l1_loss_sum = 0.0
+        interpretable_mlp_predicted_weights_l1_loss_count = 0.0
+
     total_loss_sum = 0.0
     total_loss_count = 0.0
 
@@ -76,21 +80,32 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
 
         # observed_sample_count += current_batch_size
 
-        yhat = model(X)
+        if cfg["model"] == "dl_interpretable_mlp":
+            yhat, weights = model(X)
+        else:
+            yhat = model(X)
+
         current_main_loss = loss_function(yhat, y)
-        main_loss_sum += float(current_main_loss) * current_batch_size
+        main_loss_sum += float(current_main_loss)
         main_loss_count += current_batch_size
 
         current_l1_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l1")
-        l1_loss_sum += current_l1_loss
-        l1_loss_count += 1
+        l1_loss_sum += float(current_l1_loss)
+        l1_loss_count += current_batch_size
 
         current_l2_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l2")
-        l2_loss_sum += current_l2_loss
-        l2_loss_count += 1
+        l2_loss_sum += float(current_l2_loss)
+        l2_loss_count += current_batch_size
 
         current_total_loss = current_main_loss + current_l1_loss + current_l2_loss
-        total_loss_sum += float(current_total_loss) * current_batch_size
+
+        if cfg["model"] == "dl_interpretable_mlp":
+            current_interpretable_mlp_predicted_weights_l1_loss = cfg["interpretable_mlp_predicted_weights_l1_reg_coeff"] * weights.abs().sum()
+            interpretable_mlp_predicted_weights_l1_loss_sum += float(current_interpretable_mlp_predicted_weights_l1_loss)
+            interpretable_mlp_predicted_weights_l1_loss_count += current_batch_size
+            current_total_loss += current_interpretable_mlp_predicted_weights_l1_loss
+
+        total_loss_sum += float(current_total_loss)
         total_loss_count += current_batch_size
 
         # if cfg["use_gradient_accumulation"]:
@@ -104,7 +119,7 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         #         optimizer.step()
         #         optimizer.zero_grad()
         # else:
-        current_total_loss.backward()
+        (current_total_loss / float(cfg["batch_size"])).backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["gradient_norm"])
         optimizer.step()
         optimizer.zero_grad()
@@ -120,6 +135,9 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
 
     if cfg["l2_reg_diagonal_coeff"] > 0 or cfg["l2_reg_nondiagonal_coeff"] > 0:
         train_loss_dict["l2_loss"] = l2_loss_sum / l2_loss_count
+
+    if cfg["model"] == "dl_interpretable_mlp" and cfg["interpretable_mlp_predicted_weights_l1_reg_coeff"] > 0:
+        train_loss_dict["interpretable_mlp_predicted_weights_l1_loss"] = interpretable_mlp_predicted_weights_l1_loss_sum / interpretable_mlp_predicted_weights_l1_loss_count
 
     train_main_loss_values.append(train_loss_dict[cfg["loss_function"]])
 

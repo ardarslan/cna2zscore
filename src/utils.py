@@ -257,7 +257,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     # data
     parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2zscore_data/processed", help="Directory for the processed files.")
     parser.add_argument("--dataset", type=str, default="rppa2zscore", choices=["unthresholdedcnapurity2zscore", "thresholdedcnapurity2zscore", "unthresholdedcnapurity2zscore", "thresholdedcna2zscore", "unthresholdedcna2zscore", "rppa2zscore"], help="Name of the dataset.")
-    parser.add_argument("--gene_type", type=str, default="rppa_genes", choices=["168_highly_expressed_genes", "1000_highly_expressed_genes", "rppa_genes", "all_genes"])
+    parser.add_argument("--gene_type", type=str, default="rppa_genes", choices=["breast_cancer_ipac_genes", "breast_cancer_ipac_and_rppa_genes", "168_highly_expressed_genes", "1000_highly_expressed_genes", "rppa_genes", "all_genes"])
     parser.add_argument("--cancer_type", type=str, default="blca", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
 
@@ -296,6 +296,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--l1_reg_nondiagonal_coeff", type=float, default=1e-4, help="L1 regularization coefficient for nondiagonal elements.")
     parser.add_argument("--l2_reg_diagonal_coeff", type=float, default=0.0, help="L2 regularization coefficient for diagonal elements.")
     parser.add_argument("--l2_reg_nondiagonal_coeff", type=float, default=0.0, help="L2 regularization coefficient for nondiagonal elements.")
+    parser.add_argument("--interpretable_mlp_predicted_weights_l1_reg_coeff", type=float, default=0.0, help="L1 regularization coefficient for the weight matrix predicted by DLInterpretableMLP model.")
     parser.add_argument("--early_stopping_patience", type=int, default=8, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints

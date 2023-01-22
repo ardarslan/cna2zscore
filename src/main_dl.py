@@ -32,7 +32,7 @@ if __name__ == "__main__":
     pprint(cfg, indent=4)
     optimizer = get_optimizer(cfg=cfg, model=model)
     scheduler = get_scheduler(cfg=cfg, optimizer=optimizer)
-    train_loss_function = get_loss_function(cfg=cfg, reduction="mean")
+    train_loss_function = get_loss_function(cfg=cfg, reduction="sum")
     val_test_loss_function = get_loss_function(cfg=cfg, reduction="sum")
 
     best_val_loss = np.inf
