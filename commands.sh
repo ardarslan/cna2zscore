@@ -9,13 +9,13 @@ sleep_if_necessary() {
     fi
 }
 
-for MODEL in 'dl_mlp' 'dl_per_gene' 'dl_linear'; do
+for MODEL in 'dl_linear' 'dl_per_gene' 'dl_mlp' 'sklearn_per_gene' 'sklearn_linear'; do
     for CANCER_TYPE in 'all'; do
-        for DATASET in 'rppa2zscore' 'unthresholdedcnapurity2zscore'; do
+        for DATASET in 'unthresholdedcnapurity2zscore' 'rppa2zscore'; do
             if [[ $DATASET = 'rppa2zscore' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
             else
-                declare -a GENE_TYPE_OPTIONS=("168_highly_expressed_genes" "rppa_genes" "breast_cancer_ipac_genes" "breast_cancer_ipac_and_rppa_genes")
+                declare -a GENE_TYPE_OPTIONS=("breast_cancer_ipac_genes" "breast_cancer_ipac_and_rppa_genes" "168_highly_expressed_genes" "rppa_genes")
             fi
 
             if [[ $MODEL = 'sklearn_per_gene' || $MODEL = 'sklearn_linear' ]]; then
