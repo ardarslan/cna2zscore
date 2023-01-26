@@ -20,6 +20,8 @@ def get_single_model(cfg: Dict[str, Any], input_dimension: int, output_dimension
         ModelClass = DLGeneEmbeddings
     elif cfg["model"] in ["dl_linear", "dl_mlp"]:
         ModelClass = DLMLP
+    elif cfg["model"] == "dl_linear_zero_diagonal":
+        ModelClass = DLLinearZeroDiagonal
     elif cfg["model"] == "dl_interpretable_mlp":
         ModelClass = DLInterpretableMLP
     elif cfg["model"] == "dl_rescon_mlp":
@@ -80,6 +82,49 @@ class DLGeneEmbeddings(nn.Module):
         return y
 
 
+class DLLinearZeroDiagonal(nn.Module):
+    def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
+        super().__init__()
+        self.cfg = cfg
+        self.input_dimension = input_dimension
+        self.output_dimension = output_dimension
+        len_upper_triangle_weights = torch.triu_indices(row=output_dimension, col=input_dimension, offset=1).shape[1]
+        len_lower_triangle_weights = torch.tril_indices(row=output_dimension, col=input_dimension, offset=-1).shape[1]
+        self.len_diagonal_weights = np.minimum(output_dimension, input_dimension)
+        self.upper_triangle_weights = Parameter(torch.empty(size=(1, len_upper_triangle_weights)))
+        nn.init.kaiming_uniform_(self.upper_triangle_weights, a=math.sqrt(5))
+        self.lower_triangle_weights = Parameter(torch.empty(size=(1, len_lower_triangle_weights)))
+        nn.init.kaiming_uniform_(self.lower_triangle_weights, a=math.sqrt(5))
+        diagonal_weights = torch.empty(size=(1, self.len_diagonal_weights))
+        nn.init.kaiming_uniform_(diagonal_weights, a=math.sqrt(5))
+        weight = self.reconstruct_weight(diagonal_weights=diagonal_weights)
+        self.bias = Parameter(torch.empty(output_dimension))
+        nn.init.kaiming_uniform_(weight, a=math.sqrt(5))
+        fan_in, _ = nn.init._calculate_fan_in_and_fan_out(weight)
+        bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+        nn.init.uniform_(self.bias, -bound, bound)
+
+    def reconstruct_weight(self, diagonal_weights: torch.Tensor):
+        weight = torch.zeros(size=(self.output_dimension, self.input_dimension))
+        upper_triangle_counter = 0
+        lower_triangle_counter = 0
+        for i in range(self.output_dimension):
+            for j in range(self.input_dimension):
+                if i < j:
+                    weight[i, j] = self.upper_triangle_weights[0][upper_triangle_counter]
+                    upper_triangle_counter += 1
+                elif i == j:
+                    weight[i, j] = diagonal_weights[0][i]
+                else:
+                    weight[i, j] = self.lower_triangle_weights[0][lower_triangle_counter]
+                    lower_triangle_counter += 1
+        return weight
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        weight = self.reconstruct_weight(diagonal_weights=torch.zeros(size=(1, self.len_diagonal_weights)))
+        return F.linear(input=x, weight=weight, bias=self.bias)
+
+
 class DLMLP(nn.Module):
     def __init__(self, cfg: Dict[str, Any], input_dimension: int, output_dimension: int):
         super().__init__()
@@ -107,7 +152,7 @@ class DLMLP(nn.Module):
 
     def _set_model_hidden_dimension(self) -> None:
         try:
-            self.hidden_dimension = int(np.max([self.input_dimension, self.output_dimension]) * float(self.cfg["hidden_dimension_ratio"]))
+            self.hidden_dimension = np.max([int(np.max([self.input_dimension, self.output_dimension]) * float(self.cfg["hidden_dimension_ratio"])), 1])
         except ValueError:
             raise Exception(f"{self.cfg['hidden_dimension_ratio']} is not a valid hidden_dimension_ratio.")
 

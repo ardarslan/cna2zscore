@@ -86,6 +86,10 @@ def save_results_split(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader],
 
             yhat = model(X)
 
+            if cfg["use_cna_adjusted_zscore"]:
+                yhat = yhat + dataset.cna_adjustment_intercepts[0] + dataset.cna_adjustment_coeffs[0] * X[:, :yhat.shape[1]]
+                y = y + dataset.cna_adjustment_intercepts[0] + dataset.cna_adjustment_coeffs[0] * X[:, :y.shape[1]]
+
             total_count += float(y.shape[0] * y.shape[1])
             total_loss += float(loss_function(yhat, y))
 

@@ -23,7 +23,9 @@ if __name__ == "__main__":
     val_ground_truths = []
     val_predictions = []
     val_sample_ids = []
-    for train_indices, val_indices, test_indices in dataset.train_val_test_indices:
+    for fold_idx in range(cfg["num_cv_folds"]):
+        train_indices, val_indices, test_indices = dataset.train_val_test_indices[fold_idx]
+
         X_train = dataset.X[train_indices, :]
         X_val = dataset.X[val_indices, :]
 
@@ -36,6 +38,10 @@ if __name__ == "__main__":
         yhat_val = model.predict(X_val)
         current_val_cancer_types = dataset.all_cancer_types[val_indices]
         current_val_sample_ids = dataset.sample_ids[val_indices]
+
+        if cfg["use_cna_adjusted_zscore"]:
+            yhat_val = yhat_val + dataset.cna_adjustment_intercepts[fold_idx].cpu().numpy() + dataset.cna_adjustment_coeffs[fold_idx].cpu().numpy() * X_val[:, :yhat_val.shape[1]]
+            y_val = y_val + dataset.cna_adjustment_intercepts[fold_idx].cpu().numpy() + dataset.cna_adjustment_coeffs[fold_idx].cpu().numpy() * X_val[:, :y_val.shape[1]]
 
         val_ground_truths.append(y_val)
         val_predictions.append(yhat_val)
@@ -56,6 +62,11 @@ if __name__ == "__main__":
     save_best_model(cfg=cfg, model=model, logger=logger)
     test_predictions = model.predict(X_test)
     test_sample_ids = dataset.sample_ids[test_indices]
+
+    if cfg["use_cna_adjusted_zscore"]:
+        test_predictions = test_predictions + dataset.cna_adjustment_intercepts[cfg["num_cv_folds"]].cpu().numpy() + dataset.cna_adjustment_coeffs[cfg["num_cv_folds"]].cpu().numpy() * X_test[:, :test_predictions.shape[1]]
+        test_ground_truths = test_ground_truths + dataset.cna_adjustment_intercepts[cfg["num_cv_folds"]].cpu().numpy() + dataset.cna_adjustment_coeffs[cfg["num_cv_folds"]].cpu().numpy() * X_test[:, :test_predictions.shape[1]]
+
     save_results_split_helper(cfg=cfg, predictions=val_predictions, ground_truths=val_ground_truths, sample_ids=val_sample_ids, split_name="val", logger=logger)
     save_results_split_helper(cfg=cfg, predictions=test_predictions, ground_truths=test_ground_truths, sample_ids=test_sample_ids, split_name="test", logger=logger)
     save_features(cfg=cfg, dataset=dataset, logger=logger)

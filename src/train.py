@@ -63,60 +63,60 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
     # num_batches = len(train_data_loader)
     # observed_sample_count = 0.0
 
-    main_loss_sum = 0.0
-    main_loss_count = 0.0
-
     l1_loss_sum = 0.0
-    l1_loss_count = 0.0
-
     l2_loss_sum = 0.0
-    l2_loss_count = 0.0
-
+    main_loss_sum_for_backprop = 0.0
+    main_loss_sum_for_logging = 0.0
+    total_loss_sum_for_backprop = 0.0
+    total_loss_sum_for_logging = 0.0
+    loss_count = 0.0
     if cfg["model"] == "dl_interpretable_mlp":
         interpretable_mlp_predicted_weights_l1_loss_sum = 0.0
-        interpretable_mlp_predicted_weights_l1_loss_count = 0.0
-
-    total_loss_sum = 0.0
-    total_loss_count = 0.0
 
     for batch_idx, batch in enumerate(train_data_loader):
         X = batch["X"]
         y = batch["y"]
         current_batch_size = X.shape[0]
-        current_count = y.shape[0] * y.shape[1]
+        current_loss_count = y.shape[0] * y.shape[1]
+        loss_count += float(current_loss_count)
 
         if batch_idx == len(train_data_loader) - 1 and current_batch_size == 1:
             continue
 
         # observed_sample_count += current_batch_size
 
+        current_l1_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l1")
+        l1_loss_sum += float(current_l1_loss)
+        current_l2_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l2")
+        l2_loss_sum += float(current_l2_loss)
+
         if cfg["model"] == "dl_interpretable_mlp":
             yhat, weights = model(X)
         else:
             yhat = model(X)
 
-        current_main_loss = loss_function(yhat, y)
-        main_loss_sum += float(current_main_loss)
-        main_loss_count += current_count
+        if cfg["use_cna_adjusted_zscore"]:
+            yhat_for_logging = yhat + dataset.cna_adjustment_intercepts[0] + dataset.cna_adjustment_coeffs[0] * X[:, :yhat.shape[1]]
+            y_for_logging = y + dataset.cna_adjustment_intercepts[0] + dataset.cna_adjustment_coeffs[0] * X[:, :yhat.shape[1]]
+            current_main_loss_for_backprop = float(loss_function(yhat, y))
+            current_main_loss_for_logging = float(loss_function(yhat_for_logging, y_for_logging))
+        else:
+            current_main_loss_for_backprop = float(loss_function(yhat, y))
+            current_main_loss_for_logging = current_main_loss_for_backprop
 
-        current_l1_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l1")
-        l1_loss_sum += float(current_l1_loss)
-        l1_loss_count += current_count
-
-        current_l2_loss = calculate_current_regularization_loss(cfg=cfg, model=model, regularization_loss_type="l2")
-        l2_loss_sum += float(current_l2_loss)
-        l2_loss_count += current_count
-
-        current_total_loss = current_main_loss + current_l1_loss + current_l2_loss
+        main_loss_sum_for_backprop += current_main_loss_for_backprop
+        main_loss_sum_for_logging += current_main_loss_for_logging
+        current_total_loss_for_backprop = current_main_loss_for_backprop + current_l1_loss + current_l2_loss
+        current_total_loss_for_logging = current_main_loss_for_logging + current_l1_loss + current_l2_loss
 
         if cfg["model"] == "dl_interpretable_mlp":
             current_interpretable_mlp_predicted_weights_l1_loss = cfg["interpretable_mlp_predicted_weights_l1_reg_coeff"] * weights.abs().sum()
             interpretable_mlp_predicted_weights_l1_loss_sum += float(current_interpretable_mlp_predicted_weights_l1_loss)
-            interpretable_mlp_predicted_weights_l1_loss_count += current_batch_size
-            current_total_loss += current_interpretable_mlp_predicted_weights_l1_loss
+            current_total_loss_for_backprop += current_interpretable_mlp_predicted_weights_l1_loss
+            current_total_loss_for_logging += current_interpretable_mlp_predicted_weights_l1_loss
 
-        total_loss_sum += float(current_total_loss)
-        total_loss_count += current_count
+        total_loss_sum_for_backprop += current_total_loss_for_backprop
+        total_loss_sum_for_logging += current_total_loss_for_logging
 
         # if cfg["use_gradient_accumulation"]:
         #     if ((batch_idx + 1) < num_batches) or (num_train_samples % effective_batch_size == 0):
@@ -131,26 +131,28 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         # else:
 
         # Backpropagate averaged loss.
-        (current_total_loss / current_count).backward()
+        (current_total_loss_for_backprop / current_loss_count).backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["gradient_norm"])
         optimizer.step()
         optimizer.zero_grad()
 
-    logger.log(level=logging.INFO, msg=f"Epoch {str(epoch).zfill(3)}, {(5 - len('train')) * ' ' + 'train'.capitalize()} {cfg['loss_function']} loss is {np.round(main_loss_sum / main_loss_count, 2)}.")
+    logger.log(level=logging.INFO, msg=f"Epoch {str(epoch).zfill(3)}, {(5 - len('train')) * ' ' + 'train'.capitalize()} {cfg['loss_function']} loss is {np.round(main_loss_sum_for_logging / loss_count, 2)}.")
 
     # We store the averaged loss.
     train_loss_dict = {
-        cfg["loss_function"]: main_loss_sum / main_loss_count,
+        cfg["loss_function"]: main_loss_sum_for_logging / loss_count,
     }
 
     if cfg["l1_reg_diagonal_coeff"] > 0 or cfg["l1_reg_nondiagonal_coeff"] > 0:
-        train_loss_dict["l1_loss"] = l1_loss_sum / l1_loss_count
+        train_loss_dict["l1_loss"] = l1_loss_sum / loss_count
 
     if cfg["l2_reg_diagonal_coeff"] > 0 or cfg["l2_reg_nondiagonal_coeff"] > 0:
-        train_loss_dict["l2_loss"] = l2_loss_sum / l2_loss_count
+        train_loss_dict["l2_loss"] = l2_loss_sum / loss_count
 
     if cfg["model"] == "dl_interpretable_mlp" and cfg["interpretable_mlp_predicted_weights_l1_reg_coeff"] > 0:
-        train_loss_dict["interpretable_mlp_predicted_weights_l1_loss"] = interpretable_mlp_predicted_weights_l1_loss_sum / interpretable_mlp_predicted_weights_l1_loss_count
+        train_loss_dict["interpretable_mlp_predicted_weights_l1_loss"] = interpretable_mlp_predicted_weights_l1_loss_sum / loss_count
+
+    train_loss_dict["total_loss"] = total_loss_sum_for_logging / loss_count
 
     train_main_loss_values.append(train_loss_dict[cfg["loss_function"]])
 
