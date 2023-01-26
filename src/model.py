@@ -105,7 +105,7 @@ class DLLinearZeroDiagonal(nn.Module):
         nn.init.uniform_(self.bias, -bound, bound)
 
     def reconstruct_weight(self, diagonal_weights: torch.Tensor):
-        weight = torch.zeros(size=(self.output_dimension, self.input_dimension))
+        weight = torch.zeros(size=(self.output_dimension, self.input_dimension), device=self.cfg["device"])
         upper_triangle_counter = 0
         lower_triangle_counter = 0
         for i in range(self.output_dimension):
@@ -121,7 +121,7 @@ class DLLinearZeroDiagonal(nn.Module):
         return weight
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        weight = self.reconstruct_weight(diagonal_weights=torch.zeros(size=(1, self.len_diagonal_weights)))
+        weight = self.reconstruct_weight(diagonal_weights=torch.zeros(size=(1, self.len_diagonal_weights), device=self.cfg["device"]))
         return F.linear(input=x, weight=weight, bias=self.bias)
 
 
