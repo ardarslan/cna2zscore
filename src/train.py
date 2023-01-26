@@ -98,11 +98,11 @@ def train(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Mo
         if cfg["use_cna_adjusted_zscore"]:
             yhat_for_logging = yhat + dataset.cna_adjustment_intercepts[0] + dataset.cna_adjustment_coeffs[0] * X[:, :yhat.shape[1]]
             y_for_logging = y + dataset.cna_adjustment_intercepts[0] + dataset.cna_adjustment_coeffs[0] * X[:, :yhat.shape[1]]
-            current_main_loss_for_backprop = float(loss_function(yhat, y))
+            current_main_loss_for_backprop = loss_function(yhat, y)
             current_main_loss_for_logging = float(loss_function(yhat_for_logging, y_for_logging))
         else:
-            current_main_loss_for_backprop = float(loss_function(yhat, y))
-            current_main_loss_for_logging = current_main_loss_for_backprop
+            current_main_loss_for_backprop = loss_function(yhat, y)
+            current_main_loss_for_logging = float(current_main_loss_for_backprop)
 
         main_loss_sum_for_backprop += current_main_loss_for_backprop
         main_loss_sum_for_logging += current_main_loss_for_logging
