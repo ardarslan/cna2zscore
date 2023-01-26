@@ -1,7 +1,7 @@
 cd src
 
 NUM_JOBS=0
-SLEEP_TIME=3
+SLEEP_TIME=0
 
 sleep_if_necessary() {
     if [ $(expr $(($NUM_JOBS+1)) % 100) == "0" ]; then
@@ -9,13 +9,19 @@ sleep_if_necessary() {
     fi
 }
 
-for MODEL in 'dl_linear' 'dl_per_gene' 'dl_mlp' 'sklearn_per_gene' 'sklearn_linear'; do
-    for CANCER_TYPE in 'all'; do
+for MODEL in 'dl_linear_zero_diagonal' 'dl_linear' 'dl_per_gene' 'sklearn_linear' 'sklearn_per_gene' 'dl_mlp'; do
+    for CANCER_TYPE in 'all' 'brca'; do
         for DATASET in 'unthresholdedcnapurity2zscore' 'rppa2zscore'; do
             if [[ $DATASET = 'rppa2zscore' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
+                USE_CNA_ADJUSTED_ZSCORE=false
             else
                 declare -a GENE_TYPE_OPTIONS=("breast_cancer_ipac_genes" "breast_cancer_ipac_and_rppa_genes" "168_highly_expressed_genes" "rppa_genes")
+                if [[ $MODEL = 'dl_linear' || $MODEL = 'dl_linear_zero_diagonal' ]]; then # FIXME
+                    USE_CNA_ADJUSTED_ZSCORE=true
+                else
+                    USE_CNA_ADJUSTED_ZSCORE=false
+                fi
             fi
 
             if [[ $MODEL = 'sklearn_per_gene' || $MODEL = 'sklearn_linear' ]]; then
@@ -61,6 +67,18 @@ for MODEL in 'dl_linear' 'dl_per_gene' 'dl_mlp' 'sklearn_per_gene' 'sklearn_line
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
                 PER_CHROMOSOME_OPTIONS=(false true)
             elif [[ $MODEL = 'dl_linear' ]]; then
+                RESCON_DIAGONAL_W_OPTIONS=(false)
+                HIDDEN_DIMENSION_OPTIONS=(0.0)
+                NUM_NONLINEAR_LAYERS_OPTIONS=(0)
+                L1_REG_DIAGONAL_COEFF_OPTIONS=(0.0 0.000001 0.00001 0.0001 0.001 0.01 0.1)
+                L2_REG_DIAGONAL_COEFF_OPTIONS=(0.0)
+                L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0 0.000001 0.00001 0.0001 0.001 0.01 0.1)
+                L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0)
+                INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS=(0.0)
+                GENE_EMBEDDING_SIZE_OPTIONS=(0)
+                NUM_ATTENTION_HEADS_OPTIONS=(0)
+                PER_CHROMOSOME_OPTIONS=(false true)
+            elif [[ $MODEL = 'dl_linear_zero_diagonal' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(0)
@@ -138,7 +156,7 @@ for MODEL in 'dl_linear' 'dl_per_gene' 'dl_mlp' 'sklearn_per_gene' 'sklearn_line
 
                                                     # No regularization
                                                     sleep_if_necessary
-                                                    sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME"
+                                                    sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
                                                     let NUM_JOBS=NUM_JOBS+1
 
                                                     # L1 regularization
@@ -149,7 +167,7 @@ for MODEL in 'dl_linear' 'dl_per_gene' 'dl_mlp' 'sklearn_per_gene' 'sklearn_line
                                                                     continue
                                                                 else
                                                                     sleep_if_necessary
-                                                                    sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_DIAGONAL_COEFF --l1_reg_nondiagonal_coeff $L1_REG_NONDIAGONAL_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME"
+                                                                    sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_DIAGONAL_COEFF --l1_reg_nondiagonal_coeff $L1_REG_NONDIAGONAL_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
                                                                     let NUM_JOBS=NUM_JOBS+1
                                                                 fi
                                                             done
@@ -157,7 +175,7 @@ for MODEL in 'dl_linear' 'dl_per_gene' 'dl_mlp' 'sklearn_per_gene' 'sklearn_line
                                                     else
                                                         for L1_REG_COEFF in "${L1_REG_COEFF_OPTIONS[@]}"; do
                                                             sleep_if_necessary
-                                                            sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_COEFF --l1_reg_nondiagonal_coeff $L1_REG_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME"
+                                                            sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_COEFF --l1_reg_nondiagonal_coeff $L1_REG_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
                                                             let NUM_JOBS=NUM_JOBS+1
                                                         done
                                                     fi
@@ -170,7 +188,7 @@ for MODEL in 'dl_linear' 'dl_per_gene' 'dl_mlp' 'sklearn_per_gene' 'sklearn_line
                                                                     continue
                                                                 else
                                                                     sleep_if_necessary
-                                                                    sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_DIAGONAL_COEFF --l2_reg_nondiagonal_coeff $L2_REG_NONDIAGONAL_COEFF --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME"
+                                                                    sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_DIAGONAL_COEFF --l2_reg_nondiagonal_coeff $L2_REG_NONDIAGONAL_COEFF --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
                                                                     let NUM_JOBS=NUM_JOBS+1
                                                                 fi
                                                             done
@@ -178,7 +196,7 @@ for MODEL in 'dl_linear' 'dl_per_gene' 'dl_mlp' 'sklearn_per_gene' 'sklearn_line
                                                     else
                                                         for L2_REG_COEFF in "${L2_REG_COEFF_OPTIONS[@]}"; do
                                                             sleep_if_necessary
-                                                            sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_COEFF --l2_reg_nondiagonal_coeff $L2_REG_COEFF --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME"
+                                                            sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_COEFF --l2_reg_nondiagonal_coeff $L2_REG_COEFF --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
                                                             let NUM_JOBS=NUM_JOBS+1
                                                         done
                                                     fi

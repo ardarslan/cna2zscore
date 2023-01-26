@@ -4,11 +4,11 @@ from typing import Any, Dict, List
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 
-def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter, val_main_loss_values: List[float]) -> np.float32:
+def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn.Module, loss_function, dataset: Dataset, epoch: int, logger: logging.Logger, summary_writer: SummaryWriter, val_main_loss_values: List[float]) -> np.float32:
     model.eval()
 
     with torch.no_grad():
@@ -20,6 +20,10 @@ def validate(cfg: Dict[str, Any], data_loaders: Dict[str, DataLoader], model: nn
             y = batch["y"]
 
             yhat = model(X)
+
+            if cfg["use_cna_adjusted_zscore"]:
+                yhat = yhat + dataset.cna_adjustment_intercepts[0] + dataset.cna_adjustment_coeffs[0] * X[:, :yhat.shape[1]]
+                y = y + dataset.cna_adjustment_intercepts[0] + dataset.cna_adjustment_coeffs[0] * X[:, :y.shape[1]]
 
             main_loss_count += float(y.shape[0] * y.shape[1])
             main_loss_sum += float(loss_function(yhat, y))

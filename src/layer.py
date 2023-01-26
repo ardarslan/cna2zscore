@@ -23,7 +23,7 @@ class NonLinearLayer(nn.Module):
         self.linear = nn.Linear(input_dimension, output_dimension, bias=False)
 
         # if cfg["normalization_type"] == "batch_normalization":
-        if cfg["model"] == "transformer":
+        if cfg["model"] == "dl_transformer":
             self.normalization = nn.LayerNorm(normalized_shape=output_dimension)
         else:
             self.normalization = nn.BatchNorm1d(num_features=output_dimension)

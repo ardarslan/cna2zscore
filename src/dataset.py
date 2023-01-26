@@ -138,16 +138,57 @@ class Dataset(torch.utils.data.Dataset):
             val_indices = val_test_indices[val_test_split_indices[0]]
             test_indices = val_test_indices[val_test_split_indices[1]]
             self.train_val_test_indices = [(train_indices.tolist(), val_indices.tolist(), test_indices.tolist())]
+
+            if self.cfg["use_cna_adjusted_zscore"]:
+                self.cna_adjustment_coeffs = []
+                self.cna_adjustment_intercepts = []
+                current_cna_adjustment_coeffs = []
+                current_cna_adjustment_intercepts = []
+                for j in range(self.y.shape[1]):
+                    current_coeff, current_intercept = np.polyfit(x=self.X[train_indices, j].ravel(), y=self.y[train_indices, j].ravel(), deg=1)
+                    self.y[:, j] = self.y[:, j].ravel() - current_intercept - current_coeff * self.X[:, j].ravel()
+                    current_cna_adjustment_coeffs.append(current_coeff)
+                    current_cna_adjustment_intercepts.append(current_intercept)
+                self.cna_adjustment_coeffs.append(torch.tensor(current_cna_adjustment_coeffs, dtype=torch.float32, device=self.device))
+                self.cna_adjustment_intercepts.append(torch.tensor(current_cna_adjustment_intercepts, dtype=torch.float32, device=self.device))
         else:
             all_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=1, test_size=self.split_ratios["test"], random_state=self.seed)
             all_split_indices = next(all_stratified_shuffle_split.split(X=self.sample_id_indices, y=self.all_cancer_types))
             test_indices = all_split_indices[1]
             train_val_indices = all_split_indices[0]
-            train_val_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=5, test_size=(self.split_ratios["val"]/(self.split_ratios["train"]+self.split_ratios["val"])), random_state=self.seed)
+            train_val_stratified_shuffle_split = StratifiedShuffleSplit(n_splits=self.cfg["num_cv_folds"], test_size=(self.split_ratios["val"]/(self.split_ratios["train"]+self.split_ratios["val"])), random_state=self.seed)
             train_val_cancer_types = self.all_cancer_types[train_val_indices]
             self.train_val_test_indices = []
             for current_train_indices, current_val_indices in train_val_stratified_shuffle_split.split(X=train_val_indices, y=train_val_cancer_types):
                 self.train_val_test_indices.append((train_val_indices[current_train_indices].tolist(), train_val_indices[current_val_indices].tolist(), test_indices.tolist()))
+
+            if self.cfg["use_cna_adjusted_zscore"]:
+                self.cna_adjustment_coeffs = []
+                self.cna_adjustment_intercepts = []
+
+                # for val
+                for current_train_indices, current_val_indices, _ in self.train_val_test_indices:
+                    current_cna_adjustment_coeffs = []
+                    current_cna_adjustment_intercepts = []
+                    for j in range(self.y.shape[1]):
+                        current_coeff, current_intercept = np.polyfit(x=self.X[current_train_indices, j].ravel(), y=self.y[current_train_indices, j].ravel(), deg=1)
+                        self.y[:, j] = self.y[:, j].ravel() - current_intercept - current_coeff * self.X[:, j].ravel()
+                        current_cna_adjustment_coeffs.append(current_coeff)
+                        current_cna_adjustment_intercepts.append(current_intercept)
+                    self.cna_adjustment_coeffs.append(torch.tensor(current_cna_adjustment_coeffs, dtype=torch.float32, device=self.device))
+                    self.cna_adjustment_intercepts.append(torch.tensor(current_cna_adjustment_intercepts, dtype=torch.float32, device=self.device))
+
+                # for test
+                train_val_indices = self.train_val_test_indices[0][0] + self.train_val_test_indices[0][1]
+                current_cna_adjustment_coeffs = []
+                current_cna_adjustment_intercepts = []
+                for j in range(self.y.shape[1]):
+                    current_coeff, current_intercept = np.polyfit(x=self.X[train_val_indices, j].ravel(), y=self.y[train_val_indices, j].ravel(), deg=1)
+                    self.y[:, j] = self.y[:, j].ravel() - current_intercept - current_coeff * self.X[:, j].ravel()
+                    current_cna_adjustment_coeffs.append(current_coeff)
+                    current_cna_adjustment_intercepts.append(current_intercept)
+                self.cna_adjustment_coeffs.append(torch.tensor(current_cna_adjustment_coeffs, dtype=torch.float32, device=self.device))
+                self.cna_adjustment_intercepts.append(torch.tensor(current_cna_adjustment_intercepts, dtype=torch.float32, device=self.device))
 
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         return {
