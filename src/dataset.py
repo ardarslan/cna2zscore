@@ -63,8 +63,10 @@ class Dataset(torch.utils.data.Dataset):
                 elif self.cfg["gene_type"] in ["breast_cancer_ipac_genes", "rppa_genes", "168_highly_expressed_genes", "1000_highly_expressed_genes"]:
                     intersecting_columns = set([str(entrezgene_id) for entrezgene_id in pd.read_csv(os.path.join(self.processed_data_dir, f"{self.cfg['gene_type']}.tsv"), sep="\t")["gene_id"].tolist()]).intersection(intersecting_columns)
                 elif self.cfg["gene_type"] == "breast_cancer_ipac_and_rppa_genes":
+                    union_columns = set()
                     for gene_type in ["breast_cancer_ipac_genes", "rppa_genes"]:
-                        intersecting_columns = set([str(entrezgene_id) for entrezgene_id in pd.read_csv(os.path.join(self.processed_data_dir, f"{gene_type}.tsv"), sep="\t")["gene_id"].tolist()]).intersection(intersecting_columns)
+                        union_columns.union(set([str(entrezgene_id) for entrezgene_id in pd.read_csv(os.path.join(self.processed_data_dir, f"{gene_type}.tsv"), sep="\t")["gene_id"].tolist()]))
+                    intersecting_columns = union_columns.intersection(intersecting_columns)
                 else:
                     raise Exception(f"{self.cfg['gene_type']} is not a valid gene_type.")
 
