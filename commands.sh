@@ -16,7 +16,7 @@ for MODEL in 'dl_linear' 'dl_per_gene' 'dl_linear_zero_diagonal' 'sklearn_linear
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
                 USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false)
             else
-                declare -a GENE_TYPE_OPTIONS=("breast_cancer_ipac_genes" "breast_cancer_ipac_and_rppa_genes" "168_highly_expressed_genes" "rppa_genes")
+                declare -a GENE_TYPE_OPTIONS=("breast_cancer_ipac_and_rppa_genes")
                 if [[ $MODEL = 'dl_linear' ]]; then
                     USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false true)
                 elif [[ $MODEL = 'dl_linear_zero_diagonal' ]]; then
