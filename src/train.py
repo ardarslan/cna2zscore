@@ -32,7 +32,11 @@ def calculate_current_regularization_loss(cfg: Dict[str, Any], model: nn.Module,
     current_regularization_loss = 0.0
 
     if cfg["model"] == "dl_linear_zero_diagonal":
-        current_regularization_loss = regularization_nondiagonal_coeff * (regularization_operation(model.upper_triangle_weights).sum() + regularization_operation(model.lower_triangle_weights).sum())
+        if cfg["per_chromosome"]:
+            for submodel in model.models:
+                current_regularization_loss += regularization_nondiagonal_coeff * (regularization_operation(submodel.upper_triangle_weights).sum() + regularization_operation(submodel.lower_triangle_weights).sum())
+        else:
+            current_regularization_loss += regularization_nondiagonal_coeff * (regularization_operation(model.upper_triangle_weights).sum() + regularization_operation(model.lower_triangle_weights).sum())
     elif regularization_diagonal_coeff != regularization_nondiagonal_coeff:
         # regularize diagonal elements
         if regularization_diagonal_coeff != 0.0:
