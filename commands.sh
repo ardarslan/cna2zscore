@@ -9,18 +9,20 @@ sleep_if_necessary() {
     fi
 }
 
-for MODEL in 'dl_linear_zero_diagonal'; do
+for MODEL in 'dl_linear' 'dl_per_gene' 'dl_linear_zero_diagonal' 'sklearn_linear' 'sklearn_per_gene' 'dl_mlp'; do
     for CANCER_TYPE in 'all' 'brca'; do
         for DATASET in 'unthresholdedcnapurity2zscore' 'rppa2zscore'; do
             if [[ $DATASET = 'rppa2zscore' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
-                USE_CNA_ADJUSTED_ZSCORE=false
+                USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false)
             else
                 declare -a GENE_TYPE_OPTIONS=("breast_cancer_ipac_genes" "breast_cancer_ipac_and_rppa_genes" "168_highly_expressed_genes" "rppa_genes")
-                if [[ $MODEL = 'dl_linear' || $MODEL = 'dl_linear_zero_diagonal' ]]; then # FIXME
-                    USE_CNA_ADJUSTED_ZSCORE=true
+                if [[ $MODEL = 'dl_linear' ]]; then
+                    USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false true)
+                elif [[ $MODEL = 'dl_linear_zero_diagonal' ]]; then
+                    USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(true)
                 else
-                    USE_CNA_ADJUSTED_ZSCORE=false
+                    USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false)
                 fi
             fi
 
@@ -153,54 +155,55 @@ for MODEL in 'dl_linear_zero_diagonal'; do
                                         for DROPOUT in "${DROPOUT_OPTIONS[@]}"; do
                                             for INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF in "${INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS[@]}"; do
                                                 for LEARNING_RATE in "${LEARNING_RATE_OPTIONS[@]}"; do
+                                                    for USE_CNA_ADJUSTED_ZSCORE in "${USE_CNA_ADJUSTED_ZSCORE_OPTIONS[@]}"; do
 
-                                                    # No regularization
-                                                    sleep_if_necessary
-                                                    sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
-                                                    let NUM_JOBS=NUM_JOBS+1
+                                                        # No regularization
+                                                        sleep_if_necessary
+                                                        sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
+                                                        let NUM_JOBS=NUM_JOBS+1
 
-                                                    # L1 regularization
-                                                    if [[ $MODEL = "dl_linear" ]]; then
-                                                        for L1_REG_DIAGONAL_COEFF in "${L1_REG_DIAGONAL_COEFF_OPTIONS[@]}"; do
-                                                            for L1_REG_NONDIAGONAL_COEFF in "${L1_REG_NONDIAGONAL_COEFF_OPTIONS[@]}"; do
-                                                                if (( $(echo "$L1_REG_DIAGONAL_COEFF > $L1_REG_NONDIAGONAL_COEFF" |bc -l) )); then
-                                                                    continue
-                                                                else
-                                                                    sleep_if_necessary
-                                                                    sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_DIAGONAL_COEFF --l1_reg_nondiagonal_coeff $L1_REG_NONDIAGONAL_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
-                                                                    let NUM_JOBS=NUM_JOBS+1
-                                                                fi
+                                                        # L1 regularization
+                                                        if [[ $MODEL = "dl_linear" ]]; then
+                                                            for L1_REG_DIAGONAL_COEFF in "${L1_REG_DIAGONAL_COEFF_OPTIONS[@]}"; do
+                                                                for L1_REG_NONDIAGONAL_COEFF in "${L1_REG_NONDIAGONAL_COEFF_OPTIONS[@]}"; do
+                                                                    if (( $(echo "$L1_REG_DIAGONAL_COEFF > $L1_REG_NONDIAGONAL_COEFF" |bc -l) )); then
+                                                                        continue
+                                                                    else
+                                                                        sleep_if_necessary
+                                                                        sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_DIAGONAL_COEFF --l1_reg_nondiagonal_coeff $L1_REG_NONDIAGONAL_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
+                                                                        let NUM_JOBS=NUM_JOBS+1
+                                                                    fi
+                                                                done
                                                             done
-                                                        done
-                                                    else
-                                                        for L1_REG_COEFF in "${L1_REG_COEFF_OPTIONS[@]}"; do
-                                                            sleep_if_necessary
-                                                            sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_COEFF --l1_reg_nondiagonal_coeff $L1_REG_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
-                                                            let NUM_JOBS=NUM_JOBS+1
-                                                        done
-                                                    fi
-
-                                                    # L2 regularization
-                                                    if [[ $MODEL = "dl_linear" ]]; then
-                                                        for L2_REG_DIAGONAL_COEFF in "${L2_REG_DIAGONAL_COEFF_OPTIONS[@]}"; do
-                                                            for L2_REG_NONDIAGONAL_COEFF in "${L2_REG_NONDIAGONAL_COEFF_OPTIONS[@]}"; do
-                                                                if (( $(echo "$L2_REG_DIAGONAL_COEFF > $L2_REG_NONDIAGONAL_COEFF" |bc -l) )); then
-                                                                    continue
-                                                                else
-                                                                    sleep_if_necessary
-                                                                    sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_DIAGONAL_COEFF --l2_reg_nondiagonal_coeff $L2_REG_NONDIAGONAL_COEFF --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
-                                                                    let NUM_JOBS=NUM_JOBS+1
-                                                                fi
+                                                        else
+                                                            for L1_REG_COEFF in "${L1_REG_COEFF_OPTIONS[@]}"; do
+                                                                sleep_if_necessary
+                                                                sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff $L1_REG_COEFF --l1_reg_nondiagonal_coeff $L1_REG_COEFF --l2_reg_diagonal_coeff 0.0 --l2_reg_nondiagonal_coeff 0.0 --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
+                                                                let NUM_JOBS=NUM_JOBS+1
                                                             done
-                                                        done
-                                                    else
-                                                        for L2_REG_COEFF in "${L2_REG_COEFF_OPTIONS[@]}"; do
-                                                            sleep_if_necessary
-                                                            sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_COEFF --l2_reg_nondiagonal_coeff $L2_REG_COEFF --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
-                                                            let NUM_JOBS=NUM_JOBS+1
-                                                        done
-                                                    fi
+                                                        fi
 
+                                                        # L2 regularization
+                                                        if [[ $MODEL = "dl_linear" ]]; then
+                                                            for L2_REG_DIAGONAL_COEFF in "${L2_REG_DIAGONAL_COEFF_OPTIONS[@]}"; do
+                                                                for L2_REG_NONDIAGONAL_COEFF in "${L2_REG_NONDIAGONAL_COEFF_OPTIONS[@]}"; do
+                                                                    if (( $(echo "$L2_REG_DIAGONAL_COEFF > $L2_REG_NONDIAGONAL_COEFF" |bc -l) )); then
+                                                                        continue
+                                                                    else
+                                                                        sleep_if_necessary
+                                                                        sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_DIAGONAL_COEFF --l2_reg_nondiagonal_coeff $L2_REG_NONDIAGONAL_COEFF --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
+                                                                        let NUM_JOBS=NUM_JOBS+1
+                                                                    fi
+                                                                done
+                                                            done
+                                                        else
+                                                            for L2_REG_COEFF in "${L2_REG_COEFF_OPTIONS[@]}"; do
+                                                                sleep_if_necessary
+                                                                sbatch $TIME_SETTINGS $CPU_SETTINGS $GPU_SETTINGS --wrap="python $MAIN_FILE_NAME --dataset $DATASET --cancer_type $CANCER_TYPE --gene_type $GENE_TYPE --model $MODEL --rescon_diagonal_W $RESCON_DIAGONAL_W --gene_embedding_size $GENE_EMBEDDING_SIZE --num_attention_heads $NUM_ATTENTION_HEADS --num_nonlinear_layers $NUM_NONLINEAR_LAYERS --hidden_dimension $HIDDEN_DIMENSION --learning_rate $LEARNING_RATE --l1_reg_diagonal_coeff 0.0 --l1_reg_nondiagonal_coeff 0.0 --l2_reg_diagonal_coeff $L2_REG_COEFF --l2_reg_nondiagonal_coeff $L2_REG_COEFF --dropout $DROPOUT --interpretable_mlp_predicted_weights_l1_reg_coeff $INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF --per_chromosome $PER_CHROMOSOME --use_cna_adjusted_zscore $USE_CNA_ADJUSTED_ZSCORE"
+                                                                let NUM_JOBS=NUM_JOBS+1
+                                                            done
+                                                        fi
+                                                    done
                                                 done
                                             done
                                         done
