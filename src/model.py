@@ -58,10 +58,15 @@ class DLPerGene(nn.Module):
             self.biases.append(current_bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        nongene_inputs = x[:, -(self.input_dimension - self.output_dimension):]
+        if self.input_dimension != self.output_dimension:
+            nongene_inputs = x[:, -(self.input_dimension - self.output_dimension):]
+
         y = torch.zeros(size=(x.shape[0], self.output_dimension), device=self.cfg["device"])
         for j in range(self.output_dimension):
-            y[:, j] = F.linear(torch.concat((x[:, j:j+1], nongene_inputs), dim=1), self.weights[j], self.biases[j]).squeeze()
+            if self.input_dimension != self.output_dimension:
+                y[:, j] = F.linear(torch.concat((x[:, j:j+1], nongene_inputs), dim=1), self.weights[j], self.biases[j]).squeeze()
+            else:
+                y[:, j] = F.linear(x[:, j:j+1], self.weights[j], self.biases[j]).squeeze()
         return y
 
 
