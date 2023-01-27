@@ -82,7 +82,7 @@ for MODEL in 'dl_linear_zero_diagonal' 'dl_linear' 'dl_per_gene' 'sklearn_linear
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(0)
-                L1_REG_DIAGONAL_COEFF_OPTIONS=(0.0 0.000001 0.00001 0.0001 0.001 0.01 0.1)
+                L1_REG_DIAGONAL_COEFF_OPTIONS=(0.0)
                 L2_REG_DIAGONAL_COEFF_OPTIONS=(0.0)
                 L1_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0 0.000001 0.00001 0.0001 0.001 0.01 0.1)
                 L2_REG_NONDIAGONAL_COEFF_OPTIONS=(0.0)
