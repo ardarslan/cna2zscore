@@ -9,7 +9,7 @@ sleep_if_necessary() {
     fi
 }
 
-for MODEL in 'dl_linear_zero_diagonal' 'dl_linear' 'dl_per_gene' 'sklearn_linear' 'sklearn_per_gene' 'dl_mlp'; do
+for MODEL in 'dl_linear_zero_diagonal'; do
     for CANCER_TYPE in 'all' 'brca'; do
         for DATASET in 'unthresholdedcnapurity2zscore' 'rppa2zscore'; do
             if [[ $DATASET = 'rppa2zscore' ]]; then
