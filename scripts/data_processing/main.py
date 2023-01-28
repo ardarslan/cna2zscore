@@ -8,12 +8,12 @@ from cancer_type import get_cancer_type_data
 from tumor_purity import get_tumor_purity_data
 from gex import get_gex_data
 from zscore import get_zscore_data
-from gene_predictability import get_gene_predictability_data
+from overall_survival import get_overall_survival_data
 
 from utils import get_dfs_with_intersecting_sample_ids, get_dfs_with_intersecting_columns
 
 
-data_dir = "data" # FIXME ("/cluster/scratch/aarslan/cna2gex_data")
+data_dir = "/cluster/scratch/aarslan/cna2gex_data"
 raw_folder_name = "raw"
 processed_folder_name = "processed"
 os.makedirs(os.path.join(data_dir, processed_folder_name), exist_ok=True)
@@ -71,6 +71,6 @@ if __name__ == "__main__":
     highly_expressed_genes_df.iloc[:1000, :][["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "1000_highly_expressed_genes.tsv"), sep="\t", index=False)
     del highly_expressed_genes_df
 
-    gene_predictability_df = get_gene_predictability_data(gex_df=gex_df, entrezgene_id_to_mean_and_std_gex_mapping_df=entrezgene_id_to_mean_and_std_gex_mapping_df, thresholded_cna_df=thresholded_cna_df)
-    gene_predictability_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_to_aug_adg_ddg_dug_ratios_mapping.tsv"), sep="\t", index=False)
-    print("gene_predictability_df.shape:", gene_predictability_df.shape)
+    overall_survival_df = get_overall_survival_data(data_dir=data_dir, raw_folder_name=raw_folder_name)
+    overall_survival_df.to_csv(os.path.join(data_dir, processed_folder_name, "overall_survival.tsv"), sep="\t", index=False)
+    del overall_survival_df
