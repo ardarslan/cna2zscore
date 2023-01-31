@@ -30,42 +30,51 @@ driver = webdriver.Chrome(ChromeDriverManager().install())
 
 # In[ ]:
 
-data_dir = "../data"
+data_dir = "../../data"
 raw_folder_name = "raw"
 processed_folder_name = "processed"
 cna_file_name = "TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_all_data_by_genes"
 rppa_file_name = "TCGA-RPPA-pancan-clean.xena"
 gex_file_name = "EB++AdjustPANCAN_IlluminaHiSeq_RNASeqV2.geneExp.xena"
+breast_cancer_ipac_genes_file_name = "breast_cancer_ipac_genes.tsv"
+breast_cancer_scc_genes_file_name = "breast_cancer_scc_genes.tsv"
 protein_to_hgnc_mapping_file_name = "tcpa_to_ncbi_mapping.csv"
 output_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
 
 # In[ ]:
 
-cna_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cna_file_name), sep="\t")
-cna_df["Sample"] = cna_df["Sample"].apply(lambda x: x.split("|")[0])
-cna_df_hgnc_symbols = set(cna_df["Sample"].tolist())
-del cna_df
+# cna_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cna_file_name), sep="\t")
+# cna_df["Sample"] = cna_df["Sample"].apply(lambda x: x.split("|")[0])
+# cna_df_hgnc_symbols = set(cna_df["Sample"].tolist())
+# del cna_df
 
-# In[ ]:
+# # In[ ]:
 
-rppa_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, rppa_file_name), sep="\t")
-rppa_df.index = rppa_df["SampleID"].tolist()
-rppa_df.drop(columns=["SampleID"], inplace=True)
-rppa_df = rppa_df.T
-rppa_df.reset_index(drop=False, inplace=True)
-rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
-rppa_df = rppa_df.dropna(axis=1)
-protein_to_hgnc_mapping_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, protein_to_hgnc_mapping_file_name), sep=",")
-protein_to_hgnc_mapping = dict(protein_to_hgnc_mapping_df[["TCPA Symbol", "NCBI Symbol 1"]].values)
-rppa_df_hgnc_symbols = set([protein_to_hgnc_mapping[column] for column in rppa_df.columns if column != "sample_id"])
-del rppa_df
-del protein_to_hgnc_mapping_df
+# rppa_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, rppa_file_name), sep="\t")
+# rppa_df.index = rppa_df["SampleID"].tolist()
+# rppa_df.drop(columns=["SampleID"], inplace=True)
+# rppa_df = rppa_df.T
+# rppa_df.reset_index(drop=False, inplace=True)
+# rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
+# rppa_df = rppa_df.dropna(axis=1)
+# protein_to_hgnc_mapping_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, protein_to_hgnc_mapping_file_name), sep=",")
+# protein_to_hgnc_mapping = dict(protein_to_hgnc_mapping_df[["TCPA Symbol", "NCBI Symbol 1"]].values)
+# rppa_df_hgnc_symbols = set([protein_to_hgnc_mapping[column] for column in rppa_df.columns if column != "sample_id"])
+# del rppa_df
+# del protein_to_hgnc_mapping_df
 
-gex_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, gex_file_name), sep="\t")
-gex_df_hgnc_symbols = set([gene_id for gene_id in gex_df["sample"].tolist() if isinstance(gene_id, str) and (not gene_id.isdigit())])
-del gex_df
+# gex_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, gex_file_name), sep="\t")
+# gex_df_hgnc_symbols = set([gene_id for gene_id in gex_df["sample"].tolist() if isinstance(gene_id, str) and (not gene_id.isdigit())])
+# del gex_df
 
-hgnc_symbols = cna_df_hgnc_symbols.union(gex_df_hgnc_symbols).union(rppa_df_hgnc_symbols)
+breast_cancer_ipac_genes_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, breast_cancer_ipac_genes_file_name), sep="\t")
+breast_cancer_ipac_genes_hgnc_symbols = set(breast_cancer_ipac_genes_df["hgnc_symbol"].tolist())
+
+breast_cancer_scc_genes_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, breast_cancer_scc_genes_file_name), sep="\t")
+breast_cancer_scc_genes_hgnc_symbols = set(breast_cancer_scc_genes_df["hgnc_symbol"].tolist())
+
+# hgnc_symbols = cna_df_hgnc_symbols.union(gex_df_hgnc_symbols).union(rppa_df_hgnc_symbols).union(breast_cancer_ipac_genes_hgnc_symbols).union(breast_cancer_scc_genes_hgnc_symbols)
+hgnc_symbols = breast_cancer_ipac_genes_hgnc_symbols.union(breast_cancer_scc_genes_hgnc_symbols)
 
 mart = r.useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 r_df = r.getBM(attributes = StrVector(("hgnc_symbol", "entrezgene_id", "chromosome_name")),
