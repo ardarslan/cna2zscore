@@ -73,8 +73,7 @@ breast_cancer_ipac_genes_hgnc_symbols = set(breast_cancer_ipac_genes_df["hgnc_sy
 breast_cancer_scc_genes_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, breast_cancer_scc_genes_file_name), sep="\t")
 breast_cancer_scc_genes_hgnc_symbols = set(breast_cancer_scc_genes_df["hgnc_symbol"].tolist())
 
-# hgnc_symbols = cna_df_hgnc_symbols.union(gex_df_hgnc_symbols).union(rppa_df_hgnc_symbols).union(breast_cancer_ipac_genes_hgnc_symbols).union(breast_cancer_scc_genes_hgnc_symbols)
-hgnc_symbols = breast_cancer_ipac_genes_hgnc_symbols.union(breast_cancer_scc_genes_hgnc_symbols)
+hgnc_symbols = cna_df_hgnc_symbols.union(gex_df_hgnc_symbols).union(rppa_df_hgnc_symbols).union(breast_cancer_ipac_genes_hgnc_symbols).union(breast_cancer_scc_genes_hgnc_symbols)
 
 mart = r.useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 r_df = r.getBM(attributes = StrVector(("hgnc_symbol", "entrezgene_id", "chromosome_name")),
