@@ -74,11 +74,11 @@ if __name__ == "__main__":
     # del highly_expressed_genes_df
 
     breast_cancer_scc_genes_df = get_breast_cancer_scc_genes_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name)
-    breast_cancer_scc_genes_df[["entrezgene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "breast_cancer_scc_genes.tsv"), sep="\t", index=False)
+    breast_cancer_scc_genes_df[["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "breast_cancer_scc_genes.tsv"), sep="\t", index=False)
     del breast_cancer_scc_genes_df
 
     breast_cancer_ipac_genes_df = get_breast_cancer_ipac_genes_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name)
-    breast_cancer_ipac_genes_df[["entrezgene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "breast_cancer_ipac_genes.tsv"), sep="\t", index=False)
+    breast_cancer_ipac_genes_df[["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "breast_cancer_ipac_genes.tsv"), sep="\t", index=False)
     del breast_cancer_ipac_genes_df
 
     # overall_survival_df = get_overall_survival_data(data_dir=data_dir, raw_folder_name=raw_folder_name)
