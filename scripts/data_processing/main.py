@@ -15,7 +15,7 @@ from breast_cancer_ipac_genes import get_breast_cancer_ipac_genes_data
 from utils import get_dfs_with_intersecting_sample_ids, get_dfs_with_intersecting_columns
 
 
-data_dir = "data"
+data_dir = "../../data"
 raw_folder_name = "raw"
 processed_folder_name = "processed"
 os.makedirs(os.path.join(data_dir, processed_folder_name), exist_ok=True)
