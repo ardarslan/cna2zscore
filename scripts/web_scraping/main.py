@@ -39,7 +39,8 @@ gex_file_name = "EB++AdjustPANCAN_IlluminaHiSeq_RNASeqV2.geneExp.xena"
 breast_cancer_ipac_genes_file_name = "breast_cancer_ipac_genes.tsv"
 breast_cancer_scc_genes_file_name = "breast_cancer_scc_genes.tsv"
 protein_to_hgnc_mapping_file_name = "tcpa_to_ncbi_mapping.csv"
-output_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
+hgnc_to_entrezgene_id_mapping_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
+entrezgene_id_chromosome_name_mapping_file_name = "entrezgene_id_chromosome_name_mapping.tsv"
 
 # In[ ]:
 
@@ -89,6 +90,11 @@ pandas_df = pandas_df[~pd.isnull(pandas_df["hgnc_symbol"]) & \
 
 hgnc_entrezgene_id_mapping = dict(pandas_df[["hgnc_symbol", "entrezgene_id"]].values)
 entrezgene_id_chromosome_name_mapping = dict(pandas_df[["entrezgene_id", "chromosome_name"]].values)
+# entrezgene_id_chromosome_name_mapping = dict()
+# hgnc_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, hgnc_to_entrezgene_id_mapping_file_name), sep="\t").values)
+# old_entrezgene_id_chromosome_name_mapping = pd.read_csv(os.path.join(data_dir, processed_folder_name, "old_entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
+# entrezgene_ids = set(hgnc_entrezgene_id_mapping.values()) - set(old_entrezgene_id_chromosome_name_mapping.keys())
+# hgnc_symbols = [key for key, value in hgnc_entrezgene_id_mapping.items() if value not in entrezgene_ids]
 
 hgnc_symbols = list(hgnc_symbols - hgnc_entrezgene_id_mapping.keys())
 
@@ -112,7 +118,7 @@ for hgnc_symbol in tqdm(hgnc_symbols):
         print(f"Error with hgnc_symbol: {hgnc_symbol}: {e}")
 
 hgnc_entrezgene_id_mapping_df = pd.DataFrame.from_dict({"hgnc_symbol": hgnc_entrezgene_id_mapping.keys(), "entrezgene_id": hgnc_entrezgene_id_mapping.values()})
-hgnc_entrezgene_id_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, "hgnc_to_entrezgene_id_mapping.tsv"), sep="\t", index=False)
+hgnc_entrezgene_id_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, hgnc_to_entrezgene_id_mapping_file_name), sep="\t", index=False)
 
 entrezgene_id_chromosome_name_mapping_df = pd.DataFrame.from_dict({"entrezgene_id": entrezgene_id_chromosome_name_mapping.keys(), "chromosome_name": entrezgene_id_chromosome_name_mapping.values()})
-entrezgene_id_chromosome_name_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, "entrezgene_id_chromosome_name_mapping.tsv"), sep="\t", index=False)
+entrezgene_id_chromosome_name_mapping_df.to_csv(os.path.join(data_dir, processed_folder_name, entrezgene_id_chromosome_name_mapping_file_name), sep="\t", index=False)
