@@ -43,29 +43,29 @@ output_file_name = "hgnc_to_entrezgene_id_mapping.tsv"
 
 # In[ ]:
 
-# cna_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cna_file_name), sep="\t")
-# cna_df["Sample"] = cna_df["Sample"].apply(lambda x: x.split("|")[0])
-# cna_df_hgnc_symbols = set(cna_df["Sample"].tolist())
-# del cna_df
+cna_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cna_file_name), sep="\t")
+cna_df["Sample"] = cna_df["Sample"].apply(lambda x: x.split("|")[0])
+cna_df_hgnc_symbols = set(cna_df["Sample"].tolist())
+del cna_df
 
-# # In[ ]:
+# In[ ]:
 
-# rppa_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, rppa_file_name), sep="\t")
-# rppa_df.index = rppa_df["SampleID"].tolist()
-# rppa_df.drop(columns=["SampleID"], inplace=True)
-# rppa_df = rppa_df.T
-# rppa_df.reset_index(drop=False, inplace=True)
-# rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
-# rppa_df = rppa_df.dropna(axis=1)
-# protein_to_hgnc_mapping_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, protein_to_hgnc_mapping_file_name), sep=",")
-# protein_to_hgnc_mapping = dict(protein_to_hgnc_mapping_df[["TCPA Symbol", "NCBI Symbol 1"]].values)
-# rppa_df_hgnc_symbols = set([protein_to_hgnc_mapping[column] for column in rppa_df.columns if column != "sample_id"])
-# del rppa_df
-# del protein_to_hgnc_mapping_df
+rppa_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, rppa_file_name), sep="\t")
+rppa_df.index = rppa_df["SampleID"].tolist()
+rppa_df.drop(columns=["SampleID"], inplace=True)
+rppa_df = rppa_df.T
+rppa_df.reset_index(drop=False, inplace=True)
+rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
+rppa_df = rppa_df.dropna(axis=1)
+protein_to_hgnc_mapping_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, protein_to_hgnc_mapping_file_name), sep=",")
+protein_to_hgnc_mapping = dict(protein_to_hgnc_mapping_df[["TCPA Symbol", "NCBI Symbol 1"]].values)
+rppa_df_hgnc_symbols = set([protein_to_hgnc_mapping[column] for column in rppa_df.columns if column != "sample_id"])
+del rppa_df
+del protein_to_hgnc_mapping_df
 
-# gex_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, gex_file_name), sep="\t")
-# gex_df_hgnc_symbols = set([gene_id for gene_id in gex_df["sample"].tolist() if isinstance(gene_id, str) and (not gene_id.isdigit())])
-# del gex_df
+gex_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, gex_file_name), sep="\t")
+gex_df_hgnc_symbols = set([gene_id for gene_id in gex_df["sample"].tolist() if isinstance(gene_id, str) and (not gene_id.isdigit())])
+del gex_df
 
 breast_cancer_ipac_genes_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, breast_cancer_ipac_genes_file_name), sep="\t")
 breast_cancer_ipac_genes_hgnc_symbols = set(breast_cancer_ipac_genes_df["hgnc_symbol"].tolist())
