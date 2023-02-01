@@ -272,9 +272,9 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2zscore_data/processed", help="Directory for the processed files.")
+    parser.add_argument("--processed_data_dir", type=str, default="data/processed", help="Directory for the processed files.")
     parser.add_argument("--dataset", type=str, default="rppa2zscore", choices=["unthresholdedcnapurity2zscore", "thresholdedcnapurity2zscore", "unthresholdedcnapurity2zscore", "thresholdedcna2zscore", "unthresholdedcna2zscore", "rppa2zscore"], help="Name of the dataset.")
-    parser.add_argument("--gene_type", type=str, default="rppa_genes")
+    parser.add_argument("--gene_type", type=str, default="breast_cancer_scc_genes_2_6")
     parser.add_argument("--cancer_type", type=str, default="blca", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
     parser.add_argument("--split_ratios", type=dict, default={"train": 0.6, "val": 0.2, "test": 0.2}, help="Ratios for train, val and test splits.")
     parser.add_argument("--use_cna_adjusted_zscore", type=str2bool, default=True, help="Whether to adjust Z-Score of each gene using its copy number or not.")
@@ -282,7 +282,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
 
     # model
     parser.add_argument("--model", type=str, default="dl_linear_zero_diagonal", choices=["dl_gene_embeddings", "dl_per_gene", "dl_linear", "dl_linear_zero_diagonal", "dl_interpretable_mlp", "dl_mlp", "dl_rescon_mlp", "dl_transformer", "sklearn_linear", "sklearn_per_gene"], help="Which model to use.")
-    parser.add_argument("--per_chromosome", type=str2bool, nargs='?', const=True, default=True, help="Whether to use a per chromosome model or not.")
+    parser.add_argument("--per_chromosome", type=str2bool, nargs='?', const=True, default=False, help="Whether to use a per chromosome model or not.")
     parser.add_argument("--num_nonlinear_layers", type=int, default=1, help="Number of layers with a nonlinear activation.")
     parser.add_argument("--hidden_dimension_ratio", type=float, default=0.10, help="Ratio of number of nodes in a hidden layer to max(number of nodes in input layer, number of nodes in output layer).")
     parser.add_argument("--hidden_activation", type=str, default="relu", choices=["relu", "leaky_relu"], help="Activation function used to activate each hidden layer's (batch normalized) output.")
@@ -319,7 +319,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early_stopping_patience", type=int, default=8, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2zscore_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="cna2zscore_checkpoints")
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")
