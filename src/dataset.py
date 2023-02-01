@@ -67,7 +67,7 @@ class Dataset(torch.utils.data.Dataset):
                     component_entrezgene_ids = set()
                     for component_id in component_ids:
                         component_entrezgene_ids.union([str(entrezgene_id) for entrezgene_id in pd.read_csv(os.path.join(self.processed_data_dir, f"breast_cancer_scc_genes_component_{component_id.zfill(2)}.tsv"), sep="\t")["gene_id"].tolist()])
-                    intersecting_columns = intersecting_columns.intersect(component_entrezgene_ids)
+                    intersecting_columns = intersecting_columns.intersection(component_entrezgene_ids)
                 else:
                     raise Exception(f"{self.cfg['gene_type']} is not a valid gene_type.")
 
