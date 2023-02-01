@@ -272,7 +272,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=0, help="Random seed for reproducibility.")
 
     # data
-    parser.add_argument("--processed_data_dir", type=str, default="data/processed", help="Directory for the processed files.")
+    parser.add_argument("--processed_data_dir", type=str, default="/cluster/scratch/aarslan/cna2zscore_data/processed", help="Directory for the processed files.")
     parser.add_argument("--dataset", type=str, default="rppa2zscore", choices=["unthresholdedcnapurity2zscore", "thresholdedcnapurity2zscore", "unthresholdedcnapurity2zscore", "thresholdedcna2zscore", "unthresholdedcna2zscore", "rppa2zscore"], help="Name of the dataset.")
     parser.add_argument("--gene_type", type=str, default="breast_cancer_scc_genes_2_6")
     parser.add_argument("--cancer_type", type=str, default="blca", choices=["blca", "skcm", "thcm", "sarc", "prad", "pcpg", "paad", "hnsc", "esca", "coad", "cesc", "brca", "blca", "tgct", "kirp", "kirc", "laml", "read", "ov", "luad", "lihc", "ucec", "gbm", "lgg", "ucs", "thym", "stad", "dlbc", "lusc", "meso", "kich", "uvm", "chol", "acc", "all"], help="Cancer type.")
@@ -319,7 +319,7 @@ def get_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early_stopping_patience", type=int, default=8, help="Number of epochs to wait without an improvement in validation loss, before stopping the training.")
 
     # checkpoints
-    parser.add_argument("--checkpoints_dir", type=str, default="cna2zscore_checkpoints")
+    parser.add_argument("--checkpoints_dir", type=str, default="/cluster/scratch/aarslan/cna2zscore_checkpoints")
 
     # logging
     parser.add_argument("--log_level", type=str, default="info")
