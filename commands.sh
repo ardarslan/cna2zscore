@@ -11,7 +11,7 @@ sleep_if_necessary() {
 
 for MODEL in 'dl_linear' 'sklearn_linear' 'dl_mlp' 'dl_linear_zero_diagonal'; do
     for CANCER_TYPE in 'all' 'brca'; do
-        for DATASET in 'unthresholdedcnapurity2zscore'; do
+        for DATASET in 'unthresholdedcnapurity2zscore' 'rppa2zscore'; do
             if [[ $DATASET = 'rppa2zscore' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
                 USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false)
