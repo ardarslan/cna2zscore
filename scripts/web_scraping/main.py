@@ -44,37 +44,38 @@ entrezgene_id_chromosome_name_mapping_file_name = "entrezgene_id_chromosome_name
 
 # In[ ]:
 
-cna_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cna_file_name), sep="\t")
-cna_df["Sample"] = cna_df["Sample"].apply(lambda x: x.split("|")[0])
-cna_df_hgnc_symbols = set(cna_df["Sample"].tolist())
-del cna_df
+# cna_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, cna_file_name), sep="\t")
+# cna_df["Sample"] = cna_df["Sample"].apply(lambda x: x.split("|")[0])
+# cna_df_hgnc_symbols = set(cna_df["Sample"].tolist())
+# del cna_df
 
 # In[ ]:
 
-rppa_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, rppa_file_name), sep="\t")
-rppa_df.index = rppa_df["SampleID"].tolist()
-rppa_df.drop(columns=["SampleID"], inplace=True)
-rppa_df = rppa_df.T
-rppa_df.reset_index(drop=False, inplace=True)
-rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
-rppa_df = rppa_df.dropna(axis=1)
-protein_to_hgnc_mapping_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, protein_to_hgnc_mapping_file_name), sep=",")
-protein_to_hgnc_mapping = dict(protein_to_hgnc_mapping_df[["TCPA Symbol", "NCBI Symbol 1"]].values)
-rppa_df_hgnc_symbols = set([protein_to_hgnc_mapping[column] for column in rppa_df.columns if column != "sample_id"])
-del rppa_df
-del protein_to_hgnc_mapping_df
+# rppa_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, rppa_file_name), sep="\t")
+# rppa_df.index = rppa_df["SampleID"].tolist()
+# rppa_df.drop(columns=["SampleID"], inplace=True)
+# rppa_df = rppa_df.T
+# rppa_df.reset_index(drop=False, inplace=True)
+# rppa_df.rename(columns={"index": "sample_id"}, inplace=True)
+# rppa_df = rppa_df.dropna(axis=1)
+# protein_to_hgnc_mapping_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, protein_to_hgnc_mapping_file_name), sep=",")
+# protein_to_hgnc_mapping = dict(protein_to_hgnc_mapping_df[["TCPA Symbol", "NCBI Symbol 1"]].values)
+# rppa_df_hgnc_symbols = set([protein_to_hgnc_mapping[column] for column in rppa_df.columns if column != "sample_id"])
+# del rppa_df
+# del protein_to_hgnc_mapping_df
 
-gex_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, gex_file_name), sep="\t")
-gex_df_hgnc_symbols = set([gene_id for gene_id in gex_df["sample"].tolist() if isinstance(gene_id, str) and (not gene_id.isdigit())])
-del gex_df
+# gex_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, gex_file_name), sep="\t")
+# gex_df_hgnc_symbols = set([gene_id for gene_id in gex_df["sample"].tolist() if isinstance(gene_id, str) and (not gene_id.isdigit())])
+# del gex_df
 
-breast_cancer_ipac_genes_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, breast_cancer_ipac_genes_file_name), sep="\t")
-breast_cancer_ipac_genes_hgnc_symbols = set(breast_cancer_ipac_genes_df["hgnc_symbol"].tolist())
+breast_cancer_scc_cna_components = pd.read_excel(os.path.join(data_dir, raw_folder_name, "journal.pone.0276886.s002.xlsx"), sheet_name="Supplementary Table 1").drop(columns=["Unnamed: 0"])
+breast_cancer_scc_zscore_components = pd.read_excel(os.path.join(data_dir, raw_folder_name, "journal.pone.0276886.s002.xlsx"), sheet_name="Supplementary Table 2").drop(columns=["Unnamed: 0"])
+breast_cancer_scc_genes_hgnc_symbols = set()
+for column in breast_cancer_scc_cna_components.columns:
+    breast_cancer_scc_genes_hgnc_symbols = breast_cancer_scc_genes_hgnc_symbols.union(set(breast_cancer_scc_cna_components[[column]].dropna(axis=0).values.ravel().tolist()))
 
-breast_cancer_scc_genes_df = pd.read_csv(os.path.join(data_dir, raw_folder_name, breast_cancer_scc_genes_file_name), sep="\t")
-breast_cancer_scc_genes_hgnc_symbols = set(breast_cancer_scc_genes_df["hgnc_symbol"].tolist())
-
-hgnc_symbols = cna_df_hgnc_symbols.union(gex_df_hgnc_symbols).union(rppa_df_hgnc_symbols).union(breast_cancer_ipac_genes_hgnc_symbols).union(breast_cancer_scc_genes_hgnc_symbols)
+# hgnc_symbols = cna_df_hgnc_symbols.union(gex_df_hgnc_symbols).union(rppa_df_hgnc_symbols).union(breast_cancer_scc_genes_hgnc_symbols)
+hgnc_symbols = breast_cancer_scc_genes_hgnc_symbols
 
 mart = r.useMart(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 r_df = r.getBM(attributes = StrVector(("hgnc_symbol", "entrezgene_id", "chromosome_name")),
@@ -90,11 +91,6 @@ pandas_df = pandas_df[~pd.isnull(pandas_df["hgnc_symbol"]) & \
 
 hgnc_entrezgene_id_mapping = dict(pandas_df[["hgnc_symbol", "entrezgene_id"]].values)
 entrezgene_id_chromosome_name_mapping = dict(pandas_df[["entrezgene_id", "chromosome_name"]].values)
-# entrezgene_id_chromosome_name_mapping = dict()
-# hgnc_entrezgene_id_mapping = dict(pd.read_csv(os.path.join(data_dir, processed_folder_name, hgnc_to_entrezgene_id_mapping_file_name), sep="\t").values)
-# old_entrezgene_id_chromosome_name_mapping = pd.read_csv(os.path.join(data_dir, processed_folder_name, "old_entrezgene_id_chromosome_name_mapping.tsv"), sep="\t")
-# entrezgene_ids = set(hgnc_entrezgene_id_mapping.values()) - set(old_entrezgene_id_chromosome_name_mapping.keys())
-# hgnc_symbols = [key for key, value in hgnc_entrezgene_id_mapping.items() if value not in entrezgene_ids]
 
 hgnc_symbols = list(hgnc_symbols - hgnc_entrezgene_id_mapping.keys())
 
