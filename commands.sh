@@ -1,7 +1,7 @@
 cd src
 
 NUM_JOBS=0
-SLEEP_TIME=0
+SLEEP_TIME=1
 
 sleep_if_necessary() {
     if [ $(expr $(($NUM_JOBS+1)) % 100) == "0" ]; then
@@ -9,14 +9,14 @@ sleep_if_necessary() {
     fi
 }
 
-for MODEL in 'dl_linear' 'dl_per_gene' 'dl_linear_zero_diagonal' 'sklearn_linear' 'sklearn_per_gene' 'dl_mlp'; do
+for MODEL in 'dl_linear' 'sklearn_linear' 'dl_mlp' 'dl_linear_zero_diagonal'; do
     for CANCER_TYPE in 'all' 'brca'; do
         for DATASET in 'unthresholdedcnapurity2zscore'; do
             if [[ $DATASET = 'rppa2zscore' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
                 USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false)
             else
-                declare -a GENE_TYPE_OPTIONS=("breast_cancer_scc_genes")
+                declare -a GENE_TYPE_OPTIONS=("breast_cancer_scc_genes_2_6" "breast_cancer_scc_genes_2_8" "breast_cancer_scc_genes_1_2_3_4_5_6_7_8_9_10_11_12_13_14" "rppa_genes")
                 if [[ $MODEL = 'dl_linear' ]]; then
                     USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false true)
                 elif [[ $MODEL = 'dl_linear_zero_diagonal' ]]; then

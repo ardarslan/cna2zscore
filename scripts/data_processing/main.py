@@ -10,7 +10,6 @@ from gex import get_gex_data
 from zscore import get_zscore_data
 from overall_survival import get_overall_survival_data
 from breast_cancer_scc_genes import get_breast_cancer_scc_genes_data
-from breast_cancer_ipac_genes import get_breast_cancer_ipac_genes_data
 
 from utils import get_dfs_with_intersecting_sample_ids, get_dfs_with_intersecting_columns
 
@@ -69,17 +68,13 @@ if __name__ == "__main__":
                                                         "gene_expression_sum": gex_df.drop(columns=["sample_id"]).sum(axis=0).values.ravel()})
     highly_expressed_genes_df = highly_expressed_genes_df.sort_values(by="gene_expression_sum", ascending=True).reset_index(drop=True)
     highly_expressed_genes_df.iloc[:168, :][["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "168_highly_expressed_genes.tsv"), sep="\t", index=False)
-    highly_expressed_genes_df.iloc[:250, :][["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "250_highly_expressed_genes.tsv"), sep="\t", index=False)
     highly_expressed_genes_df.iloc[:1000, :][["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "1000_highly_expressed_genes.tsv"), sep="\t", index=False)
     del highly_expressed_genes_df
 
-    breast_cancer_scc_genes_df = get_breast_cancer_scc_genes_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name)
-    breast_cancer_scc_genes_df[["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "breast_cancer_scc_genes.tsv"), sep="\t", index=False)
-    del breast_cancer_scc_genes_df
-
-    breast_cancer_ipac_genes_df = get_breast_cancer_ipac_genes_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name)
-    breast_cancer_ipac_genes_df[["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, "breast_cancer_ipac_genes.tsv"), sep="\t", index=False)
-    del breast_cancer_ipac_genes_df
+    breast_cancer_scc_genes_df_mapping = get_breast_cancer_scc_genes_data(data_dir=data_dir, raw_folder_name=raw_folder_name, processed_folder_name=processed_folder_name)
+    for column, current_breast_cancer_scc_genes_df in breast_cancer_scc_genes_df_mapping.items():
+        current_breast_cancer_scc_genes_df[["gene_id"]].to_csv(os.path.join(data_dir, processed_folder_name, f"breast_cancer_scc_genes_component_{str(column).zfill(2)}.tsv"), sep="\t", index=False)
+    del breast_cancer_scc_genes_df_mapping
 
     overall_survival_df = get_overall_survival_data(data_dir=data_dir, raw_folder_name=raw_folder_name)
     overall_survival_df.to_csv(os.path.join(data_dir, processed_folder_name, "overall_survival.tsv"), sep="\t", index=False)
