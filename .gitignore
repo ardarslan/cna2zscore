@@ -7,3 +7,4 @@ data
 checkpoints
 *lsf.*
 cna2zscore_checkpoints
+src/slurm-*
