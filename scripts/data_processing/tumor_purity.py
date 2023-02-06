@@ -35,7 +35,7 @@ def get_tumor_purity_data(data_dir: str, raw_folder_name: str, tumor_sample_ids:
     for _, row in tumor_purity_estimate_df.iterrows():
         sample_id = row["NAME"]
         purity_estimate = row["TumorPurity"]
-        if not pd.isnull(purity_estimate):
+        if not pd.isnull(purity_estimate) and sample_id not in tumor_sample_id_purity_mapping.keys():
             tumor_sample_id_purity_mapping[sample_id] = purity_estimate
 
     tumor_purity_df = pd.DataFrame.from_dict({"sample_id": tumor_sample_id_purity_mapping.keys(),
