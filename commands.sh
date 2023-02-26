@@ -2,6 +2,8 @@ cd src
 
 NUM_JOBS=0
 SLEEP_TIME=1
+CHECKPOINTS_DIR="/cluster/scratch/aarslan/input_informativeness"
+
 
 sleep_if_necessary() {
     if [ $(expr $(($NUM_JOBS+1)) % 100) == "0" ]; then
@@ -9,14 +11,14 @@ sleep_if_necessary() {
     fi
 }
 
-for MODEL in 'dl_linear' 'sklearn_linear' 'dl_mlp' 'dl_linear_zero_diagonal'; do
-    for CANCER_TYPE in 'all' 'brca'; do
-        for DATASET in 'unthresholdedcnapurity2zscore' 'rppa2zscore'; do
+for MODEL in 'sklearn_linear' 'dl_mlp'; do
+    for CANCER_TYPE in 'all'; do
+        for DATASET in 'unthresholdedcnapurity2zscore' 'thresholdedcnapurity2zscore' 'rppa2zscore'; do
             if [[ $DATASET = 'rppa2zscore' ]]; then
                 declare -a GENE_TYPE_OPTIONS=("rppa_genes")
                 USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false)
             else
-                declare -a GENE_TYPE_OPTIONS=("breast_cancer_scc_genes_2_6" "breast_cancer_scc_genes_2_8" "breast_cancer_scc_genes_1_2_3_4_5_6_7_8_9_10_11_12_13_14" "rppa_genes")
+                declare -a GENE_TYPE_OPTIONS=("168_highly_expressed_genes" "rppa_genes")
                 if [[ $MODEL = 'dl_linear' ]]; then
                     USE_CNA_ADJUSTED_ZSCORE_OPTIONS=(false true)
                 elif [[ $MODEL = 'dl_linear_zero_diagonal' ]]; then
@@ -48,7 +50,7 @@ for MODEL in 'dl_linear' 'sklearn_linear' 'dl_mlp' 'dl_linear_zero_diagonal'; do
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
                 PER_CHROMOSOME_OPTIONS=(false)
-            elif [[ $MODEL = 'gene_embeddings' ]]; then
+            elif [[ $MODEL = 'dl_gene_embeddings' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
                 NUM_NONLINEAR_LAYERS_OPTIONS=(0)
@@ -133,17 +135,17 @@ for MODEL in 'dl_linear' 'sklearn_linear' 'dl_mlp' 'dl_linear_zero_diagonal'; do
                 NUM_ATTENTION_HEADS_OPTIONS=(4)
                 PER_CHROMOSOME_OPTIONS=(false true)
             else
-                echo "MODEL is not a valid $MODEL."
+                echo "$MODEL is not a valid MODEL."
                 exit 1
             fi
 
             for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
                 if [[ $MODEL = 'sklearn_linear' && $PER_CHROMOSOME ]]; then
                     TIME_SETTINGS="--time=7200"
-                    CPU_SETTINGS="--ntasks=25 --mem-per-cpu=32768"
+                    CPU_SETTINGS="--ntasks=20 --mem-per-cpu=32768"
                 else
                     TIME_SETTINGS="--time=1440"
-                    CPU_SETTINGS="--ntasks=2 --mem-per-cpu=32768"
+                    CPU_SETTINGS="--ntasks=1 --mem-per-cpu=32768"
                 fi
 
                 for GENE_TYPE in "${GENE_TYPE_OPTIONS[@]}"; do
