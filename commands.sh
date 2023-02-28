@@ -59,7 +59,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS=(0.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(4 16 64)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
-                PER_CHROMOSOME_OPTIONS=(false true)
+                PER_CHROMOSOME_OPTIONS=(false) # (false true)
             elif [[ $MODEL = 'sklearn_linear' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
@@ -69,7 +69,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS=(0.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
-                PER_CHROMOSOME_OPTIONS=(false true)
+                PER_CHROMOSOME_OPTIONS=(false) # (false true)
             elif [[ $MODEL = 'dl_linear' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
@@ -81,7 +81,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS=(0.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
-                PER_CHROMOSOME_OPTIONS=(false true)
+                PER_CHROMOSOME_OPTIONS=(false) # (false true)
             elif [[ $MODEL = 'dl_linear_zero_diagonal' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.0)
@@ -93,7 +93,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS=(0.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
-                PER_CHROMOSOME_OPTIONS=(false true)
+                PER_CHROMOSOME_OPTIONS=(false) # (false true)
             elif [[ $MODEL = 'dl_mlp' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.10 0.25 0.50)
@@ -103,7 +103,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS=(0.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
-                PER_CHROMOSOME_OPTIONS=(false true)
+                PER_CHROMOSOME_OPTIONS=(false) # (false true)
             elif [[ $MODEL = 'dl_interpretable_mlp' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.10 0.25 0.50)
@@ -113,7 +113,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS=(0.0 0.0000001 0.000001 0.00001 0.0001 0.001 0.01)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
-                PER_CHROMOSOME_OPTIONS=(false true)
+                PER_CHROMOSOME_OPTIONS=(false) # (false true)
             elif [[ $MODEL = 'dl_rescon_mlp' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false true)
                 HIDDEN_DIMENSION_OPTIONS=(0.10 0.25 0.50)
@@ -123,7 +123,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS=(0.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(0)
                 NUM_ATTENTION_HEADS_OPTIONS=(0)
-                PER_CHROMOSOME_OPTIONS=(false true)
+                PER_CHROMOSOME_OPTIONS=(false) # (false true)
             elif [[ $MODEL = 'dl_transformer' ]]; then
                 RESCON_DIAGONAL_W_OPTIONS=(false)
                 HIDDEN_DIMENSION_OPTIONS=(0.10 0.25 0.50)
@@ -133,7 +133,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 INTERPRETABLE_MLP_PREDICTED_WEIGHTS_L1_REG_COEFF_OPTIONS=(0.0)
                 GENE_EMBEDDING_SIZE_OPTIONS=(4 16 64)
                 NUM_ATTENTION_HEADS_OPTIONS=(4)
-                PER_CHROMOSOME_OPTIONS=(false true)
+                PER_CHROMOSOME_OPTIONS=(false) # (false true)
             else
                 echo "$MODEL is not a valid MODEL."
                 exit 1
@@ -142,10 +142,10 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
             for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
                 if [[ $MODEL = 'sklearn_linear' && $PER_CHROMOSOME ]]; then
                     TIME_SETTINGS="--time=7200"
-                    CPU_SETTINGS="--ntasks=20 --mem-per-cpu=32768"
+                    CPU_SETTINGS="--ntasks=20 --mem-per-cpu=12800"
                 else
                     TIME_SETTINGS="--time=1440"
-                    CPU_SETTINGS="--ntasks=1 --mem-per-cpu=32768"
+                    CPU_SETTINGS="--ntasks=1 --mem-per-cpu=12800"
                 fi
 
                 for GENE_TYPE in "${GENE_TYPE_OPTIONS[@]}"; do
