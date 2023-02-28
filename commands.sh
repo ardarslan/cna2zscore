@@ -141,10 +141,10 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
 
             for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
                 if [[ $MODEL = 'sklearn_linear' && $PER_CHROMOSOME ]]; then
-                    TIME_SETTINGS="--time=7200"
+                    TIME_SETTINGS="--time=240"
                     CPU_SETTINGS="--ntasks=20 --mem-per-cpu=12800"
                 else
-                    TIME_SETTINGS="--time=1440"
+                    TIME_SETTINGS="--time=240"
                     CPU_SETTINGS="--ntasks=1 --mem-per-cpu=12800"
                 fi
 
