@@ -37,7 +37,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 DROPOUT_OPTIONS=(0.00 0.25 0.50)
                 LEARNING_RATE_OPTIONS=(0.001 0.01)
                 MAIN_FILE_NAME="main_dl.py"
-                GPU_SETTINGS="--gpus=1"
+                GPU_SETTINGS="-p gpu --gres=gpu:rtx2080ti:1"
             fi
 
             if [[ $MODEL = 'sklearn_per_gene' || $MODEL = 'dl_per_gene' ]]; then
