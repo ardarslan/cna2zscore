@@ -37,7 +37,7 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
                 DROPOUT_OPTIONS=(0.00 0.25 0.50)
                 LEARNING_RATE_OPTIONS=(0.001 0.01)
                 MAIN_FILE_NAME="main_dl.py"
-                GPU_SETTINGS="--gpus=1 --gres=gpumem:12288"
+                GPU_SETTINGS="--gpus=1"
             fi
 
             if [[ $MODEL = 'sklearn_per_gene' || $MODEL = 'dl_per_gene' ]]; then
@@ -141,11 +141,11 @@ for MODEL in 'sklearn_linear' 'dl_mlp'; do
 
             for PER_CHROMOSOME in "${PER_CHROMOSOME_OPTIONS[@]}"; do
                 if [[ $MODEL = 'sklearn_linear' && $PER_CHROMOSOME ]]; then
-                    TIME_SETTINGS="--time=240"
-                    CPU_SETTINGS="--ntasks=20 --mem-per-cpu=12800"
+                    TIME_SETTINGS="--time=4:00:00"
+                    CPU_SETTINGS="--cpus-per-task=20 --mem-per-cpu=4G"
                 else
-                    TIME_SETTINGS="--time=240"
-                    CPU_SETTINGS="--ntasks=1 --mem-per-cpu=12800"
+                    TIME_SETTINGS="--time=4:00:00"
+                    CPU_SETTINGS="--cpus-per-task=2 --mem-per-cpu=12G"
                 fi
 
                 for GENE_TYPE in "${GENE_TYPE_OPTIONS[@]}"; do
